@@ -1,6 +1,6 @@
 {
   "name": "Color The Map",
   "icon": "🗺️",
-  "image": null,
+  "image": "color-the-map.png",
   "description": "Visualize GPS workout tracks and color every street in town"
 }

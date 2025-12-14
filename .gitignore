@@ -9,3 +9,4 @@ ENV/
 data/
 *.gpx
 .DS_Store
+.idea
