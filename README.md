@@ -29,7 +29,13 @@ Access at: http://localhost:8005
 
 ## Deployment
 
-See main infrastructure repo for deployment instructions.
+Deploy to production server:
+
+```bash
+./deploy-to-prod.sh
+```
+
+This will push changes to git, SSH to the server, pull updates, install dependencies, and restart the service.
 
 ## Port
 
