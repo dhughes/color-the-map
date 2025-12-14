@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 User=dhughes
-WorkingDirectory=/home/dhughes/Projects/Personal/color-the-map
-ExecStart=/home/dhughes/Projects/Personal/color-the-map/venv/bin/python app.py
+WorkingDirectory=/home/dhughes/apps/color-the-map
+ExecStart=/home/dhughes/apps/color-the-map/venv/bin/python app.py
 Restart=always
 RestartSec=5
 
