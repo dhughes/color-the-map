@@ -1,0 +1,14 @@
+[Unit]
+Description=Color The Map - GPS Track Visualizer
+After=network.target
+
+[Service]
+Type=simple
+User=dhughes
+WorkingDirectory=/home/dhughes/Projects/Personal/color-the-map
+ExecStart=/usr/bin/python3 app.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
