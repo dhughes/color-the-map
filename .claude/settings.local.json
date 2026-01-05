@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(feature-dev:feature-dev)"
+    ]
+  }
+}
