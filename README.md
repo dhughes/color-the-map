@@ -48,6 +48,12 @@ sudo systemctl daemon-reload
 sudo systemctl enable color-the-map
 sudo systemctl start color-the-map
 
+# Configure passwordless sudo for service restart (required for deployment)
+sudo visudo -f /etc/sudoers.d/color-the-map
+# Add this line:
+# dhughes ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart color-the-map
+# Save and exit (Ctrl+X, then Y, then Enter)
+
 # Deploy infrastructure to update Caddy configuration
 cd ~/infrastructure
 sudo ./deploy.sh
