@@ -12,7 +12,7 @@ function AppContent() {
   const [isUploading, setIsUploading] = useState(false)
   const [status, setStatus] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null)
   const queryClient = useQueryClient()
-  const statusTimeoutRef = useRef<NodeJS.Timeout>()
+  const statusTimeoutRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     return () => {
