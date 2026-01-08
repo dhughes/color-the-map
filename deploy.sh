@@ -12,7 +12,7 @@ echo "🎨 Building frontend..."
 
 # Load nvm if it exists (for Node.js installed via nvm)
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
 
 cd frontend
 npm install
