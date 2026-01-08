@@ -28,7 +28,9 @@
       "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/pytest /Users/doughughes/Projects/Personal/color-the-map/backend/tests/ -v --tb=short)",
       "Bash(venv/bin/pytest backend/tests/ -v --tb=short)",
       "Bash(venv/bin/pytest backend/tests/ --cov=backend --cov-report=term-missing --tb=no)",
-      "Bash(venv/bin/pytest:*)"
+      "Bash(venv/bin/pytest:*)",
+      "mcp__chrome__browser_click",
+      "mcp__chrome__browser_fill_form"
     ]
   }
 }
