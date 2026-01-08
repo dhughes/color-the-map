@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **CRITICAL:** When you need to ask the user questions, ALWAYS use the `AskUserQuestion` tool instead of embedding questions in long responses. Use it multiple times if needed for multiple questions. Questions buried in text are hard for the user to respond to.
 
+**CRITICAL:** NEVER push to GitHub without explicit user permission. Always ask first, even if it seems like the logical next step.
+
 ## Implementation Documentation
 
 **Before implementing features, read these documents:**
