@@ -22,8 +22,8 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--color-bg);
@@ -51,7 +51,7 @@ body {
   position: absolute;
   inset: 0;
   z-index: 1000;
-  pointer-events: all;
+  pointer-events: none;
 }
 
 .upload-zone {
