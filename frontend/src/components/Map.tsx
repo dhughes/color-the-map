@@ -1,102 +1,108 @@
-import { useEffect, useRef, useState } from 'react'
-import maplibregl from 'maplibre-gl'
-import { config } from '../config'
-import type { TrackGeometry } from '../types/track'
+import { useEffect, useRef, useState } from "react";
+import maplibregl from "maplibre-gl";
+import { config } from "../config";
+import type { TrackGeometry } from "../types/track";
 
 interface MapProps {
-  geometries: TrackGeometry[]
+  geometries: TrackGeometry[];
 }
 
 export function Map({ geometries }: MapProps) {
-  const mapContainer = useRef<HTMLDivElement>(null)
-  const map = useRef<maplibregl.Map | null>(null)
-  const [mapLoaded, setMapLoaded] = useState(false)
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<maplibregl.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
-    if (!mapContainer.current || map.current) return
+    if (!mapContainer.current || map.current) return;
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
       style: {
         version: 8,
         sources: {
-          'osm': {
-            type: 'raster',
-            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          osm: {
+            type: "raster",
+            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
             tileSize: 256,
-            attribution: '© OpenStreetMap contributors'
-          }
+            attribution: "© OpenStreetMap contributors",
+          },
         },
-        layers: [{
-          id: 'osm',
-          type: 'raster',
-          source: 'osm'
-        }]
+        layers: [
+          {
+            id: "osm",
+            type: "raster",
+            source: "osm",
+          },
+        ],
       },
       center: config.mapCenter,
-      zoom: config.mapZoom
-    })
+      zoom: config.mapZoom,
+    });
 
-    map.current.on('load', () => {
-      setMapLoaded(true)
-    })
+    map.current.on("load", () => {
+      setMapLoaded(true);
+    });
 
     return () => {
       if (map.current) {
-        map.current.remove()
-        map.current = null
-        setMapLoaded(false)
+        map.current.remove();
+        map.current = null;
+        setMapLoaded(false);
       }
+    };
+  }, []);
+
+  const updateTracks = (
+    mapInstance: maplibregl.Map,
+    geometries: TrackGeometry[],
+  ) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!mapInstance || !(mapInstance as any)._loaded) return;
+
+    if (mapInstance.getLayer("track-lines")) {
+      mapInstance.removeLayer("track-lines");
     }
-  }, [])
-
-  useEffect(() => {
-    if (!map.current || !mapLoaded || geometries.length === 0) return
-
-    updateTracks(map.current, geometries)
-  }, [geometries, mapLoaded])
-
-  const updateTracks = (mapInstance: maplibregl.Map, geometries: TrackGeometry[]) => {
-    if (!mapInstance || !(mapInstance as any)._loaded) return
-
-    if (mapInstance.getLayer('track-lines')) {
-      mapInstance.removeLayer('track-lines')
-    }
-    if (mapInstance.getSource('tracks')) {
-      mapInstance.removeSource('tracks')
+    if (mapInstance.getSource("tracks")) {
+      mapInstance.removeSource("tracks");
     }
 
-    const features = geometries.map(geom => ({
-      type: 'Feature' as const,
+    const features = geometries.map((geom) => ({
+      type: "Feature" as const,
       id: geom.track_id,
       properties: {
-        id: geom.track_id
+        id: geom.track_id,
       },
       geometry: {
-        type: 'LineString' as const,
-        coordinates: geom.coordinates
-      }
-    }))
+        type: "LineString" as const,
+        coordinates: geom.coordinates,
+      },
+    }));
 
-    mapInstance.addSource('tracks', {
-      type: 'geojson',
+    mapInstance.addSource("tracks", {
+      type: "geojson",
       data: {
-        type: 'FeatureCollection',
-        features
-      }
-    })
+        type: "FeatureCollection",
+        features,
+      },
+    });
 
     mapInstance.addLayer({
-      id: 'track-lines',
-      type: 'line',
-      source: 'tracks',
+      id: "track-lines",
+      type: "line",
+      source: "tracks",
       paint: {
-        'line-color': config.trackColor,
-        'line-width': 3,
-        'line-opacity': 0.85
-      }
-    })
-  }
+        "line-color": config.trackColor,
+        "line-width": 3,
+        "line-opacity": 0.85,
+      },
+    });
+  };
 
-  return <div ref={mapContainer} className="map-container" />
+  useEffect(() => {
+    if (!map.current || !mapLoaded || geometries.length === 0) return;
+
+    updateTracks(map.current, geometries);
+  }, [geometries, mapLoaded]);
+
+  return <div ref={mapContainer} className="map-container" />;
 }

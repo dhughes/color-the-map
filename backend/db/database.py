@@ -2,6 +2,7 @@ import sqlite3
 from pathlib import Path
 from contextlib import contextmanager
 
+
 class Database:
     def __init__(self, db_path: Path):
         self.db_path = db_path

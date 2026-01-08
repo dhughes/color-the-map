@@ -30,7 +30,8 @@
       "Bash(venv/bin/pytest backend/tests/ --cov=backend --cov-report=term-missing --tb=no)",
       "Bash(venv/bin/pytest:*)",
       "mcp__chrome__browser_click",
-      "mcp__chrome__browser_fill_form"
+      "mcp__chrome__browser_fill_form",
+      "Bash(venv/bin/ruff check:*)"
     ]
   }
 }

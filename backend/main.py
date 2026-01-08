@@ -7,9 +7,7 @@ from .config import config
 config.ensure_dirs()
 
 app = FastAPI(
-    title="Color The Map",
-    description="GPS Track Visualization API",
-    version="1.0.0"
+    title="Color The Map", description="GPS Track Visualization API", version="1.0.0"
 )
 
 app.add_middleware(
@@ -22,15 +20,20 @@ app.add_middleware(
 
 app.include_router(api_router, prefix="/api/v1", tags=["tracks"])
 
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy"}
 
+
 try:
-    app.mount("/", StaticFiles(directory=str(config.STATIC_DIR), html=True), name="static")
+    app.mount(
+        "/", StaticFiles(directory=str(config.STATIC_DIR), html=True), name="static"
+    )
 except RuntimeError:
     pass
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host=config.HOST, port=config.PORT)

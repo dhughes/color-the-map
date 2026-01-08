@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
 
+
 class TrackResponse(BaseModel):
     id: int
     hash: str
@@ -33,14 +34,17 @@ class TrackResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class UploadResult(BaseModel):
     uploaded: int
     failed: int
     track_ids: List[int]
     errors: List[str]
 
+
 class GeometryRequest(BaseModel):
     track_ids: List[int]
+
 
 class TrackGeometry(BaseModel):
     track_id: int

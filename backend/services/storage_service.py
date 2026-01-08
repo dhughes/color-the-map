@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
+
 class StorageService:
     def __init__(self, storage_path: Path):
         self.storage_path = storage_path
@@ -13,10 +14,10 @@ class StorageService:
         return hashlib.sha256(minified).hexdigest()
 
     def _minify_gpx(self, content: bytes) -> bytes:
-        text = content.decode('utf-8')
-        text = re.sub(r'>\s+<', '><', text)
+        text = content.decode("utf-8")
+        text = re.sub(r">\s+<", "><", text)
         text = text.strip()
-        return text.encode('utf-8')
+        return text.encode("utf-8")
 
     def store_gpx(self, gpx_hash: str, content: bytes) -> Path:
         file_path = self.storage_path / f"{gpx_hash}.gpx"

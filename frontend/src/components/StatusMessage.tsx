@@ -1,6 +1,6 @@
 interface StatusMessageProps {
-  message: string
-  type: 'info' | 'success' | 'error'
+  message: string;
+  type: "info" | "success" | "error";
 }
 
 export function StatusMessage({ message, type }: StatusMessageProps) {
@@ -9,5 +9,5 @@ export function StatusMessage({ message, type }: StatusMessageProps) {
       <div className="status-dot" />
       <span>{message}</span>
     </div>
-  )
+  );
 }

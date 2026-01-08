@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 class Config:
     BASE_DIR = Path(__file__).parent.parent
     DATA_DIR = BASE_DIR / "data"
@@ -23,5 +24,6 @@ class Config:
     def ensure_dirs(cls):
         cls.DATA_DIR.mkdir(exist_ok=True)
         cls.GPX_DIR.mkdir(exist_ok=True)
+
 
 config = Config()
