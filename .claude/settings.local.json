@@ -1,7 +1,34 @@
 {
   "permissions": {
     "allow": [
-      "Skill(feature-dev:feature-dev)"
+      "Skill(feature-dev:feature-dev)",
+      "Bash(wc:*)",
+      "Bash(python3:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)",
+      "Bash(pytest:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install:*)",
+      "Skill(frontend-design:frontend-design)",
+      "Bash(npm test:*)",
+      "Bash(python app.py:*)",
+      "Bash(npm run dev:*)",
+      "Bash(cat:*)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "mcp__chrome__browser_navigate",
+      "mcp__chrome__browser_snapshot",
+      "mcp__chrome__browser_console_messages",
+      "Bash(venv/bin/python:*)",
+      "mcp__chrome__browser_take_screenshot",
+      "mcp__chrome__browser_network_requests",
+      "mcp__chrome__browser_evaluate",
+      "Bash(sqlite3:*)",
+      "mcp__chrome__browser_close",
+      "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/pytest /Users/doughughes/Projects/Personal/color-the-map/backend/tests/ -v --tb=short)",
+      "Bash(venv/bin/pytest backend/tests/ -v --tb=short)",
+      "Bash(venv/bin/pytest backend/tests/ --cov=backend --cov-report=term-missing --tb=no)",
+      "Bash(venv/bin/pytest:*)"
     ]
   }
 }

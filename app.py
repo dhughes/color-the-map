@@ -1,10 +1,7 @@
-from flask import Flask, render_template
-
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-    return render_template('index.html')
+#!/usr/bin/env python3
+from backend.main import app
+from backend.config import config
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8005, debug=True)
+    import uvicorn
+    uvicorn.run(app, host=config.HOST, port=config.PORT)

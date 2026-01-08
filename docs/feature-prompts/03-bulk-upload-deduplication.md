@@ -1,15 +1,17 @@
-# Feature 3: Bulk Upload & Deduplication
+# Feature 3: Activity Inference, Deduplication & Enhanced Upload UX
 
 **Status**: Not Started
 **Dependencies**: Features 1-2
-**Estimated Time**: 3-4 days
+**Estimated Time**: 2-3 days
 **Priority**: High
 
 ---
 
 ## Goal
 
-Enable drag-and-drop upload of multiple GPX files simultaneously with progress tracking. Implement smart duplicate detection that silently skips duplicate files and centers the map on existing tracks. Add activity type inference from filenames.
+**Note:** Drag-and-drop and multi-file upload were implemented in Feature 1. This feature focuses on enhancing the upload experience with activity type inference, smart duplicate handling with viewport centering, and detailed progress reporting.
+
+Add intelligent activity type detection from filenames, implement deduplication that centers the viewport on existing tracks, and create an enhanced progress dialog with detailed statistics.
 
 ---
 
@@ -17,23 +19,30 @@ Enable drag-and-drop upload of multiple GPX files simultaneously with progress t
 
 See [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) Section "Activity Type Inference" and "Content-Addressable Storage".
 
-**Building On:**
-- Features 1-2 provide: Single upload, storage service, hash calculation
-- You're adding: Drag-drop interface, bulk processing, progress dialog, activity inference
+**Already Implemented in Feature 1:**
+- Drag-and-drop upload interface (entire map is drop zone)
+- Multi-file upload support (POST /api/v1/tracks accepts array)
+- Content-addressable storage (SHA256 hash-based filenames)
+- Simple upload status messages
+
+**You're Adding:**
+- Activity type inference from filename patterns
+- Duplicate detection with viewport centering on existing tracks
+- Enhanced progress dialog with detailed statistics
+- Better error reporting (show which files failed and why)
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] Drag-and-drop zone accepts multiple .gpx files
-- [ ] Progress dialog shows: % complete, count of files processed, activity type counts
-- [ ] Activity type inferred from filename patterns (see ARCHITECTURE.md)
-- [ ] Duplicate files skipped silently (hash match)
-- [ ] After import, viewport centers on imported/existing tracks
-- [ ] Failed files skipped, shown in error summary
-- [ ] Max file size enforced (10 MB per file)
-- [ ] Can upload 50+ files without browser hanging
-- [ ] Import completes successfully and tracks appear in list
+- [ ] Activity type inferred from filename patterns (Cycling, Walking, Running, etc.)
+- [ ] Activity type stored in both `activity_type` and `activity_type_inferred` fields
+- [ ] Duplicate files detected (hash match) and skipped silently
+- [ ] After upload with duplicates, viewport centers on all affected tracks (new + existing)
+- [ ] Enhanced progress dialog replaces simple status message
+- [ ] Progress dialog shows: % complete, file count, activity type breakdown, errors list
+- [ ] Failed files shown with specific error messages
+- [ ] Upload of 50+ files performs well with progress updates
 
 ---
 
