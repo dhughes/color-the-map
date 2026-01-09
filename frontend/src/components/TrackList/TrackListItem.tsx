@@ -1,3 +1,4 @@
+import { Eye, EyeOff } from "lucide-react";
 import type { Track } from "../../types/track";
 
 interface TrackListItemProps {
@@ -31,7 +32,7 @@ export function TrackListItem({
         aria-label={track.visible ? "Hide track" : "Show track"}
         title={track.visible ? "Hide track" : "Show track"}
       >
-        {track.visible ? "👁" : "👁‍🗨"}
+        {track.visible ? <Eye size={18} /> : <EyeOff size={18} />}
       </button>
 
       <div className="track-item-content">
