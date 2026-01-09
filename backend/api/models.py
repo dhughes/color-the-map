@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..models.track import Track
+    from ..models.track_geometry import TrackGeometry as DomainTrackGeometry
 
 
 class TrackResponse(BaseModel):
@@ -34,6 +38,11 @@ class TrackResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+    @classmethod
+    def from_domain(cls, track: "Track") -> "TrackResponse":
+        """Convert domain Track to API TrackResponse"""
+        return cls.model_validate(track, from_attributes=True)
+
 
 class UploadResult(BaseModel):
     uploaded: int
@@ -49,3 +58,17 @@ class GeometryRequest(BaseModel):
 class TrackGeometry(BaseModel):
     track_id: int
     coordinates: List[List[float]]
+
+    model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_domain(cls, geometry: "DomainTrackGeometry") -> "TrackGeometry":
+        """Convert domain TrackGeometry to API TrackGeometry"""
+        return cls.model_validate(geometry, from_attributes=True)
+
+
+class TrackUpdate(BaseModel):
+    visible: Optional[bool] = None
+    name: Optional[str] = None
+    activity_type: Optional[str] = None
+    description: Optional[str] = None

@@ -35,7 +35,7 @@ function AppContent() {
     queryFn: listTracks,
   });
 
-  const trackIds = useMemo(() => tracks.map((t) => t.id), [tracks]);
+  const trackIds = useMemo(() => tracks.map((track) => track.id), [tracks]);
 
   const { data: geometries = [] } = useQuery<TrackGeometry[]>({
     queryKey: ["geometries", trackIds],

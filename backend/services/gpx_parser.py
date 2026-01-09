@@ -1,11 +1,12 @@
 import gpxpy
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import List, Dict
 from math import radians, sin, cos, sqrt, atan2
+from ..models.gpx_data import ParsedGPXData
 
 
 class GPXParser:
-    def parse(self, content: bytes) -> Dict[str, Any]:
+    def parse(self, content: bytes) -> ParsedGPXData:
         gpx = gpxpy.parse(content.decode("utf-8"))
 
         coordinates = []
@@ -31,21 +32,21 @@ class GPXParser:
         bounds = self._calculate_bounds(coordinates)
         activity_date = timestamps[0] if timestamps else datetime.utcnow()
 
-        return {
-            "coordinates": coordinates,
-            "distance_meters": distance,
-            "duration_seconds": duration,
-            "avg_speed_ms": speed_stats["avg"],
-            "max_speed_ms": speed_stats["max"],
-            "min_speed_ms": speed_stats["min"],
-            "elevation_gain_meters": elevation_stats["gain"],
-            "elevation_loss_meters": elevation_stats["loss"],
-            "bounds_min_lat": bounds["min_lat"],
-            "bounds_max_lat": bounds["max_lat"],
-            "bounds_min_lon": bounds["min_lon"],
-            "bounds_max_lon": bounds["max_lon"],
-            "activity_date": activity_date,
-        }
+        return ParsedGPXData(
+            coordinates=coordinates,
+            distance_meters=distance,
+            duration_seconds=duration,
+            avg_speed_ms=speed_stats["avg"],
+            max_speed_ms=speed_stats["max"],
+            min_speed_ms=speed_stats["min"],
+            elevation_gain_meters=elevation_stats["gain"],
+            elevation_loss_meters=elevation_stats["loss"],
+            bounds_min_lat=bounds["min_lat"],
+            bounds_max_lat=bounds["max_lat"],
+            bounds_min_lon=bounds["min_lon"],
+            bounds_max_lon=bounds["max_lon"],
+            activity_date=activity_date,
+        )
 
     def _calculate_distance(self, coordinates: List[List[float]]) -> float:
         total = 0.0
@@ -88,8 +89,8 @@ class GPXParser:
         return {"gain": gain, "loss": loss}
 
     def _calculate_bounds(self, coordinates: List[List[float]]) -> Dict[str, float]:
-        lons = [c[0] for c in coordinates]
-        lats = [c[1] for c in coordinates]
+        lons = [coord[0] for coord in coordinates]
+        lats = [coord[1] for coord in coordinates]
 
         return {
             "min_lat": min(lats),

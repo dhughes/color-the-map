@@ -31,10 +31,10 @@ def sample_gpx():
 def test_upload_track(track_service, sample_gpx):
     result = track_service.upload_track("test.gpx", sample_gpx)
 
-    assert result["duplicate"] is False
-    assert result["track"]["name"] == "test"
-    assert result["track"]["distance_meters"] > 0
-    assert result["track"]["hash"]
+    assert result.duplicate is False
+    assert result.track.name == "test"
+    assert result.track.distance_meters > 0
+    assert result.track.hash
 
 
 def test_duplicate_detection(track_service, sample_gpx):
@@ -42,8 +42,8 @@ def test_duplicate_detection(track_service, sample_gpx):
 
     result = track_service.upload_track("test2.gpx", sample_gpx)
 
-    assert result["duplicate"] is True
-    assert result["track"]["name"] == "test"
+    assert result.duplicate is True
+    assert result.track.name == "test"
 
 
 def test_list_tracks(track_service, sample_gpx):
@@ -52,19 +52,19 @@ def test_list_tracks(track_service, sample_gpx):
     tracks = track_service.list_tracks()
 
     assert len(tracks) == 1
-    assert tracks[0]["name"] == "track1"
+    assert tracks[0].name == "track1"
 
 
 def test_get_track_geometry(track_service, sample_gpx):
     result = track_service.upload_track("test.gpx", sample_gpx)
-    track_id = result["track"]["id"]
+    track_id = result.track.id
 
     geometry = track_service.get_track_geometry(track_id)
 
     assert geometry is not None
-    assert geometry["track_id"] == track_id
-    assert len(geometry["coordinates"]) > 0
-    assert isinstance(geometry["coordinates"][0], list)
+    assert geometry.track_id == track_id
+    assert len(geometry.coordinates) > 0
+    assert isinstance(geometry.coordinates[0], list)
 
 
 def test_get_multiple_geometries(track_service):
@@ -82,9 +82,27 @@ def test_get_multiple_geometries(track_service):
     result1 = track_service.upload_track("track1.gpx", content1)
     result2 = track_service.upload_track("track2.gpx", content2)
 
-    track_ids = [result1["track"]["id"], result2["track"]["id"]]
+    track_ids = [result1.track.id, result2.track.id]
     geometries = track_service.get_multiple_geometries(track_ids)
 
     assert len(geometries) == 2
-    assert geometries[0]["track_id"] == result1["track"]["id"]
-    assert geometries[1]["track_id"] == result2["track"]["id"]
+    assert geometries[0].track_id == result1.track.id
+    assert geometries[1].track_id == result2.track.id
+
+
+def test_update_track_visibility(track_service, sample_gpx):
+    result = track_service.upload_track("test.gpx", sample_gpx)
+    track_id = result.track.id
+
+    assert result.track.visible is True
+
+    updated = track_service.update_track(track_id, {"visible": False})
+
+    assert updated is not None
+    assert updated.visible is False
+    assert updated.id == track_id
+
+
+def test_update_nonexistent_track(track_service):
+    result = track_service.update_track(9999, {"visible": False})
+    assert result is None

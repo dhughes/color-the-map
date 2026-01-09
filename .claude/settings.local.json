@@ -32,7 +32,8 @@
       "mcp__chrome__browser_click",
       "mcp__chrome__browser_fill_form",
       "Bash(venv/bin/ruff check:*)",
-      "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/python:*)"
+      "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/python:*)",
+      "Bash(venv/bin/mypy:*)"
     ]
   }
 }

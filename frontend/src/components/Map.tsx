@@ -66,15 +66,15 @@ export function Map({ geometries }: MapProps) {
       mapInstance.removeSource("tracks");
     }
 
-    const features = geometries.map((geom) => ({
+    const features = geometries.map((geometry) => ({
       type: "Feature" as const,
-      id: geom.track_id,
+      id: geometry.track_id,
       properties: {
-        id: geom.track_id,
+        id: geometry.track_id,
       },
       geometry: {
         type: "LineString" as const,
-        coordinates: geom.coordinates,
+        coordinates: geometry.coordinates,
       },
     }));
 

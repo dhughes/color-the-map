@@ -1,6 +1,12 @@
-from fastapi import APIRouter, UploadFile, File, status
+from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from typing import List
-from .models import TrackResponse, UploadResult, GeometryRequest, TrackGeometry
+from .models import (
+    TrackResponse,
+    UploadResult,
+    GeometryRequest,
+    TrackGeometry,
+    TrackUpdate,
+)
 from ..services.track_service import TrackService
 from ..config import config
 from ..db.database import Database
@@ -40,11 +46,11 @@ async def upload_tracks(files: List[UploadFile] = File(...)):
 
             result = track_service.upload_track(file.filename, content)
 
-            if result["duplicate"]:
-                track_ids.append(result["track"]["id"])
+            if result.duplicate:
+                track_ids.append(result.track.id)
             else:
                 uploaded += 1
-                track_ids.append(result["track"]["id"])
+                track_ids.append(result.track.id)
 
         except Exception as e:
             failed += 1
@@ -58,10 +64,20 @@ async def upload_tracks(files: List[UploadFile] = File(...)):
 @router.get("/tracks", response_model=List[TrackResponse])
 async def list_tracks():
     tracks = track_service.list_tracks()
-    return [TrackResponse(**track) for track in tracks]
+    return [TrackResponse.from_domain(track) for track in tracks]
 
 
 @router.post("/tracks/geometry", response_model=List[TrackGeometry])
 async def get_track_geometries(request: GeometryRequest):
     geometries = track_service.get_multiple_geometries(request.track_ids)
-    return [TrackGeometry(**g) for g in geometries]
+    return [TrackGeometry.from_domain(geometry) for geometry in geometries]
+
+
+@router.patch("/tracks/{track_id}", response_model=TrackResponse)
+async def update_track(track_id: int, update: TrackUpdate):
+    track = track_service.update_track(track_id, update.model_dump(exclude_unset=True))
+
+    if not track:
+        raise HTTPException(status_code=404, detail="Track not found")
+
+    return TrackResponse.from_domain(track)

@@ -100,3 +100,25 @@ def test_get_track_geometry(sample_gpx_file):
     assert len(geometries) == 1
     assert geometries[0]["track_id"] == track_id
     assert len(geometries[0]["coordinates"]) > 0
+
+
+def test_update_track(sample_gpx_file):
+    upload_response = client.post(
+        "/api/v1/tracks",
+        files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
+    )
+    track_id = upload_response.json()["track_ids"][0]
+
+    response = client.patch(
+        f"/api/v1/tracks/{track_id}", json={"visible": False, "name": "Updated Name"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["visible"] is False
+    assert data["name"] == "Updated Name"
+
+
+def test_update_nonexistent_track():
+    response = client.patch("/api/v1/tracks/9999", json={"visible": False})
+    assert response.status_code == 404

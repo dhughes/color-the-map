@@ -21,17 +21,17 @@ def sample_gpx_content():
 def test_parse_basic_gpx(parser, sample_gpx_content):
     result = parser.parse(sample_gpx_content)
 
-    assert result["distance_meters"] > 0
-    assert len(result["coordinates"]) > 0
-    assert "bounds_min_lat" in result
-    assert "bounds_max_lat" in result
-    assert "activity_date" in result
+    assert result.distance_meters > 0
+    assert len(result.coordinates) > 0
+    assert result.bounds_min_lat is not None
+    assert result.bounds_max_lat is not None
+    assert result.activity_date is not None
 
 
 def test_coordinates_format(parser, sample_gpx_content):
     result = parser.parse(sample_gpx_content)
 
-    coords = result["coordinates"]
+    coords = result.coordinates
     assert isinstance(coords, list)
     assert len(coords) > 0
 
@@ -45,7 +45,7 @@ def test_coordinates_format(parser, sample_gpx_content):
 def test_distance_calculation(parser, sample_gpx_content):
     result = parser.parse(sample_gpx_content)
 
-    distance = result["distance_meters"]
+    distance = result.distance_meters
     assert distance > 0
     assert distance < 1000000
 
@@ -53,19 +53,17 @@ def test_distance_calculation(parser, sample_gpx_content):
 def test_elevation_statistics(parser, sample_gpx_content):
     result = parser.parse(sample_gpx_content)
 
-    assert "elevation_gain_meters" in result
-    assert "elevation_loss_meters" in result
-    assert result["elevation_gain_meters"] >= 0
-    assert result["elevation_loss_meters"] >= 0
+    assert result.elevation_gain_meters >= 0
+    assert result.elevation_loss_meters >= 0
 
 
 def test_bounds_calculation(parser, sample_gpx_content):
     result = parser.parse(sample_gpx_content)
 
-    assert result["bounds_min_lat"] < result["bounds_max_lat"]
-    assert result["bounds_min_lon"] < result["bounds_max_lon"]
-    assert -90 <= result["bounds_min_lat"] <= 90
-    assert -180 <= result["bounds_min_lon"] <= 180
+    assert result.bounds_min_lat < result.bounds_max_lat
+    assert result.bounds_min_lon < result.bounds_max_lon
+    assert -90 <= result.bounds_min_lat <= 90
+    assert -180 <= result.bounds_min_lon <= 180
 
 
 def test_invalid_gpx(parser):
