@@ -46,3 +46,25 @@ export async function getTrackGeometries(
 
   return response.json();
 }
+
+export async function updateTrack(
+  trackId: number,
+  updates: {
+    visible?: boolean;
+    name?: string;
+    activity_type?: string;
+    description?: string;
+  },
+): Promise<Track> {
+  const response = await fetch(`${API_BASE}api/v1/tracks/${trackId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update track");
+  }
+
+  return response.json();
+}

@@ -8,6 +8,7 @@ import {
 import { Map } from "./components/Map";
 import { UploadZone } from "./components/UploadZone";
 import { StatusMessage } from "./components/StatusMessage";
+import { TrackList } from "./components/TrackList/TrackList";
 import { uploadTracks, listTracks, getTrackGeometries } from "./api/client";
 import type { Track, TrackGeometry } from "./types/track";
 
@@ -35,12 +36,15 @@ function AppContent() {
     queryFn: listTracks,
   });
 
-  const trackIds = useMemo(() => tracks.map((track) => track.id), [tracks]);
+  const visibleTrackIds = useMemo(
+    () => tracks.filter((track) => track.visible).map((track) => track.id),
+    [tracks],
+  );
 
   const { data: geometries = [] } = useQuery<TrackGeometry[]>({
-    queryKey: ["geometries", trackIds],
-    queryFn: () => getTrackGeometries(trackIds),
-    enabled: trackIds.length > 0,
+    queryKey: ["geometries", visibleTrackIds],
+    queryFn: () => getTrackGeometries(visibleTrackIds),
+    enabled: visibleTrackIds.length > 0,
   });
 
   const handleFilesDropped = async (files: File[]) => {
@@ -78,13 +82,18 @@ function AppContent() {
   };
 
   return (
-    <div className="app">
-      <Map geometries={geometries} />
-      <UploadZone
-        onFilesDropped={handleFilesDropped}
-        isUploading={isUploading}
-      />
-      {status && <StatusMessage message={status.message} type={status.type} />}
+    <div className="app-container">
+      <div className="app-main">
+        <Map geometries={geometries} />
+        <UploadZone
+          onFilesDropped={handleFilesDropped}
+          isUploading={isUploading}
+        />
+        {status && (
+          <StatusMessage message={status.message} type={status.type} />
+        )}
+      </div>
+      <TrackList />
     </div>
   );
 }
