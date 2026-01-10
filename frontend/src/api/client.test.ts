@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { uploadTracks, listTracks, getTrackGeometries } from "./client";
+import {
+  uploadTracks,
+  listTracks,
+  getTrackGeometries,
+  updateTrack,
+} from "./client";
 
 globalThis.fetch = vi.fn() as any;
 
@@ -116,6 +121,44 @@ describe("API Client", () => {
       );
 
       expect(result).toEqual(mockGeometries);
+    });
+  });
+
+  describe("updateTrack", () => {
+    it("updates track with PATCH request", async () => {
+      const mockTrack = { id: 1, name: "Updated Track", visible: false };
+
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockTrack,
+      });
+
+      const result = await updateTrack(1, {
+        visible: false,
+        name: "Updated Track",
+      });
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "api/v1/tracks/1",
+        expect.objectContaining({
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ visible: false, name: "Updated Track" }),
+        }),
+      );
+
+      expect(result).toEqual(mockTrack);
+    });
+
+    it("throws error on failed update", async () => {
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        statusText: "Not Found",
+      });
+
+      await expect(updateTrack(999, { visible: false })).rejects.toThrow(
+        "Failed to update track",
+      );
     });
   });
 });
