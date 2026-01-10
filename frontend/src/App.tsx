@@ -36,16 +36,22 @@ function AppContent() {
     queryFn: listTracks,
   });
 
-  const visibleTrackIds = useMemo(
-    () => tracks.filter((track) => track.visible).map((track) => track.id),
-    [tracks],
-  );
+  const trackIds = useMemo(() => tracks.map((track) => track.id), [tracks]);
 
-  const { data: geometries = [] } = useQuery<TrackGeometry[]>({
-    queryKey: ["geometries", visibleTrackIds],
-    queryFn: () => getTrackGeometries(visibleTrackIds),
-    enabled: visibleTrackIds.length > 0,
+  const { data: allGeometries = [] } = useQuery<TrackGeometry[]>({
+    queryKey: ["geometries", trackIds],
+    queryFn: () => getTrackGeometries(trackIds),
+    enabled: trackIds.length > 0,
   });
+
+  const visibleGeometries = useMemo(() => {
+    const visibleIds = new Set(
+      tracks.filter((track) => track.visible).map((track) => track.id),
+    );
+    return allGeometries.filter((geometry) =>
+      visibleIds.has(geometry.track_id),
+    );
+  }, [tracks, allGeometries]);
 
   const handleFilesDropped = async (files: File[]) => {
     setIsUploading(true);
@@ -84,7 +90,7 @@ function AppContent() {
   return (
     <div className="app-container">
       <div className="app-main">
-        <Map geometries={geometries} />
+        <Map geometries={visibleGeometries} />
         <UploadZone
           onFilesDropped={handleFilesDropped}
           isUploading={isUploading}

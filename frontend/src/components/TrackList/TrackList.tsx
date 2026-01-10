@@ -13,11 +13,23 @@ export function TrackList() {
   const toggleVisibility = useMutation({
     mutationFn: ({ trackId, visible }: { trackId: number; visible: boolean }) =>
       updateTrack(trackId, { visible }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tracks"] });
-      queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === "geometries",
-      });
+    onMutate: async ({ trackId, visible }) => {
+      await queryClient.cancelQueries({ queryKey: ["tracks"] });
+
+      const previousTracks = queryClient.getQueryData(["tracks"]);
+
+      queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
+        old?.map((track) =>
+          track.id === trackId ? { ...track, visible } : track,
+        ),
+      );
+
+      return { previousTracks };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousTracks) {
+        queryClient.setQueryData(["tracks"], context.previousTracks);
+      }
     },
   });
 
