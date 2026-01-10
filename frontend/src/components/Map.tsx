@@ -59,13 +59,6 @@ export function Map({ geometries }: MapProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (!mapInstance || !(mapInstance as any)._loaded) return;
 
-    if (mapInstance.getLayer("track-lines")) {
-      mapInstance.removeLayer("track-lines");
-    }
-    if (mapInstance.getSource("tracks")) {
-      mapInstance.removeSource("tracks");
-    }
-
     const features = geometries.map((geometry) => ({
       type: "Feature" as const,
       id: geometry.track_id,
@@ -78,24 +71,33 @@ export function Map({ geometries }: MapProps) {
       },
     }));
 
-    mapInstance.addSource("tracks", {
-      type: "geojson",
-      data: {
+    const source = mapInstance.getSource("tracks") as maplibregl.GeoJSONSource;
+
+    if (source) {
+      source.setData({
         type: "FeatureCollection",
         features,
-      },
-    });
+      });
+    } else {
+      mapInstance.addSource("tracks", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features,
+        },
+      });
 
-    mapInstance.addLayer({
-      id: "track-lines",
-      type: "line",
-      source: "tracks",
-      paint: {
-        "line-color": config.trackColor,
-        "line-width": 3,
-        "line-opacity": 0.85,
-      },
-    });
+      mapInstance.addLayer({
+        id: "track-lines",
+        type: "line",
+        source: "tracks",
+        paint: {
+          "line-color": config.trackColor,
+          "line-width": 3,
+          "line-opacity": 0.85,
+        },
+      });
+    }
   };
 
   useEffect(() => {
