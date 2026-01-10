@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 
 
 @dataclass
 class ParsedGPXData:
-    coordinates: List[List[float]]
+    coordinates: List[Tuple[float, float]]
     distance_meters: float
     duration_seconds: int
     avg_speed_ms: float

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Tuple
 
 
 @dataclass
 class TrackGeometry:
     track_id: int
-    coordinates: List[List[float]]
+    coordinates: List[Tuple[float, float]]

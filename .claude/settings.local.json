@@ -34,7 +34,10 @@
       "Bash(venv/bin/ruff check:*)",
       "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/python:*)",
       "Bash(venv/bin/mypy:*)",
-      "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/pytest /Users/doughughes/Projects/Personal/color-the-map/backend/tests/ -q --tb=no)"
+      "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/pytest /Users/doughughes/Projects/Personal/color-the-map/backend/tests/ -q --tb=no)",
+      "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/pytest /Users/doughughes/Projects/Personal/color-the-map/backend/tests/test_track_service.py::test_upload_track -v)",
+      "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/pytest /Users/doughughes/Projects/Personal/color-the-map/backend/tests/ -q --tb=short)",
+      "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/mypy:*)"
     ]
   }
 }

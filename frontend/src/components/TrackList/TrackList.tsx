@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listTracks, updateTrack } from "../../api/client";
 import { TrackListItem } from "./TrackListItem";
+import type { Track } from "../../types/track";
 
 export function TrackList() {
   const queryClient = useQueryClient();

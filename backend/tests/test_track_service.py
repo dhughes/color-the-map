@@ -64,7 +64,7 @@ def test_get_track_geometry(track_service, sample_gpx):
     assert geometry is not None
     assert geometry.track_id == track_id
     assert len(geometry.coordinates) > 0
-    assert isinstance(geometry.coordinates[0], list)
+    assert isinstance(geometry.coordinates[0], tuple)
 
 
 def test_get_multiple_geometries(track_service):

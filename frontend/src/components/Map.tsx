@@ -101,7 +101,7 @@ export function Map({ geometries }: MapProps) {
   };
 
   useEffect(() => {
-    if (!map.current || !mapLoaded || geometries.length === 0) return;
+    if (!map.current || !mapLoaded) return;
 
     updateTracks(map.current, geometries);
   }, [geometries, mapLoaded]);

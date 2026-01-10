@@ -7,6 +7,8 @@ from ..models.track import Track
 from ..models.upload_result import UploadResult
 from ..models.track_geometry import TrackGeometry
 
+ALLOWED_UPDATE_FIELDS = {"visible", "name", "activity_type", "description"}
+
 
 class TrackService:
     def __init__(self, db: Database, storage: StorageService, parser: GPXParser):
@@ -134,7 +136,7 @@ class TrackService:
             params = []
 
             for key, value in updates.items():
-                if key in ["visible", "name", "activity_type", "description"]:
+                if key in ALLOWED_UPDATE_FIELDS:
                     update_parts.append(f"{key} = ?")
                     params.append(value)
 
@@ -142,10 +144,8 @@ class TrackService:
                 return self.get_track_metadata(track_id)
 
             params.append(track_id)
-            conn.execute(
-                f"UPDATE tracks SET {', '.join(update_parts)} WHERE id = ?",
-                tuple(params),
-            )
+            query = f"UPDATE tracks SET {', '.join(update_parts)} WHERE id = ?"
+            conn.execute(query, tuple(params))
 
             cursor = conn.execute("SELECT * FROM tracks WHERE id = ?", (track_id,))
             track = cursor.fetchone()

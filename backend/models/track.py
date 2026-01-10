@@ -35,7 +35,13 @@ class Track:
 
     @classmethod
     def from_db_row(cls, row) -> "Track":
-        """Create Track from sqlite3.Row"""
+        """Create Track from sqlite3.Row, parsing datetime strings"""
+
+        def parse_datetime(value) -> datetime:
+            if isinstance(value, str):
+                return datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return value
+
         return cls(
             id=row["id"],
             hash=row["hash"],
@@ -43,8 +49,8 @@ class Track:
             filename=row["filename"],
             activity_type=row["activity_type"],
             activity_type_inferred=row["activity_type_inferred"],
-            activity_date=row["activity_date"],
-            uploaded_at=row["uploaded_at"],
+            activity_date=parse_datetime(row["activity_date"]),
+            uploaded_at=parse_datetime(row["uploaded_at"]),
             distance_meters=row["distance_meters"],
             duration_seconds=row["duration_seconds"],
             avg_speed_ms=row["avg_speed_ms"],
@@ -58,6 +64,6 @@ class Track:
             bounds_max_lon=row["bounds_max_lon"],
             visible=bool(row["visible"]),
             description=row["description"],
-            created_at=row["created_at"],
-            updated_at=row["updated_at"],
+            created_at=parse_datetime(row["created_at"]),
+            updated_at=parse_datetime(row["updated_at"]),
         )

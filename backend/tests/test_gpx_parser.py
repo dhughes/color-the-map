@@ -36,7 +36,7 @@ def test_coordinates_format(parser, sample_gpx_content):
     assert len(coords) > 0
 
     first_coord = coords[0]
-    assert isinstance(first_coord, list)
+    assert isinstance(first_coord, tuple)
     assert len(first_coord) == 2
     assert isinstance(first_coord[0], float)
     assert isinstance(first_coord[1], float)

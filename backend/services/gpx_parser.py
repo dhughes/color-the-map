@@ -1,6 +1,6 @@
 import gpxpy
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from math import radians, sin, cos, sqrt, atan2
 from ..models.gpx_data import ParsedGPXData
 
@@ -16,7 +16,7 @@ class GPXParser:
         for track in gpx.tracks:
             for segment in track.segments:
                 for point in segment.points:
-                    coordinates.append([point.longitude, point.latitude])
+                    coordinates.append((point.longitude, point.latitude))
                     if point.elevation:
                         elevations.append(point.elevation)
                     if point.time:
@@ -48,7 +48,7 @@ class GPXParser:
             activity_date=activity_date,
         )
 
-    def _calculate_distance(self, coordinates: List[List[float]]) -> float:
+    def _calculate_distance(self, coordinates: List[Tuple[float, float]]) -> float:
         total = 0.0
         for i in range(1, len(coordinates)):
             lon1, lat1 = coordinates[i - 1]
@@ -88,7 +88,9 @@ class GPXParser:
 
         return {"gain": gain, "loss": loss}
 
-    def _calculate_bounds(self, coordinates: List[List[float]]) -> Dict[str, float]:
+    def _calculate_bounds(
+        self, coordinates: List[Tuple[float, float]]
+    ) -> Dict[str, float]:
         lons = [coord[0] for coord in coordinates]
         lats = [coord[1] for coord in coordinates]
 
