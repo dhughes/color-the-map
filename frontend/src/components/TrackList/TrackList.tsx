@@ -50,6 +50,11 @@ export function TrackList({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+        return;
+      }
+
       if (!tracks.length) return;
 
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {

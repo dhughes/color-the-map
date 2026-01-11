@@ -131,20 +131,17 @@ class TrackService:
         return geometries
 
     def update_track(self, track_id: int, updates: Dict[str, Any]) -> Optional[Track]:
+        allowed_updates = {
+            key: value for key, value in updates.items() if key in ALLOWED_UPDATE_FIELDS
+        }
+
+        if not allowed_updates:
+            return self.get_track_metadata(track_id)
+
         with self.db.get_connection() as conn:
-            update_parts = []
-            params = []
-
-            for key, value in updates.items():
-                if key in ALLOWED_UPDATE_FIELDS:
-                    update_parts.append(f"{key} = ?")
-                    params.append(value)
-
-            if not update_parts:
-                return self.get_track_metadata(track_id)
-
-            params.append(track_id)
-            query = f"UPDATE tracks SET {', '.join(update_parts)} WHERE id = ?"
+            set_clause = ", ".join(f"{field} = ?" for field in allowed_updates.keys())
+            params = list(allowed_updates.values()) + [track_id]
+            query = f"UPDATE tracks SET {set_clause} WHERE id = ?"
             conn.execute(query, tuple(params))
 
             cursor = conn.execute("SELECT * FROM tracks WHERE id = ?", (track_id,))

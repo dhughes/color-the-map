@@ -31,11 +31,14 @@ describe("TrackListItem", () => {
   };
 
   const mockOnToggleVisibility = vi.fn();
+  const mockOnSelect = vi.fn();
 
   it("renders track name", () => {
     render(
       <TrackListItem
         track={mockTrack}
+        isSelected={false}
+        onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
       />,
     );
@@ -47,6 +50,8 @@ describe("TrackListItem", () => {
     render(
       <TrackListItem
         track={mockTrack}
+        isSelected={false}
+        onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
       />,
     );
@@ -58,6 +63,8 @@ describe("TrackListItem", () => {
     render(
       <TrackListItem
         track={mockTrack}
+        isSelected={false}
+        onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
       />,
     );
@@ -69,6 +76,8 @@ describe("TrackListItem", () => {
     render(
       <TrackListItem
         track={mockTrack}
+        isSelected={false}
+        onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
       />,
     );
@@ -77,5 +86,18 @@ describe("TrackListItem", () => {
     fireEvent.click(button);
 
     expect(mockOnToggleVisibility).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders selected state with CSS class", () => {
+    const { container } = render(
+      <TrackListItem
+        track={mockTrack}
+        isSelected={true}
+        onSelect={mockOnSelect}
+        onToggleVisibility={mockOnToggleVisibility}
+      />,
+    );
+
+    expect(container.querySelector(".selected")).toBeInTheDocument();
   });
 });

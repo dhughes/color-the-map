@@ -17,6 +17,7 @@ export function useSelection() {
         }
         return newSet;
       });
+      setAnchorTrackId(trackId);
     } else {
       setSelectedTrackIds(new Set([trackId]));
       setAnchorTrackId(trackId);

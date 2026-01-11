@@ -62,8 +62,7 @@ export function Map({
 
   const updateTracks = useCallback(
     (mapInstance: maplibregl.Map, geometries: TrackGeometry[]) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!mapInstance || !(mapInstance as any)._loaded) return;
+      if (!mapInstance) return;
 
       const features = geometries.map((geometry) => ({
         type: "Feature" as const,

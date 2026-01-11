@@ -47,6 +47,11 @@ function AppContent() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+        return;
+      }
+
       if ((e.metaKey || e.ctrlKey) && e.key === "a") {
         e.preventDefault();
         const allTrackIds = tracks.map((track) => track.id);
