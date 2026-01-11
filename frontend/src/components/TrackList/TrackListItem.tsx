@@ -37,6 +37,7 @@ export function TrackListItem({
     <div
       className={`track-item ${isSelected ? "selected" : ""}`}
       onClick={onSelect}
+      data-track-id={track.id}
     >
       <button
         className="track-item-visibility"

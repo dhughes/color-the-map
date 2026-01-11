@@ -23,7 +23,14 @@ function AppContent() {
   } | null>(null);
   const queryClient = useQueryClient();
   const statusTimeoutRef = useRef<number | undefined>(undefined);
-  const { selectedTrackIds, toggleSelection, clearSelection } = useSelection();
+  const {
+    selectedTrackIds,
+    anchorTrackId,
+    toggleSelection,
+    selectRange,
+    selectAll,
+    clearSelection,
+  } = useSelection();
 
   useEffect(() => {
     return () => {
@@ -32,6 +39,21 @@ function AppContent() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "a") {
+        e.preventDefault();
+        const allTrackIds = tracks.map((track) => track.id);
+        selectAll(allTrackIds);
+      } else if (e.key === "Escape") {
+        clearSelection();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [tracks, selectAll, clearSelection]);
 
   const { data: tracks = [] } = useQuery<Track[]>({
     queryKey: ["tracks"],
@@ -108,7 +130,9 @@ function AppContent() {
       </div>
       <TrackList
         selectedTrackIds={selectedTrackIds}
+        anchorTrackId={anchorTrackId}
         onSelect={toggleSelection}
+        onSelectRange={selectRange}
       />
     </div>
   );

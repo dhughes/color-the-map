@@ -122,7 +122,9 @@ export function Map({
             const trackId = e.features[0].properties?.id;
             if (trackId) {
               const isMultiSelect =
-                e.originalEvent.metaKey || e.originalEvent.ctrlKey;
+                e.originalEvent.metaKey ||
+                e.originalEvent.ctrlKey ||
+                e.originalEvent.shiftKey;
               onSelect(trackId, isMultiSelect);
             }
           }

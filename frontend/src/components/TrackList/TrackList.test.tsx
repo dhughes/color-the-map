@@ -30,6 +30,7 @@ vi.mock("../../api/client", () => ({
 describe("TrackList", () => {
   const mockSelectedTrackIds = new Set<number>();
   const mockOnSelect = vi.fn();
+  const mockOnSelectRange = vi.fn();
 
   const createWrapper = () => {
     const queryClient = new QueryClient({
@@ -44,7 +45,9 @@ describe("TrackList", () => {
     render(
       <TrackList
         selectedTrackIds={mockSelectedTrackIds}
+        anchorTrackId={null}
         onSelect={mockOnSelect}
+        onSelectRange={mockOnSelectRange}
       />,
       { wrapper: createWrapper() },
     );
@@ -56,7 +59,9 @@ describe("TrackList", () => {
     render(
       <TrackList
         selectedTrackIds={mockSelectedTrackIds}
+        anchorTrackId={null}
         onSelect={mockOnSelect}
+        onSelectRange={mockOnSelectRange}
       />,
       { wrapper: createWrapper() },
     );
@@ -68,7 +73,9 @@ describe("TrackList", () => {
     render(
       <TrackList
         selectedTrackIds={mockSelectedTrackIds}
+        anchorTrackId={null}
         onSelect={mockOnSelect}
+        onSelectRange={mockOnSelectRange}
       />,
       { wrapper: createWrapper() },
     );
@@ -81,7 +88,12 @@ describe("TrackList", () => {
     const selectedIds = new Set([1, 2]);
 
     render(
-      <TrackList selectedTrackIds={selectedIds} onSelect={mockOnSelect} />,
+      <TrackList
+        selectedTrackIds={selectedIds}
+        anchorTrackId={null}
+        onSelect={mockOnSelect}
+        onSelectRange={mockOnSelectRange}
+      />,
       { wrapper: createWrapper() },
     );
 

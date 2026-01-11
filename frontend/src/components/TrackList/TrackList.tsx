@@ -1,15 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { listTracks, updateTrack } from "../../api/client";
 import { TrackListItem } from "./TrackListItem";
 import type { Track } from "../../types/track";
 
 interface TrackListProps {
   selectedTrackIds: Set<number>;
+  anchorTrackId: number | null;
   onSelect: (trackId: number, isMultiSelect: boolean) => void;
+  onSelectRange: (trackIds: number[], startId: number, endId: number) => void;
 }
 
-export function TrackList({ selectedTrackIds, onSelect }: TrackListProps) {
+export function TrackList({
+  selectedTrackIds,
+  anchorTrackId,
+  onSelect,
+  onSelectRange,
+}: TrackListProps) {
   const queryClient = useQueryClient();
+  const listRef = useRef<HTMLDivElement>(null);
 
   const { data: tracks = [], isLoading } = useQuery({
     queryKey: ["tracks"],
@@ -39,6 +48,40 @@ export function TrackList({ selectedTrackIds, onSelect }: TrackListProps) {
     },
   });
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!tracks.length) return;
+
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+
+        const currentIndex = anchorTrackId
+          ? tracks.findIndex((t) => t.id === anchorTrackId)
+          : -1;
+
+        let nextIndex: number;
+        if (e.key === "ArrowDown") {
+          nextIndex =
+            currentIndex < tracks.length - 1 ? currentIndex + 1 : currentIndex;
+        } else {
+          nextIndex = currentIndex > 0 ? currentIndex - 1 : 0;
+        }
+
+        if (nextIndex >= 0 && nextIndex < tracks.length) {
+          onSelect(tracks[nextIndex].id, false);
+
+          const item = listRef.current?.querySelector(
+            `[data-track-id="${tracks[nextIndex].id}"]`,
+          );
+          item?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [tracks, anchorTrackId, onSelect]);
+
   if (isLoading) {
     return (
       <div className="track-list">
@@ -64,7 +107,7 @@ export function TrackList({ selectedTrackIds, onSelect }: TrackListProps) {
         )}
       </div>
 
-      <div className="track-list-items">
+      <div className="track-list-items" ref={listRef}>
         {tracks.map((track) => (
           <TrackListItem
             key={track.id}
@@ -72,7 +115,14 @@ export function TrackList({ selectedTrackIds, onSelect }: TrackListProps) {
             isSelected={selectedTrackIds.has(track.id)}
             onSelect={(event) => {
               const isMultiSelect = event.metaKey || event.ctrlKey;
-              onSelect(track.id, isMultiSelect);
+              const isRangeSelect = event.shiftKey;
+
+              if (isRangeSelect && anchorTrackId !== null) {
+                const trackIds = tracks.map((t) => t.id);
+                onSelectRange(trackIds, anchorTrackId, track.id);
+              } else {
+                onSelect(track.id, isMultiSelect);
+              }
             }}
             onToggleVisibility={(event) => {
               event.stopPropagation();
