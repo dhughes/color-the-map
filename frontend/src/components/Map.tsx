@@ -96,6 +96,17 @@ export function Map({
         });
 
         mapInstance.addLayer({
+          id: "track-outlines",
+          type: "line",
+          source: "tracks",
+          paint: {
+            "line-color": "#444",
+            "line-width": 10,
+            "line-opacity": 0,
+          },
+        });
+
+        mapInstance.addLayer({
           id: "track-lines",
           type: "line",
           source: "tracks",
@@ -149,6 +160,15 @@ export function Map({
 
     const mapInstance = map.current;
     const selectedIds = Array.from(selectedTrackIds);
+
+    if (mapInstance.getLayer("track-outlines")) {
+      mapInstance.setPaintProperty("track-outlines", "line-opacity", [
+        "case",
+        ["in", ["get", "id"], ["literal", selectedIds]],
+        1,
+        0,
+      ]);
+    }
 
     if (mapInstance.getLayer("track-lines")) {
       mapInstance.setPaintProperty("track-lines", "line-color", [
