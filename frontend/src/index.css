@@ -257,6 +257,7 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  user-select: none;
 }
 
 /* Track List Item */
