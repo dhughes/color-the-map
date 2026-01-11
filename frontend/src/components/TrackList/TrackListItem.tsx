@@ -3,11 +3,15 @@ import type { Track } from "../../types/track";
 
 interface TrackListItemProps {
   track: Track;
-  onToggleVisibility: () => void;
+  isSelected: boolean;
+  onSelect: (event: React.MouseEvent) => void;
+  onToggleVisibility: (event: React.MouseEvent) => void;
 }
 
 export function TrackListItem({
   track,
+  isSelected,
+  onSelect,
   onToggleVisibility,
 }: TrackListItemProps) {
   const formatDate = (dateStr: string) => {
@@ -24,11 +28,19 @@ export function TrackListItem({
     return `${km.toFixed(1)} km`;
   };
 
+  const handleEyeClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    onToggleVisibility(event);
+  };
+
   return (
-    <div className="track-item">
+    <div
+      className={`track-item ${isSelected ? "selected" : ""}`}
+      onClick={onSelect}
+    >
       <button
         className="track-item-visibility"
-        onClick={onToggleVisibility}
+        onClick={handleEyeClick}
         aria-label={track.visible ? "Hide track" : "Show track"}
         title={track.visible ? "Hide track" : "Show track"}
       >

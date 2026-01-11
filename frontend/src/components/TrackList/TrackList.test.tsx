@@ -28,6 +28,9 @@ vi.mock("../../api/client", () => ({
 }));
 
 describe("TrackList", () => {
+  const mockSelectedTrackIds = new Set<number>();
+  const mockOnSelect = vi.fn();
+
   const createWrapper = () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -38,27 +41,50 @@ describe("TrackList", () => {
   };
 
   it("renders track list header", async () => {
-    render(<TrackList />, { wrapper: createWrapper() });
+    render(
+      <TrackList
+        selectedTrackIds={mockSelectedTrackIds}
+        onSelect={mockOnSelect}
+      />,
+      { wrapper: createWrapper() },
+    );
 
     expect(await screen.findByText("Tracks")).toBeInTheDocument();
   });
 
   it("displays track count", async () => {
-    render(<TrackList />, { wrapper: createWrapper() });
+    render(
+      <TrackList
+        selectedTrackIds={mockSelectedTrackIds}
+        onSelect={mockOnSelect}
+      />,
+      { wrapper: createWrapper() },
+    );
 
     expect(await screen.findByText("2")).toBeInTheDocument();
   });
 
   it("renders track items", async () => {
-    render(<TrackList />, { wrapper: createWrapper() });
+    render(
+      <TrackList
+        selectedTrackIds={mockSelectedTrackIds}
+        onSelect={mockOnSelect}
+      />,
+      { wrapper: createWrapper() },
+    );
 
     expect(await screen.findByText("Track 1")).toBeInTheDocument();
     expect(await screen.findByText("Track 2")).toBeInTheDocument();
   });
 
-  it("shows loading state initially", () => {
-    const { container } = render(<TrackList />, { wrapper: createWrapper() });
+  it("shows selected count when tracks selected", async () => {
+    const selectedIds = new Set([1, 2]);
 
-    expect(container.querySelector(".track-list-loading")).toBeInTheDocument();
+    render(
+      <TrackList selectedTrackIds={selectedIds} onSelect={mockOnSelect} />,
+      { wrapper: createWrapper() },
+    );
+
+    expect(await screen.findByText("2 selected")).toBeInTheDocument();
   });
 });

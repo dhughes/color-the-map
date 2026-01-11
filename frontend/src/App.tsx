@@ -9,6 +9,7 @@ import { Map } from "./components/Map";
 import { UploadZone } from "./components/UploadZone";
 import { StatusMessage } from "./components/StatusMessage";
 import { TrackList } from "./components/TrackList/TrackList";
+import { useSelection } from "./hooks/useSelection";
 import { uploadTracks, listTracks, getTrackGeometries } from "./api/client";
 import type { Track, TrackGeometry } from "./types/track";
 
@@ -22,6 +23,7 @@ function AppContent() {
   } | null>(null);
   const queryClient = useQueryClient();
   const statusTimeoutRef = useRef<number | undefined>(undefined);
+  const { selectedTrackIds, toggleSelection, clearSelection } = useSelection();
 
   useEffect(() => {
     return () => {
@@ -90,7 +92,12 @@ function AppContent() {
   return (
     <div className="app-container">
       <div className="app-main">
-        <Map geometries={visibleGeometries} />
+        <Map
+          geometries={visibleGeometries}
+          selectedTrackIds={selectedTrackIds}
+          onSelect={toggleSelection}
+          onClearSelection={clearSelection}
+        />
         <UploadZone
           onFilesDropped={handleFilesDropped}
           isUploading={isUploading}
@@ -99,7 +106,10 @@ function AppContent() {
           <StatusMessage message={status.message} type={status.type} />
         )}
       </div>
-      <TrackList />
+      <TrackList
+        selectedTrackIds={selectedTrackIds}
+        onSelect={toggleSelection}
+      />
     </div>
   );
 }

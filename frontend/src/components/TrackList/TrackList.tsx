@@ -3,7 +3,12 @@ import { listTracks, updateTrack } from "../../api/client";
 import { TrackListItem } from "./TrackListItem";
 import type { Track } from "../../types/track";
 
-export function TrackList() {
+interface TrackListProps {
+  selectedTrackIds: Set<number>;
+  onSelect: (trackId: number, isMultiSelect: boolean) => void;
+}
+
+export function TrackList({ selectedTrackIds, onSelect }: TrackListProps) {
   const queryClient = useQueryClient();
 
   const { data: tracks = [], isLoading } = useQuery({
@@ -45,11 +50,18 @@ export function TrackList() {
     );
   }
 
+  const selectedCount = selectedTrackIds.size;
+
   return (
     <div className="track-list">
       <div className="track-list-header">
-        <h2>Tracks</h2>
-        <span className="track-count">{tracks.length}</span>
+        <div className="track-list-title">
+          <h2>Tracks</h2>
+          <span className="track-count">{tracks.length}</span>
+        </div>
+        {selectedCount > 0 && (
+          <span className="track-selected-count">{selectedCount} selected</span>
+        )}
       </div>
 
       <div className="track-list-items">
@@ -57,12 +69,18 @@ export function TrackList() {
           <TrackListItem
             key={track.id}
             track={track}
-            onToggleVisibility={() =>
+            isSelected={selectedTrackIds.has(track.id)}
+            onSelect={(event) => {
+              const isMultiSelect = event.metaKey || event.ctrlKey;
+              onSelect(track.id, isMultiSelect);
+            }}
+            onToggleVisibility={(event) => {
+              event.stopPropagation();
               toggleVisibility.mutate({
                 trackId: track.id,
                 visible: !track.visible,
-              })
-            }
+              });
+            }}
           />
         ))}
       </div>
