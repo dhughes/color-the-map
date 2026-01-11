@@ -112,7 +112,7 @@ export function Map({
           source: "tracks",
           paint: {
             "line-color": config.trackColor,
-            "line-width": 3,
+            "line-width": 1,
             "line-opacity": 0.85,
           },
         });
@@ -181,8 +181,8 @@ export function Map({
       mapInstance.setPaintProperty("track-lines", "line-width", [
         "case",
         ["in", ["get", "id"], ["literal", selectedIds]],
-        8,
-        3,
+        6,
+        1,
       ]);
     }
   }, [selectedTrackIds, mapLoaded]);
