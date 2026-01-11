@@ -40,6 +40,11 @@ function AppContent() {
     };
   }, []);
 
+  const { data: tracks = [] } = useQuery<Track[]>({
+    queryKey: ["tracks"],
+    queryFn: listTracks,
+  });
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "a") {
@@ -54,11 +59,6 @@ function AppContent() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [tracks, selectAll, clearSelection]);
-
-  const { data: tracks = [] } = useQuery<Track[]>({
-    queryKey: ["tracks"],
-    queryFn: listTracks,
-  });
 
   const trackIds = useMemo(() => tracks.map((track) => track.id), [tracks]);
 
