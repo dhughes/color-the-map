@@ -107,9 +107,11 @@ export function TrackList({
           <h2>Tracks</h2>
           <span className="track-count">{tracks.length}</span>
         </div>
-        {selectedCount > 0 && (
-          <span className="track-selected-count">{selectedCount} selected</span>
-        )}
+        <span className="track-selected-count">
+          {selectedCount > 0
+            ? `${selectedCount} selected`
+            : `${tracks.length} tracks`}
+        </span>
       </div>
 
       <div className="track-list-items" ref={listRef}>
