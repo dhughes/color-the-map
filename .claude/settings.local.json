@@ -38,7 +38,10 @@
       "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/pytest /Users/doughughes/Projects/Personal/color-the-map/backend/tests/test_track_service.py::test_upload_track -v)",
       "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/pytest /Users/doughughes/Projects/Personal/color-the-map/backend/tests/ -q --tb=short)",
       "Bash(/Users/doughughes/Projects/Personal/color-the-map/venv/bin/mypy:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)",
+      "Bash(mypy:*)"
     ]
   }
 }

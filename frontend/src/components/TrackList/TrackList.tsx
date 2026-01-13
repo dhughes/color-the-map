@@ -9,6 +9,7 @@ interface TrackListProps {
   anchorTrackId: number | null;
   onSelect: (trackId: number, isMultiSelect: boolean) => void;
   onSelectRange: (trackIds: number[], startId: number, endId: number) => void;
+  onZoomToTrack: (track: Track) => void;
 }
 
 export function TrackList({
@@ -16,6 +17,7 @@ export function TrackList({
   anchorTrackId,
   onSelect,
   onSelectRange,
+  onZoomToTrack,
 }: TrackListProps) {
   const queryClient = useQueryClient();
   const listRef = useRef<HTMLDivElement>(null);
@@ -137,6 +139,7 @@ export function TrackList({
                 visible: !track.visible,
               });
             }}
+            onDoubleClick={() => onZoomToTrack(track)}
           />
         ))}
       </div>

@@ -6,6 +6,7 @@ interface TrackListItemProps {
   isSelected: boolean;
   onSelect: (event: React.MouseEvent) => void;
   onToggleVisibility: (event: React.MouseEvent) => void;
+  onDoubleClick: () => void;
 }
 
 export function TrackListItem({
@@ -13,6 +14,7 @@ export function TrackListItem({
   isSelected,
   onSelect,
   onToggleVisibility,
+  onDoubleClick,
 }: TrackListItemProps) {
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(undefined, {
@@ -33,10 +35,16 @@ export function TrackListItem({
     onToggleVisibility(event);
   };
 
+  const handleClick = (event: React.MouseEvent) => {
+    if (event.detail === 2) return;
+    onSelect(event);
+  };
+
   return (
     <div
       className={`track-item ${isSelected ? "selected" : ""}`}
-      onClick={onSelect}
+      onClick={handleClick}
+      onDoubleClick={onDoubleClick}
       data-track-id={track.id}
     >
       <button

@@ -31,6 +31,7 @@ describe("TrackList", () => {
   const mockSelectedTrackIds = new Set<number>();
   const mockOnSelect = vi.fn();
   const mockOnSelectRange = vi.fn();
+  const mockOnZoomToTrack = vi.fn();
 
   const createWrapper = () => {
     const queryClient = new QueryClient({
@@ -48,6 +49,7 @@ describe("TrackList", () => {
         anchorTrackId={null}
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
+        onZoomToTrack={mockOnZoomToTrack}
       />,
       { wrapper: createWrapper() },
     );
@@ -62,11 +64,12 @@ describe("TrackList", () => {
         anchorTrackId={null}
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
+        onZoomToTrack={mockOnZoomToTrack}
       />,
       { wrapper: createWrapper() },
     );
 
-    expect(await screen.findByText("2")).toBeInTheDocument();
+    expect(await screen.findByText("2 tracks")).toBeInTheDocument();
   });
 
   it("renders track items", async () => {
@@ -76,6 +79,7 @@ describe("TrackList", () => {
         anchorTrackId={null}
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
+        onZoomToTrack={mockOnZoomToTrack}
       />,
       { wrapper: createWrapper() },
     );
@@ -93,6 +97,7 @@ describe("TrackList", () => {
         anchorTrackId={null}
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
+        onZoomToTrack={mockOnZoomToTrack}
       />,
       { wrapper: createWrapper() },
     );

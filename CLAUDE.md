@@ -46,8 +46,7 @@ Color The Map is a GPS track visualization tool for mapping workout routes. The 
 
 ### Local Development
 ```bash
-# Backend setup
-cd backend
+# Backend setup (from project root)
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -55,24 +54,28 @@ pip install -r requirements.txt
 # Frontend setup
 cd frontend
 npm install
+cd ..
 
-# Run backend (terminal 1)
-cd backend
+# Run backend (terminal 1, from project root)
 source venv/bin/activate
-uvicorn app.main:app --reload --port 8005
+uvicorn backend.main:app --reload --port 8005
 
 # Run frontend dev server (terminal 2)
 cd frontend
 npm run dev
 # Vite dev server proxies API calls to backend
 
-# Run tests
-cd backend && pytest                    # Backend tests
-cd frontend && npm run test             # Frontend tests
+# Run tests (from project root)
+source venv/bin/activate
+pytest backend/tests/ -v               # Backend tests
+cd frontend && npm test -- --run       # Frontend tests
 
-# Run linting/formatting
-cd backend && ruff check . && black .   # Backend
-cd frontend && npm run lint             # Frontend
+# Run linting/formatting (from project root)
+source venv/bin/activate
+ruff check backend/                    # Backend linter
+ruff format backend/                   # Backend formatter
+mypy backend/ --ignore-missing-imports # Backend type checker
+cd frontend && npm run lint            # Frontend linter
 ```
 
 ### Deployment
@@ -126,7 +129,15 @@ cd ~/apps/color-the-map
 *Development:*
 - Pre-commit hooks enforce formatting/linting
 - All tests must pass before deployment
-- **CRITICAL** TDD-ish approach for core business logic. Write tests early, not at the end. 
+
+**Testing (CRITICAL!)**
+- TDD-ish approach for core business logic.
+- Tests are the foundation of insuring code quality.
+- Write tests.
+- Write tests early.
+- Run tests frequently.
+- Don't test private functions.
+- Test behavior, not implementation.
 
 **Project Structure**
 ```

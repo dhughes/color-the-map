@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import maplibregl from "maplibre-gl";
 import { config } from "../config";
 import type { TrackGeometry } from "../types/track";
@@ -10,15 +17,40 @@ interface MapProps {
   onClearSelection: () => void;
 }
 
-export function Map({
-  geometries,
-  selectedTrackIds,
-  onSelect,
-  onClearSelection,
-}: MapProps) {
+export interface MapRef {
+  zoomToBounds: (bounds: {
+    minLat: number;
+    maxLat: number;
+    minLon: number;
+    maxLon: number;
+  }) => void;
+}
+
+export const Map = forwardRef<MapRef, MapProps>(function Map(
+  { geometries, selectedTrackIds, onSelect, onClearSelection },
+  ref,
+) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    zoomToBounds: (bounds) => {
+      if (!map.current) return;
+
+      map.current.fitBounds(
+        [
+          [bounds.minLon, bounds.minLat],
+          [bounds.maxLon, bounds.maxLat],
+        ],
+        {
+          padding: 75,
+          maxZoom: 16,
+          duration: 800,
+        },
+      );
+    },
+  }));
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -187,4 +219,4 @@ export function Map({
   }, [selectedTrackIds, mapLoaded]);
 
   return <div ref={mapContainer} className="map-container" />;
-}
+});

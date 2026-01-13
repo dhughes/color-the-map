@@ -5,7 +5,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { Map } from "./components/Map";
+import { Map, type MapRef } from "./components/Map";
 import { UploadZone } from "./components/UploadZone";
 import { StatusMessage } from "./components/StatusMessage";
 import { TrackList } from "./components/TrackList/TrackList";
@@ -23,6 +23,7 @@ function AppContent() {
   } | null>(null);
   const queryClient = useQueryClient();
   const statusTimeoutRef = useRef<number | undefined>(undefined);
+  const mapRef = useRef<MapRef>(null);
   const {
     selectedTrackIds,
     anchorTrackId,
@@ -82,6 +83,26 @@ function AppContent() {
     );
   }, [tracks, allGeometries]);
 
+  const handleZoomToTrack = (track: Track) => {
+    if (
+      track.bounds_min_lat === null ||
+      track.bounds_max_lat === null ||
+      track.bounds_min_lon === null ||
+      track.bounds_max_lon === null
+    ) {
+      return;
+    }
+
+    toggleSelection(track.id, false);
+
+    mapRef.current?.zoomToBounds({
+      minLat: track.bounds_min_lat,
+      maxLat: track.bounds_max_lat,
+      minLon: track.bounds_min_lon,
+      maxLon: track.bounds_max_lon,
+    });
+  };
+
   const handleFilesDropped = async (files: File[]) => {
     setIsUploading(true);
     setStatus({
@@ -120,6 +141,7 @@ function AppContent() {
     <div className="app-container">
       <div className="app-main">
         <Map
+          ref={mapRef}
           geometries={visibleGeometries}
           selectedTrackIds={selectedTrackIds}
           onSelect={toggleSelection}
@@ -138,6 +160,7 @@ function AppContent() {
         anchorTrackId={anchorTrackId}
         onSelect={toggleSelection}
         onSelectRange={selectRange}
+        onZoomToTrack={handleZoomToTrack}
       />
     </div>
   );

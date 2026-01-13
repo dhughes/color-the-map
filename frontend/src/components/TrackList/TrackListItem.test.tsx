@@ -32,6 +32,7 @@ describe("TrackListItem", () => {
 
   const mockOnToggleVisibility = vi.fn();
   const mockOnSelect = vi.fn();
+  const mockOnDoubleClick = vi.fn();
 
   it("renders track name", () => {
     render(
@@ -40,6 +41,7 @@ describe("TrackListItem", () => {
         isSelected={false}
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
+        onDoubleClick={mockOnDoubleClick}
       />,
     );
 
@@ -53,6 +55,7 @@ describe("TrackListItem", () => {
         isSelected={false}
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
+        onDoubleClick={mockOnDoubleClick}
       />,
     );
 
@@ -66,6 +69,7 @@ describe("TrackListItem", () => {
         isSelected={false}
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
+        onDoubleClick={mockOnDoubleClick}
       />,
     );
 
@@ -79,6 +83,7 @@ describe("TrackListItem", () => {
         isSelected={false}
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
+        onDoubleClick={mockOnDoubleClick}
       />,
     );
 
@@ -95,9 +100,44 @@ describe("TrackListItem", () => {
         isSelected={true}
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
+        onDoubleClick={mockOnDoubleClick}
       />,
     );
 
     expect(container.querySelector(".selected")).toBeInTheDocument();
+  });
+
+  it("calls onDoubleClick when track item is double-clicked", () => {
+    render(
+      <TrackListItem
+        track={mockTrack}
+        isSelected={false}
+        onSelect={mockOnSelect}
+        onToggleVisibility={mockOnToggleVisibility}
+        onDoubleClick={mockOnDoubleClick}
+      />,
+    );
+
+    const trackItem = screen.getByText("Test Track").closest(".track-item");
+    fireEvent.doubleClick(trackItem!);
+
+    expect(mockOnDoubleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onSelect when track item is single-clicked", () => {
+    render(
+      <TrackListItem
+        track={mockTrack}
+        isSelected={false}
+        onSelect={mockOnSelect}
+        onToggleVisibility={mockOnToggleVisibility}
+        onDoubleClick={mockOnDoubleClick}
+      />,
+    );
+
+    const trackItem = screen.getByText("Test Track").closest(".track-item");
+    fireEvent.click(trackItem!);
+
+    expect(mockOnSelect).toHaveBeenCalledTimes(1);
   });
 });
