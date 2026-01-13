@@ -103,11 +103,10 @@ export function TrackList({
   return (
     <div className="track-list">
       <div className="track-list-header">
-        <div className="track-list-title">
-          <h2>Tracks</h2>
-          <span className="track-count">{tracks.length}</span>
-        </div>
-        <span className="track-selected-count">
+        <h2>Tracks</h2>
+        <span
+          className={`track-info-badge ${selectedCount > 0 ? "selected" : ""}`}
+        >
           {selectedCount > 0
             ? `${selectedCount} selected`
             : `${tracks.length} tracks`}

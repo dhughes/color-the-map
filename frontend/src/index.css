@@ -214,12 +214,6 @@ body {
   flex-shrink: 0;
 }
 
-.track-list-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .track-list-header h2 {
   margin: 0;
   font-size: 1.125rem;
@@ -228,27 +222,17 @@ body {
   color: var(--color-text);
 }
 
-.track-count {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  background: var(--color-bg);
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-weight: 500;
-}
-
-.track-selected-count {
+.track-info-badge {
   font-size: 0.8125rem;
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 6px;
   color: var(--color-text-muted);
-  background: var(--color-bg);
+  background: #f0f0f0;
   transition: all 0.2s ease;
 }
 
-.track-list-header:has(.track-selected-count:not(:empty))
-  .track-selected-count {
+.track-info-badge.selected {
   color: var(--color-primary);
   background: rgba(255, 0, 255, 0.08);
 }
