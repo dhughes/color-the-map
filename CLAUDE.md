@@ -120,13 +120,13 @@ cd ~/apps/color-the-map
 - **Vite** - Build tool and dev server
 - **React Query** - Server state management and caching
 - **MapLibre GL JS** - WebGL-based map rendering (handles large datasets)
-- **Vitest + React Testing Library** - Testing
+- **Vitest + React Testing Library** - Testing with 80% coverage target
 - **ESLint + Prettier** - Linting and formatting
 
 *Development:*
 - Pre-commit hooks enforce formatting/linting
 - All tests must pass before deployment
-- TDD-ish approach for core business logic
+- **CRITICAL** TDD-ish approach for core business logic. Write tests early, not at the end. 
 
 **Project Structure**
 ```
