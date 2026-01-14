@@ -10,6 +10,7 @@ data/
 *.gpx
 .DS_Store
 .idea
+.env
 
 frontend/node_modules/
 frontend/dist/
