@@ -3,6 +3,8 @@ set -e
 
 echo "🚀 Deploying Color The Map..."
 
+git checkout .
+
 # Pull latest changes
 echo "📥 Pulling latest changes..."
 git pull
