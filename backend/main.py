@@ -1,13 +1,52 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router as api_router
 from .config import config
+from .services.geoip_service import GeoIPService
+import logging
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 config.ensure_dirs()
 
+geoip_service = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan: startup and shutdown."""
+    global geoip_service
+
+    # Startup
+    if config.MAXMIND_ACCOUNT_ID and config.MAXMIND_LICENSE_KEY:
+        geoip_service = GeoIPService(
+            config.GEOIP_DB_PATH,
+            config.MAXMIND_DOWNLOAD_URL,
+            config.MAXMIND_ACCOUNT_ID,
+            config.MAXMIND_LICENSE_KEY,
+        )
+        await geoip_service.initialize()
+    else:
+        logging.warning(
+            "MAXMIND_ACCOUNT_ID or MAXMIND_LICENSE_KEY not set, GeoIP service disabled"
+        )
+
+    yield
+
+    # Shutdown
+    if geoip_service:
+        geoip_service.shutdown()
+
+
 app = FastAPI(
-    title="Color The Map", description="GPS Track Visualization API", version="1.0.0"
+    title="Color The Map",
+    description="GPS Track Visualization API",
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

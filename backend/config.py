@@ -1,4 +1,8 @@
 from pathlib import Path
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 
 class Config:
@@ -19,6 +23,11 @@ class Config:
     TRACK_COLOR = "#FF00FF"
 
     SIMPLIFICATION_EPSILON = 0.00025
+
+    GEOIP_DB_PATH = DATA_DIR / "GeoLite2-City.mmdb"
+    MAXMIND_ACCOUNT_ID = os.getenv("MAXMIND_ACCOUNT_ID", "")
+    MAXMIND_LICENSE_KEY = os.getenv("MAXMIND_LICENSE_KEY", "")
+    MAXMIND_DOWNLOAD_URL = "https://download.maxmind.com/geoip/databases/GeoLite2-City/download?suffix=tar.gz"
 
     @classmethod
     def ensure_dirs(cls):
