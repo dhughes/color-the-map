@@ -88,6 +88,9 @@ async def update_track(track_id: int, update: TrackUpdate):
 async def get_client_location(request: Request):
     """Get geographic location from client IP address."""
     from ..main import geoip_service
+    import logging
+
+    logger = logging.getLogger(__name__)
 
     if not geoip_service:
         raise HTTPException(status_code=503, detail="GeoIP service not available")
@@ -97,9 +100,13 @@ async def get_client_location(request: Request):
     if forwarded_for:
         # Take the first IP (client IP, before any proxies)
         client_ip = forwarded_for.split(",")[0].strip()
+        logger.info(
+            f"X-Forwarded-For header: {forwarded_for}, using client IP: {client_ip}"
+        )
     else:
         # Fallback to direct connection IP
         client_ip = request.client.host if request.client else None
+        logger.info(f"No X-Forwarded-For header, using direct IP: {client_ip}")
 
     if not client_ip or client_ip in ("127.0.0.1", "::1", "localhost"):
         raise HTTPException(status_code=400, detail="Could not determine client IP")
@@ -107,6 +114,13 @@ async def get_client_location(request: Request):
     location = geoip_service.lookup_ip(client_ip)
 
     if not location:
+        logger.warning(f"No location found for IP: {client_ip}")
         raise HTTPException(status_code=404, detail="Location not found for IP address")
+
+    logger.info(
+        f"IP {client_ip} resolved to: {location.get('city', 'Unknown')}, "
+        f"{location.get('country', 'Unknown')} "
+        f"({location['latitude']}, {location['longitude']})"
+    )
 
     return LocationResponse(**location)

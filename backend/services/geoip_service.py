@@ -111,7 +111,7 @@ class GeoIPService:
         self.scheduler.start()
         logger.info("GeoIP update scheduler started (runs Mondays at midnight)")
 
-    def lookup_ip(self, ip_address: str) -> dict[str, float] | None:
+    def lookup_ip(self, ip_address: str) -> dict[str, float | str | None] | None:
         """
         Look up geographic coordinates for an IP address.
 
@@ -119,7 +119,7 @@ class GeoIPService:
             ip_address: IP address to look up
 
         Returns:
-            Dict with 'latitude' and 'longitude' keys, or None if not found
+            Dict with 'latitude', 'longitude', 'city', 'country' keys, or None if not found
         """
         import geoip2.database
         import geoip2.errors
@@ -139,6 +139,8 @@ class GeoIPService:
                 return {
                     "latitude": response.location.latitude,
                     "longitude": response.location.longitude,
+                    "city": response.city.name,
+                    "country": response.country.name,
                 }
         except geoip2.errors.AddressNotFoundError:
             logger.info(f"IP address not found in database: {ip_address}")
