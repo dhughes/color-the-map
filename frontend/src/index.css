@@ -194,6 +194,156 @@ body {
   }
 }
 
+/* Map Location Loader */
+.map-location-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: loaderFadeIn 0.3s ease-out;
+}
+
+@keyframes loaderFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.map-location-loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* Topographic Pulse Animation */
+.location-pulse {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-ring {
+  position: absolute;
+  border: 2px solid #ff00ff;
+  border-radius: 50%;
+  opacity: 0;
+  animation: pulseRing 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.pulse-ring-1 {
+  width: 40px;
+  height: 40px;
+  animation-delay: 0s;
+}
+
+.pulse-ring-2 {
+  width: 40px;
+  height: 40px;
+  animation-delay: 0.4s;
+}
+
+.pulse-ring-3 {
+  width: 40px;
+  height: 40px;
+  animation-delay: 0.8s;
+}
+
+.pulse-center {
+  width: 16px;
+  height: 16px;
+  background: #ff00ff;
+  border-radius: 50%;
+  position: relative;
+  box-shadow:
+    0 0 0 4px rgba(255, 0, 255, 0.15),
+    0 0 20px rgba(255, 0, 255, 0.3);
+  animation: centerPulse 2s ease-in-out infinite;
+}
+
+@keyframes pulseRing {
+  0% {
+    width: 40px;
+    height: 40px;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  80% {
+    width: 120px;
+    height: 120px;
+    opacity: 0;
+  }
+  100% {
+    width: 120px;
+    height: 120px;
+    opacity: 0;
+  }
+}
+
+@keyframes centerPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 4px rgba(255, 0, 255, 0.15),
+      0 0 20px rgba(255, 0, 255, 0.3);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow:
+      0 0 0 8px rgba(255, 0, 255, 0.25),
+      0 0 30px rgba(255, 0, 255, 0.5);
+  }
+}
+
+/* Location Text */
+.location-text {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  letter-spacing: 0.3px;
+  margin: 0;
+  animation: textFade 2s ease-in-out infinite;
+}
+
+@keyframes textFade {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  .map-location-loader {
+    background: rgba(30, 30, 30, 0.9);
+  }
+
+  .location-text {
+    color: #e0e0e0;
+  }
+}
+
 /* Track List Sidebar */
 .track-list {
   width: 350px;

@@ -6,6 +6,7 @@ import {
   useImperativeHandle,
   forwardRef,
 } from "react";
+import { useQuery } from "@tanstack/react-query";
 import maplibregl from "maplibre-gl";
 import { config } from "../config";
 import type { TrackGeometry } from "../types/track";
@@ -26,6 +27,11 @@ export interface MapRef {
   }) => void;
 }
 
+interface LocationResponse {
+  latitude: number;
+  longitude: number;
+}
+
 export const Map = forwardRef<MapRef, MapProps>(function Map(
   { geometries, selectedTrackIds, onSelect, onClearSelection },
   ref,
@@ -33,6 +39,19 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+
+  const { data: userLocation, isLoading } = useQuery<LocationResponse>({
+    queryKey: ["userLocation"],
+    queryFn: async () => {
+      const response = await fetch("api/v1/location");
+      if (!response.ok) {
+        throw new Error("Location lookup failed");
+      }
+      return response.json();
+    },
+    retry: false,
+    staleTime: Infinity,
+  });
 
   useImperativeHandle(ref, () => ({
     zoomToBounds: (bounds) => {
@@ -91,6 +110,16 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!map.current || !userLocation || !mapLoaded) return;
+
+    map.current.flyTo({
+      center: [userLocation.longitude, userLocation.latitude],
+      zoom: config.mapZoom,
+      duration: 1000,
+    });
+  }, [userLocation, mapLoaded]);
 
   const updateTracks = useCallback(
     (mapInstance: maplibregl.Map, geometries: TrackGeometry[]) => {
@@ -218,5 +247,22 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
     }
   }, [selectedTrackIds, mapLoaded]);
 
-  return <div ref={mapContainer} className="map-container" />;
+  return (
+    <>
+      <div ref={mapContainer} className="map-container" />
+      {isLoading && (
+        <div className="map-location-loader">
+          <div className="map-location-loader-content">
+            <div className="location-pulse">
+              <div className="pulse-ring pulse-ring-1"></div>
+              <div className="pulse-ring pulse-ring-2"></div>
+              <div className="pulse-ring pulse-ring-3"></div>
+              <div className="pulse-center"></div>
+            </div>
+            <p className="location-text">Finding your location...</p>
+          </div>
+        </div>
+      )}
+    </>
+  );
 });

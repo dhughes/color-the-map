@@ -111,6 +111,42 @@ class GeoIPService:
         self.scheduler.start()
         logger.info("GeoIP update scheduler started (runs Mondays at midnight)")
 
+    def lookup_ip(self, ip_address: str) -> dict[str, float] | None:
+        """
+        Look up geographic coordinates for an IP address.
+
+        Args:
+            ip_address: IP address to look up
+
+        Returns:
+            Dict with 'latitude' and 'longitude' keys, or None if not found
+        """
+        import geoip2.database
+        import geoip2.errors
+
+        if not self.db_path.exists():
+            logger.warning(f"GeoIP database not found at {self.db_path}")
+            return None
+
+        try:
+            with geoip2.database.Reader(str(self.db_path)) as reader:
+                response = reader.city(ip_address)
+
+                if not response.location.latitude or not response.location.longitude:
+                    logger.warning(f"No coordinates found for IP {ip_address}")
+                    return None
+
+                return {
+                    "latitude": response.location.latitude,
+                    "longitude": response.location.longitude,
+                }
+        except geoip2.errors.AddressNotFoundError:
+            logger.info(f"IP address not found in database: {ip_address}")
+            return None
+        except Exception as e:
+            logger.error(f"Error looking up IP {ip_address}: {e}")
+            return None
+
     def shutdown(self) -> None:
         """Shutdown the scheduler cleanly."""
         if self.scheduler and self.scheduler.running:
