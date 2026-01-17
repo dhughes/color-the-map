@@ -72,3 +72,8 @@ class TrackUpdate(BaseModel):
     name: Optional[str] = None
     activity_type: Optional[str] = None
     description: Optional[str] = None
+
+
+class LocationResponse(BaseModel):
+    latitude: float
+    longitude: float

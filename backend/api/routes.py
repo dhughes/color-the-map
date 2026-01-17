@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, HTTPException, status, Request
 from typing import List
 from .models import (
     TrackResponse,
@@ -6,6 +6,7 @@ from .models import (
     GeometryRequest,
     TrackGeometry,
     TrackUpdate,
+    LocationResponse,
 )
 from ..services.track_service import TrackService
 from ..config import config
@@ -81,3 +82,31 @@ async def update_track(track_id: int, update: TrackUpdate):
         raise HTTPException(status_code=404, detail="Track not found")
 
     return TrackResponse.from_domain(track)
+
+
+@router.get("/location", response_model=LocationResponse)
+async def get_client_location(request: Request):
+    """Get geographic location from client IP address."""
+    from ..main import geoip_service
+
+    if not geoip_service:
+        raise HTTPException(status_code=503, detail="GeoIP service not available")
+
+    # Extract real client IP from X-Forwarded-For header (set by Caddy reverse proxy)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        # Take the first IP (client IP, before any proxies)
+        client_ip = forwarded_for.split(",")[0].strip()
+    else:
+        # Fallback to direct connection IP
+        client_ip = request.client.host if request.client else None
+
+    if not client_ip or client_ip in ("127.0.0.1", "::1", "localhost"):
+        raise HTTPException(status_code=400, detail="Could not determine client IP")
+
+    location = geoip_service.lookup_ip(client_ip)
+
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found for IP address")
+
+    return LocationResponse(**location)

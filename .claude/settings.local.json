@@ -41,7 +41,9 @@
       "Bash(npm run lint)",
       "Bash(ruff check:*)",
       "Bash(ruff format:*)",
-      "Bash(mypy:*)"
+      "Bash(mypy:*)",
+      "Skill(tdd-feature-dev:tdd-feature-development)",
+      "WebSearch"
     ]
   }
 }
