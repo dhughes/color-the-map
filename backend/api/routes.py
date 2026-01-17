@@ -95,9 +95,18 @@ async def get_client_location(request: Request):
     if not geoip_service:
         raise HTTPException(status_code=503, detail="GeoIP service not available")
 
-    # Extract real client IP from X-Forwarded-For header (set by Caddy reverse proxy)
+    # Extract real client IP, checking Cloudflare header first
+    # Priority: CF-Connecting-IP (Cloudflare) > X-Forwarded-For (Caddy) > direct IP
+    cf_connecting_ip = request.headers.get("CF-Connecting-IP")
     forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
+
+    if cf_connecting_ip:
+        # Cloudflare provides real client IP in CF-Connecting-IP
+        client_ip = cf_connecting_ip.strip()
+        logger.info(
+            f"CF-Connecting-IP header: {cf_connecting_ip}, using client IP: {client_ip}"
+        )
+    elif forwarded_for:
         # Take the first IP (client IP, before any proxies)
         client_ip = forwarded_for.split(",")[0].strip()
         logger.info(
@@ -106,7 +115,7 @@ async def get_client_location(request: Request):
     else:
         # Fallback to direct connection IP
         client_ip = request.client.host if request.client else None
-        logger.info(f"No X-Forwarded-For header, using direct IP: {client_ip}")
+        logger.info(f"No proxy headers, using direct IP: {client_ip}")
 
     if not client_ip or client_ip in ("127.0.0.1", "::1", "localhost"):
         raise HTTPException(status_code=400, detail="Could not determine client IP")
