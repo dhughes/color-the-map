@@ -105,6 +105,16 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       zoom: config.mapZoom,
     });
 
+    const geolocateControl = new maplibregl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: false,
+      },
+      trackUserLocation: false,
+      showUserLocation: false,
+    });
+
+    map.current.addControl(geolocateControl, "top-right");
+
     map.current.on("load", () => {
       setMapLoaded(true);
     });
