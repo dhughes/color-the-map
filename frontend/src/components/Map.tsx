@@ -72,7 +72,11 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
   }));
 
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current || map.current || isLoading) return;
+
+    const center = userLocation
+      ? ([userLocation.longitude, userLocation.latitude] as [number, number])
+      : config.mapCenter;
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
@@ -94,7 +98,7 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
           },
         ],
       },
-      center: config.mapCenter,
+      center,
       zoom: config.mapZoom,
     });
 
@@ -109,17 +113,7 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
         setMapLoaded(false);
       }
     };
-  }, []);
-
-  useEffect(() => {
-    if (!map.current || !userLocation || !mapLoaded) return;
-
-    map.current.flyTo({
-      center: [userLocation.longitude, userLocation.latitude],
-      zoom: config.mapZoom,
-      duration: 1000,
-    });
-  }, [userLocation, mapLoaded]);
+  }, [isLoading, userLocation]);
 
   const updateTracks = useCallback(
     (mapInstance: maplibregl.Map, geometries: TrackGeometry[]) => {
@@ -247,22 +241,21 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
     }
   }, [selectedTrackIds, mapLoaded]);
 
-  return (
-    <>
-      <div ref={mapContainer} className="map-container" />
-      {isLoading && (
-        <div className="map-location-loader">
-          <div className="map-location-loader-content">
-            <div className="location-pulse">
-              <div className="pulse-ring pulse-ring-1"></div>
-              <div className="pulse-ring pulse-ring-2"></div>
-              <div className="pulse-ring pulse-ring-3"></div>
-              <div className="pulse-center"></div>
-            </div>
-            <p className="location-text">Finding your location...</p>
+  if (isLoading) {
+    return (
+      <div className="map-location-loader">
+        <div className="map-location-loader-content">
+          <div className="location-pulse">
+            <div className="pulse-ring pulse-ring-1"></div>
+            <div className="pulse-ring pulse-ring-2"></div>
+            <div className="pulse-ring pulse-ring-3"></div>
+            <div className="pulse-center"></div>
           </div>
+          <p className="location-text">Finding your location...</p>
         </div>
-      )}
-    </>
-  );
+      </div>
+    );
+  }
+
+  return <div ref={mapContainer} className="map-container" />;
 });
