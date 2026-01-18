@@ -57,8 +57,8 @@ export function TrackList({
 
   const deleteTracksMutation = useMutation({
     mutationFn: (trackIds: number[]) => deleteTracks(trackIds),
-    onMutate: async (trackIdsToDelete) => {
-      await queryClient.cancelQueries({ queryKey: ["tracks"] });
+    onMutate: (trackIdsToDelete) => {
+      queryClient.cancelQueries({ queryKey: ["tracks"] });
 
       const previousTracks = queryClient.getQueryData<Track[]>(["tracks"]);
       const previousGeometries = queryClient.getQueryData(["geometries"]);
