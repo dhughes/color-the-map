@@ -57,11 +57,38 @@ export function TrackList({
 
   const deleteTracksMutation = useMutation({
     mutationFn: (trackIds: number[]) => deleteTracks(trackIds),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tracks"] });
+    onMutate: async (trackIds) => {
+      await queryClient.cancelQueries({ queryKey: ["tracks"] });
+      await queryClient.cancelQueries({
+        predicate: (query) => query.queryKey[0] === "geometries",
+      });
+
+      const previousTracks = queryClient.getQueryData(["tracks"]);
+
+      queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
+        old?.filter((track) => !trackIds.includes(track.id)),
+      );
+
+      queryClient.setQueriesData(
+        { predicate: (query) => query.queryKey[0] === "geometries" },
+        (
+          old:
+            | { track_id: number; coordinates: [number, number][] }[]
+            | undefined,
+        ) => old?.filter((geom) => !trackIds.includes(geom.track_id)),
+      );
+
+      return { previousTracks };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousTracks) {
+        queryClient.setQueryData(["tracks"], context.previousTracks);
+      }
       queryClient.invalidateQueries({
         predicate: (query) => query.queryKey[0] === "geometries",
       });
+    },
+    onSuccess: () => {
       selectedTrackIds.clear();
     },
   });
