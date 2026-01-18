@@ -80,6 +80,7 @@ function AppContent() {
     queryKey: ["geometries"],
     queryFn: () => getTrackGeometries(trackIds),
     enabled: trackIds.length > 0,
+    staleTime: Infinity,
   });
 
   const visibleGeometries = useMemo(() => {
