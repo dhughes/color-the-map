@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
-import { listTracks, updateTrack } from "../../api/client";
+import { useEffect, useRef, useState } from "react";
+import { listTracks, updateTrack, deleteTracks } from "../../api/client";
 import { TrackListItem } from "./TrackListItem";
+import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
 
 interface TrackListProps {
@@ -21,6 +22,10 @@ export function TrackList({
 }: TrackListProps) {
   const queryClient = useQueryClient();
   const listRef = useRef<HTMLDivElement>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{
+    trackIds: number[];
+    count: number;
+  } | null>(null);
 
   const { data: tracks = [], isLoading } = useQuery({
     queryKey: ["tracks"],
@@ -50,6 +55,57 @@ export function TrackList({
     },
   });
 
+  const deleteTracksMutation = useMutation({
+    mutationFn: (trackIds: number[]) => deleteTracks(trackIds),
+    onMutate: (trackIdsToDelete) => {
+      queryClient.cancelQueries({ queryKey: ["tracks"] });
+
+      const previousTracks = queryClient.getQueryData<Track[]>(["tracks"]);
+      const previousGeometries = queryClient.getQueryData(["geometries"]);
+
+      queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
+        old?.filter((track) => !trackIdsToDelete.includes(track.id)),
+      );
+
+      queryClient.setQueryData(
+        ["geometries"],
+        (
+          old:
+            | { track_id: number; coordinates: [number, number][] }[]
+            | undefined,
+        ) => old?.filter((geom) => !trackIdsToDelete.includes(geom.track_id)),
+      );
+
+      return { previousTracks, previousGeometries };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousTracks) {
+        queryClient.setQueryData(["tracks"], context.previousTracks);
+      }
+      if (context?.previousGeometries) {
+        queryClient.setQueryData(["geometries"], context.previousGeometries);
+      }
+    },
+    onSuccess: () => {
+      selectedTrackIds.clear();
+    },
+  });
+
+  const handleDeleteTrack = (trackId: number) => {
+    setConfirmDelete({ trackIds: [trackId], count: 1 });
+  };
+
+  const handleConfirmDelete = () => {
+    if (confirmDelete) {
+      deleteTracksMutation.mutate(confirmDelete.trackIds);
+    }
+    setConfirmDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDelete(null);
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -58,6 +114,18 @@ export function TrackList({
       }
 
       if (!tracks.length) return;
+
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedTrackIds.size > 0) {
+          e.preventDefault();
+          const count = selectedTrackIds.size;
+          setConfirmDelete({
+            trackIds: Array.from(selectedTrackIds),
+            count,
+          });
+        }
+        return;
+      }
 
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
@@ -87,7 +155,7 @@ export function TrackList({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [tracks, anchorTrackId, onSelect]);
+  }, [tracks, anchorTrackId, onSelect, selectedTrackIds]);
 
   if (isLoading) {
     return (
@@ -140,9 +208,24 @@ export function TrackList({
               });
             }}
             onDoubleClick={() => onZoomToTrack(track)}
+            onDelete={() => handleDeleteTrack(track.id)}
           />
         ))}
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmDelete !== null}
+        title="Delete Tracks"
+        message={
+          confirmDelete
+            ? `Delete ${confirmDelete.count} track${confirmDelete.count > 1 ? "s" : ""}?`
+            : ""
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </div>
   );
 }

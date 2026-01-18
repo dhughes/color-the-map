@@ -106,3 +106,85 @@ def test_update_track_visibility(track_service, sample_gpx):
 def test_update_nonexistent_track(track_service):
     result = track_service.update_track(9999, {"visible": False})
     assert result is None
+
+
+def test_delete_single_track(track_service, sample_gpx, tmp_path):
+    result = track_service.upload_track("test.gpx", sample_gpx)
+    track_id = result.track.id
+    gpx_hash = result.track.hash
+
+    gpx_file_path = tmp_path / "gpx" / f"{gpx_hash}.gpx"
+    assert gpx_file_path.exists()
+
+    delete_result = track_service.delete_tracks([track_id])
+
+    assert delete_result["deleted"] == 1
+    assert delete_result["failed"] == 0
+    assert len(delete_result["errors"]) == 0
+
+    assert track_service.get_track_metadata(track_id) is None
+    assert not gpx_file_path.exists()
+
+
+def test_delete_multiple_tracks(track_service, tmp_path):
+    test_dir = Path(__file__).parent
+    gpx1_path = (
+        test_dir / ".." / ".." / "sample-gpx-files" / "Cycling 2025-12-19T211415Z.gpx"
+    )
+    gpx2_path = test_dir / ".." / ".." / "sample-gpx-files" / "Walking 2031.gpx"
+
+    with open(gpx1_path, "rb") as f:
+        content1 = f.read()
+    with open(gpx2_path, "rb") as f:
+        content2 = f.read()
+
+    result1 = track_service.upload_track("track1.gpx", content1)
+    result2 = track_service.upload_track("track2.gpx", content2)
+
+    track_ids = [result1.track.id, result2.track.id]
+
+    delete_result = track_service.delete_tracks(track_ids)
+
+    assert delete_result["deleted"] == 2
+    assert delete_result["failed"] == 0
+    assert len(delete_result["errors"]) == 0
+
+    assert track_service.get_track_metadata(result1.track.id) is None
+    assert track_service.get_track_metadata(result2.track.id) is None
+
+
+def test_delete_nonexistent_track(track_service):
+    delete_result = track_service.delete_tracks([9999])
+
+    assert delete_result["deleted"] == 0
+    assert delete_result["failed"] == 1
+    assert len(delete_result["errors"]) == 1
+    assert "9999" in delete_result["errors"][0]
+
+
+def test_delete_continues_on_failure(track_service, sample_gpx):
+    result1 = track_service.upload_track("track1.gpx", sample_gpx)
+    track_id = result1.track.id
+
+    delete_result = track_service.delete_tracks([9999, track_id, 8888])
+
+    assert delete_result["deleted"] == 1
+    assert delete_result["failed"] == 2
+    assert len(delete_result["errors"]) == 2
+
+    assert track_service.get_track_metadata(track_id) is None
+
+
+def test_delete_removes_from_spatial_table(track_service, sample_gpx):
+    result = track_service.upload_track("test.gpx", sample_gpx)
+    track_id = result.track.id
+
+    with track_service.db.get_connection() as conn:
+        cursor = conn.execute("SELECT * FROM track_spatial WHERE id = ?", (track_id,))
+        assert cursor.fetchone() is not None
+
+    track_service.delete_tracks([track_id])
+
+    with track_service.db.get_connection() as conn:
+        cursor = conn.execute("SELECT * FROM track_spatial WHERE id = ?", (track_id,))
+        assert cursor.fetchone() is None

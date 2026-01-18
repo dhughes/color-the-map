@@ -77,9 +77,10 @@ function AppContent() {
   const trackIds = useMemo(() => tracks.map((track) => track.id), [tracks]);
 
   const { data: allGeometries = [] } = useQuery<TrackGeometry[]>({
-    queryKey: ["geometries", trackIds],
+    queryKey: ["geometries"],
     queryFn: () => getTrackGeometries(trackIds),
     enabled: trackIds.length > 0,
+    staleTime: Infinity,
   });
 
   const visibleGeometries = useMemo(() => {

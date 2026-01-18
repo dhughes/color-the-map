@@ -39,3 +39,9 @@ export interface UploadResult {
   track_ids: number[];
   errors: string[];
 }
+
+export interface DeleteResult {
+  deleted: number;
+  failed: number;
+  errors: string[];
+}

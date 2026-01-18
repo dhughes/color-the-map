@@ -151,3 +151,37 @@ class TrackService:
             return None
 
         return Track.from_db_row(track)
+
+    def delete_tracks(self, track_ids: List[int]) -> Dict[str, Any]:
+        deleted = 0
+        failed = 0
+        errors = []
+
+        for track_id in track_ids:
+            try:
+                track = self.get_track_metadata(track_id)
+                if not track:
+                    failed += 1
+                    errors.append(f"Track {track_id}: Not found")
+                    continue
+
+                with self.db.get_connection() as conn:
+                    conn.execute("DELETE FROM track_spatial WHERE id = ?", (track_id,))
+                    cursor = conn.execute(
+                        "DELETE FROM tracks WHERE id = ?", (track_id,)
+                    )
+
+                    if cursor.rowcount == 0:
+                        failed += 1
+                        errors.append(f"Track {track_id}: Database deletion failed")
+                        continue
+
+                self.storage.delete_gpx(track.hash)
+
+                deleted += 1
+
+            except Exception as e:
+                failed += 1
+                errors.append(f"Track {track_id}: {str(e)}")
+
+        return {"deleted": deleted, "failed": failed, "errors": errors}

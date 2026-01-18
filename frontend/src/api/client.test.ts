@@ -6,6 +6,7 @@ import {
   listTracks,
   getTrackGeometries,
   updateTrack,
+  deleteTracks,
 } from "./client";
 
 globalThis.fetch = vi.fn() as any;
@@ -253,6 +254,44 @@ describe("API Client", () => {
       expect(result.track_ids).toEqual([1, 3]);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0]).toContain("bad.gpx");
+    });
+  });
+
+  describe("deleteTracks", () => {
+    it("deletes tracks with DELETE request", async () => {
+      const mockResult = {
+        deleted: 2,
+        failed: 0,
+        errors: [],
+      };
+
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResult,
+      });
+
+      const result = await deleteTracks([1, 2]);
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "api/v1/tracks",
+        expect.objectContaining({
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ track_ids: [1, 2] }),
+        }),
+      );
+
+      expect(result).toEqual(mockResult);
+    });
+
+    it("throws error on failed delete", async () => {
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        statusText: "Internal Server Error",
+        json: async () => ({ detail: "Delete failed" }),
+      });
+
+      await expect(deleteTracks([1])).rejects.toThrow("Delete failed");
     });
   });
 });
