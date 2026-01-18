@@ -63,15 +63,6 @@ export function TrackListItem({
         {track.visible ? <Eye size={18} /> : <EyeOff size={18} />}
       </button>
 
-      <button
-        className="track-item-delete"
-        onClick={handleDeleteClick}
-        aria-label="Delete track"
-        title="Delete track"
-      >
-        <X size={16} />
-      </button>
-
       <div className="track-item-content">
         <div className="track-item-name">{track.name}</div>
         <div className="track-item-meta">
@@ -92,6 +83,15 @@ export function TrackListItem({
           )}
         </div>
       </div>
+
+      <button
+        className="track-item-delete"
+        onClick={handleDeleteClick}
+        aria-label="Delete track"
+        title="Delete track"
+      >
+        <X size={14} />
+      </button>
     </div>
   );
 }
