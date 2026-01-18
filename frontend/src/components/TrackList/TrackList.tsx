@@ -59,41 +59,32 @@ export function TrackList({
     mutationFn: (trackIds: number[]) => deleteTracks(trackIds),
     onMutate: async (trackIdsToDelete) => {
       await queryClient.cancelQueries({ queryKey: ["tracks"] });
-      await queryClient.cancelQueries({
-        predicate: (query) => query.queryKey[0] === "geometries",
-      });
+      await queryClient.cancelQueries({ queryKey: ["geometries"] });
 
       const previousTracks = queryClient.getQueryData<Track[]>(["tracks"]);
-      const oldTrackIds = previousTracks?.map((t) => t.id) || [];
-      const newTrackIds = oldTrackIds.filter(
-        (id) => !trackIdsToDelete.includes(id),
-      );
+      const previousGeometries = queryClient.getQueryData(["geometries"]);
 
       queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
         old?.filter((track) => !trackIdsToDelete.includes(track.id)),
       );
 
-      const oldGeometries = queryClient.getQueryData<
-        { track_id: number; coordinates: [number, number][] }[]
-      >(["geometries", oldTrackIds]);
+      queryClient.setQueryData(
+        ["geometries"],
+        (
+          old:
+            | { track_id: number; coordinates: [number, number][] }[]
+            | undefined,
+        ) => old?.filter((geom) => !trackIdsToDelete.includes(geom.track_id)),
+      );
 
-      if (oldGeometries) {
-        const newGeometries = oldGeometries.filter(
-          (geom) => !trackIdsToDelete.includes(geom.track_id),
-        );
-        queryClient.setQueryData(["geometries", newTrackIds], newGeometries);
-      }
-
-      return { previousTracks, oldTrackIds };
+      return { previousTracks, previousGeometries };
     },
     onError: (_err, _variables, context) => {
       if (context?.previousTracks) {
         queryClient.setQueryData(["tracks"], context.previousTracks);
-        if (context.oldTrackIds) {
-          queryClient.invalidateQueries({
-            queryKey: ["geometries", context.oldTrackIds],
-          });
-        }
+      }
+      if (context?.previousGeometries) {
+        queryClient.setQueryData(["geometries"], context.previousGeometries);
       }
     },
     onSuccess: () => {
