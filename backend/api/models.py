@@ -77,3 +77,13 @@ class TrackUpdate(BaseModel):
 class LocationResponse(BaseModel):
     latitude: float
     longitude: float
+
+
+class DeleteRequest(BaseModel):
+    track_ids: List[int]
+
+
+class DeleteResult(BaseModel):
+    deleted: int
+    failed: int
+    errors: List[str]

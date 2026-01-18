@@ -1,4 +1,4 @@
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, X } from "lucide-react";
 import type { Track } from "../../types/track";
 
 interface TrackListItemProps {
@@ -7,6 +7,7 @@ interface TrackListItemProps {
   onSelect: (event: React.MouseEvent) => void;
   onToggleVisibility: (event: React.MouseEvent) => void;
   onDoubleClick: () => void;
+  onDelete: (event: React.MouseEvent) => void;
 }
 
 export function TrackListItem({
@@ -15,6 +16,7 @@ export function TrackListItem({
   onSelect,
   onToggleVisibility,
   onDoubleClick,
+  onDelete,
 }: TrackListItemProps) {
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString(undefined, {
@@ -33,6 +35,11 @@ export function TrackListItem({
   const handleEyeClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     onToggleVisibility(event);
+  };
+
+  const handleDeleteClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    onDelete(event);
   };
 
   const handleClick = (event: React.MouseEvent) => {
@@ -54,6 +61,15 @@ export function TrackListItem({
         title={track.visible ? "Hide track" : "Show track"}
       >
         {track.visible ? <Eye size={18} /> : <EyeOff size={18} />}
+      </button>
+
+      <button
+        className="track-item-delete"
+        onClick={handleDeleteClick}
+        aria-label="Delete track"
+        title="Delete track"
+      >
+        <X size={16} />
       </button>
 
       <div className="track-item-content">

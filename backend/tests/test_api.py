@@ -122,3 +122,82 @@ def test_update_track(sample_gpx_file):
 def test_update_nonexistent_track():
     response = client.patch("/api/v1/tracks/9999", json={"visible": False})
     assert response.status_code == 404
+
+
+def test_delete_single_track(sample_gpx_file):
+    upload_response = client.post(
+        "/api/v1/tracks",
+        files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
+    )
+    track_id = upload_response.json()["track_ids"][0]
+
+    response = client.request(
+        "DELETE", "/api/v1/tracks", json={"track_ids": [track_id]}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["deleted"] == 1
+    assert data["failed"] == 0
+    assert len(data["errors"]) == 0
+
+    get_response = client.get("/api/v1/tracks")
+    tracks = get_response.json()
+    assert not any(t["id"] == track_id for t in tracks)
+
+
+def test_delete_multiple_tracks():
+    test_dir = Path(__file__).parent
+    gpx1_path = (
+        test_dir / ".." / ".." / "sample-gpx-files" / "Cycling 2025-12-19T211415Z.gpx"
+    )
+    gpx2_path = test_dir / ".." / ".." / "sample-gpx-files" / "Walking 2031.gpx"
+
+    with open(gpx1_path, "rb") as f:
+        content1 = f.read()
+    with open(gpx2_path, "rb") as f:
+        content2 = f.read()
+
+    upload_response = client.post(
+        "/api/v1/tracks",
+        files=[
+            ("files", ("test1.gpx", content1, "application/gpx+xml")),
+            ("files", ("test2.gpx", content2, "application/gpx+xml")),
+        ],
+    )
+    track_ids = upload_response.json()["track_ids"]
+
+    response = client.request("DELETE", "/api/v1/tracks", json={"track_ids": track_ids})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["deleted"] == 2
+    assert data["failed"] == 0
+
+
+def test_delete_nonexistent_track():
+    response = client.request("DELETE", "/api/v1/tracks", json={"track_ids": [9999]})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["deleted"] == 0
+    assert data["failed"] == 1
+    assert len(data["errors"]) == 1
+
+
+def test_delete_partial_failure(sample_gpx_file):
+    upload_response = client.post(
+        "/api/v1/tracks",
+        files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
+    )
+    existing_id = upload_response.json()["track_ids"][0]
+
+    response = client.request(
+        "DELETE", "/api/v1/tracks", json={"track_ids": [9999, existing_id, 8888]}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["deleted"] == 1
+    assert data["failed"] == 2
+    assert len(data["errors"]) == 2

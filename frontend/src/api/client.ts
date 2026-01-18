@@ -1,4 +1,9 @@
-import type { Track, TrackGeometry, UploadResult } from "../types/track";
+import type {
+  Track,
+  TrackGeometry,
+  UploadResult,
+  DeleteResult,
+} from "../types/track";
 
 const API_BASE = "";
 
@@ -115,6 +120,23 @@ export async function updateTrack(
 
   if (!response.ok) {
     throw new Error("Failed to update track");
+  }
+
+  return response.json();
+}
+
+export async function deleteTracks(trackIds: number[]): Promise<DeleteResult> {
+  const response = await fetch(`${API_BASE}api/v1/tracks`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ track_ids: trackIds }),
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ detail: response.statusText }));
+    throw new Error(error.detail || "Failed to delete tracks");
   }
 
   return response.json();

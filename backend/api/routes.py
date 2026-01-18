@@ -7,6 +7,8 @@ from .models import (
     TrackGeometry,
     TrackUpdate,
     LocationResponse,
+    DeleteRequest,
+    DeleteResult,
 )
 from ..services.track_service import TrackService
 from ..config import config
@@ -82,6 +84,12 @@ async def update_track(track_id: int, update: TrackUpdate):
         raise HTTPException(status_code=404, detail="Track not found")
 
     return TrackResponse.from_domain(track)
+
+
+@router.delete("/tracks", response_model=DeleteResult)
+async def delete_tracks(request: DeleteRequest):
+    result = track_service.delete_tracks(request.track_ids)
+    return DeleteResult(**result)
 
 
 @router.get("/location", response_model=LocationResponse)
