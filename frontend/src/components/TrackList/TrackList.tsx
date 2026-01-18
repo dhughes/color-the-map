@@ -57,36 +57,44 @@ export function TrackList({
 
   const deleteTracksMutation = useMutation({
     mutationFn: (trackIds: number[]) => deleteTracks(trackIds),
-    onMutate: async (trackIds) => {
+    onMutate: async (trackIdsToDelete) => {
       await queryClient.cancelQueries({ queryKey: ["tracks"] });
       await queryClient.cancelQueries({
         predicate: (query) => query.queryKey[0] === "geometries",
       });
 
-      const previousTracks = queryClient.getQueryData(["tracks"]);
+      const previousTracks = queryClient.getQueryData<Track[]>(["tracks"]);
+      const oldTrackIds = previousTracks?.map((t) => t.id) || [];
+      const newTrackIds = oldTrackIds.filter(
+        (id) => !trackIdsToDelete.includes(id),
+      );
 
       queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
-        old?.filter((track) => !trackIds.includes(track.id)),
+        old?.filter((track) => !trackIdsToDelete.includes(track.id)),
       );
 
-      queryClient.setQueriesData(
-        { predicate: (query) => query.queryKey[0] === "geometries" },
-        (
-          old:
-            | { track_id: number; coordinates: [number, number][] }[]
-            | undefined,
-        ) => old?.filter((geom) => !trackIds.includes(geom.track_id)),
-      );
+      const oldGeometries = queryClient.getQueryData<
+        { track_id: number; coordinates: [number, number][] }[]
+      >(["geometries", oldTrackIds]);
 
-      return { previousTracks };
+      if (oldGeometries) {
+        const newGeometries = oldGeometries.filter(
+          (geom) => !trackIdsToDelete.includes(geom.track_id),
+        );
+        queryClient.setQueryData(["geometries", newTrackIds], newGeometries);
+      }
+
+      return { previousTracks, oldTrackIds };
     },
     onError: (_err, _variables, context) => {
       if (context?.previousTracks) {
         queryClient.setQueryData(["tracks"], context.previousTracks);
+        if (context.oldTrackIds) {
+          queryClient.invalidateQueries({
+            queryKey: ["geometries", context.oldTrackIds],
+          });
+        }
       }
-      queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === "geometries",
-      });
     },
     onSuccess: () => {
       selectedTrackIds.clear();
