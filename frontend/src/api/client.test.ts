@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   uploadTracks,
+  uploadTracksWithProgress,
   listTracks,
   getTrackGeometries,
   updateTrack,
@@ -159,6 +160,99 @@ describe("API Client", () => {
       await expect(updateTrack(999, { visible: false })).rejects.toThrow(
         "Failed to update track",
       );
+    });
+  });
+
+  describe("uploadTracksWithProgress", () => {
+    it("uploads files sequentially and calls progress callback", async () => {
+      const mockResults = [
+        { uploaded: 1, failed: 0, track_ids: [1], errors: [] },
+        { uploaded: 1, failed: 0, track_ids: [2], errors: [] },
+        { uploaded: 1, failed: 0, track_ids: [3], errors: [] },
+      ];
+
+      (globalThis.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockResults[0],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockResults[1],
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockResults[2],
+        });
+
+      const file1 = new File(["content1"], "track1.gpx");
+      const file2 = new File(["content2"], "track2.gpx");
+      const file3 = new File(["content3"], "track3.gpx");
+
+      const progressCallback = vi.fn();
+
+      const result = await uploadTracksWithProgress(
+        [file1, file2, file3],
+        progressCallback,
+      );
+
+      expect(globalThis.fetch).toHaveBeenCalledTimes(3);
+      expect(progressCallback).toHaveBeenCalledTimes(4);
+      expect(progressCallback).toHaveBeenNthCalledWith(1, 1, 3);
+      expect(progressCallback).toHaveBeenNthCalledWith(2, 2, 3);
+      expect(progressCallback).toHaveBeenNthCalledWith(3, 3, 3);
+      expect(progressCallback).toHaveBeenNthCalledWith(4, 3, 3);
+
+      expect(result).toEqual({
+        uploaded: 3,
+        failed: 0,
+        track_ids: [1, 2, 3],
+        errors: [],
+      });
+    });
+
+    it("continues uploading after failures", async () => {
+      (globalThis.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            uploaded: 1,
+            failed: 0,
+            track_ids: [1],
+            errors: [],
+          }),
+        })
+        .mockResolvedValueOnce({
+          ok: false,
+          statusText: "Bad Request",
+          json: async () => ({ detail: "Invalid GPX" }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            uploaded: 1,
+            failed: 0,
+            track_ids: [3],
+            errors: [],
+          }),
+        });
+
+      const file1 = new File(["content1"], "track1.gpx");
+      const file2 = new File(["content2"], "bad.gpx");
+      const file3 = new File(["content3"], "track3.gpx");
+
+      const progressCallback = vi.fn();
+
+      const result = await uploadTracksWithProgress(
+        [file1, file2, file3],
+        progressCallback,
+      );
+
+      expect(result.uploaded).toBe(2);
+      expect(result.failed).toBe(1);
+      expect(result.track_ids).toEqual([1, 3]);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toContain("bad.gpx");
     });
   });
 });

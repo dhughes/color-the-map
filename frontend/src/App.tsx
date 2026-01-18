@@ -10,13 +10,21 @@ import { UploadZone } from "./components/UploadZone";
 import { StatusMessage } from "./components/StatusMessage";
 import { TrackList } from "./components/TrackList/TrackList";
 import { useSelection } from "./hooks/useSelection";
-import { uploadTracks, listTracks, getTrackGeometries } from "./api/client";
+import {
+  uploadTracksWithProgress,
+  listTracks,
+  getTrackGeometries,
+} from "./api/client";
 import type { Track, TrackGeometry } from "./types/track";
 
 const queryClient = new QueryClient();
 
 function AppContent() {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
   const [status, setStatus] = useState<{
     message: string;
     type: "info" | "success" | "error";
@@ -105,15 +113,12 @@ function AppContent() {
 
   const handleFilesDropped = async (files: File[]) => {
     setIsUploading(true);
-    setStatus({
-      message: `Uploading ${files.length} file${
-        files.length > 1 ? "s" : ""
-      }...`,
-      type: "info",
-    });
+    setUploadProgress({ current: 0, total: files.length });
 
     try {
-      const result = await uploadTracks(files);
+      const result = await uploadTracksWithProgress(files, (current, total) => {
+        setUploadProgress({ current, total });
+      });
 
       queryClient.invalidateQueries({ queryKey: ["tracks"] });
       queryClient.invalidateQueries({
@@ -134,6 +139,7 @@ function AppContent() {
       statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
     } finally {
       setIsUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -150,6 +156,7 @@ function AppContent() {
         <UploadZone
           onFilesDropped={handleFilesDropped}
           isUploading={isUploading}
+          uploadProgress={uploadProgress}
         />
         {status && (
           <StatusMessage message={status.message} type={status.type} />

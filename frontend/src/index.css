@@ -109,6 +109,35 @@ body {
   animation: spin 0.8s linear infinite;
 }
 
+.upload-progress-container {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.upload-progress-text {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+.upload-progress-bar {
+  width: 280px;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.upload-progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 0.3s ease-out;
+  border-radius: 3px;
+}
+
 .status-message {
   position: absolute;
   top: 24px;

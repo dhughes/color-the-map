@@ -1,13 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 interface UploadZoneProps {
   onFilesDropped: (files: File[]) => void;
   isUploading: boolean;
+  uploadProgress?: { current: number; total: number } | null;
 }
 
-export function UploadZone({ onFilesDropped, isUploading }: UploadZoneProps) {
+export function UploadZone({
+  onFilesDropped,
+  isUploading,
+  uploadProgress,
+}: UploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [, setDragCounter] = useState(0);
+
+  const processFileDrop = useCallback(
+    (dataTransfer: DataTransfer) => {
+      const files = Array.from(dataTransfer.files).filter((f) =>
+        f.name.endsWith(".gpx"),
+      );
+      if (files.length > 0) {
+        onFilesDropped(files);
+      }
+    },
+    [onFilesDropped],
+  );
 
   useEffect(() => {
     const handleDragEnter = (e: DragEvent) => {
@@ -39,13 +56,7 @@ export function UploadZone({ onFilesDropped, isUploading }: UploadZoneProps) {
       setDragCounter(0);
 
       if (e.dataTransfer) {
-        const files = Array.from(e.dataTransfer.files).filter((f) =>
-          f.name.endsWith(".gpx"),
-        );
-
-        if (files.length > 0) {
-          onFilesDropped(files);
-        }
+        processFileDrop(e.dataTransfer);
       }
     };
 
@@ -60,7 +71,7 @@ export function UploadZone({ onFilesDropped, isUploading }: UploadZoneProps) {
       document.removeEventListener("dragleave", handleDragLeave);
       document.removeEventListener("drop", handleDrop);
     };
-  }, [onFilesDropped]);
+  }, [processFileDrop]);
 
   if (!isDragging && !isUploading) {
     return null;
@@ -71,20 +82,18 @@ export function UploadZone({ onFilesDropped, isUploading }: UploadZoneProps) {
     e.stopPropagation();
     setIsDragging(false);
     setDragCounter(0);
-
-    const files = Array.from(e.dataTransfer.files).filter((f) =>
-      f.name.endsWith(".gpx"),
-    );
-
-    if (files.length > 0) {
-      onFilesDropped(files);
-    }
+    processFileDrop(e.dataTransfer);
   };
 
   const handleOverlayDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
   };
+
+  const percentage =
+    uploadProgress && uploadProgress.total > 0
+      ? Math.round((uploadProgress.current / uploadProgress.total) * 100)
+      : 0;
 
   return (
     <div
@@ -101,9 +110,27 @@ export function UploadZone({ onFilesDropped, isUploading }: UploadZoneProps) {
             </div>
           </>
         ) : (
-          <div className="upload-spinner">
-            <div className="spinner" />
-          </div>
+          <>
+            {uploadProgress && (
+              <div className="upload-progress-container">
+                <div className="upload-progress-text">
+                  Uploading {uploadProgress.current} of {uploadProgress.total}{" "}
+                  files ({percentage}%)
+                </div>
+                <div className="upload-progress-bar">
+                  <div
+                    className="upload-progress-fill"
+                    style={{
+                      width: `${percentage}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            <div className="upload-spinner">
+              <div className="spinner" />
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -52,4 +52,45 @@ describe("UploadZone", () => {
     addEventListenerSpy.mockRestore();
     removeEventListenerSpy.mockRestore();
   });
+
+  it("shows progress bar when uploadProgress is provided", () => {
+    const { getByText, container } = render(
+      <UploadZone
+        onFilesDropped={mockOnFilesDropped}
+        isUploading={true}
+        uploadProgress={{ current: 5, total: 10 }}
+      />,
+    );
+
+    expect(getByText(/Uploading 5 of 10 files \(50%\)/)).toBeInTheDocument();
+    expect(container.querySelector(".upload-progress-bar")).toBeInTheDocument();
+  });
+
+  it("sets correct progress bar width based on percentage", () => {
+    const { container } = render(
+      <UploadZone
+        onFilesDropped={mockOnFilesDropped}
+        isUploading={true}
+        uploadProgress={{ current: 3, total: 10 }}
+      />,
+    );
+
+    const progressFill = container.querySelector(
+      ".upload-progress-fill",
+    ) as HTMLElement;
+    expect(progressFill).toBeInTheDocument();
+    expect(progressFill.style.width).toBe("30%");
+  });
+
+  it("shows spinner even when progress is displayed", () => {
+    const { container } = render(
+      <UploadZone
+        onFilesDropped={mockOnFilesDropped}
+        isUploading={true}
+        uploadProgress={{ current: 2, total: 5 }}
+      />,
+    );
+
+    expect(container.querySelector(".spinner")).toBeInTheDocument();
+  });
 });
