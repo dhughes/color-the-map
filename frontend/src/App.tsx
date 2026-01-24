@@ -10,12 +10,9 @@ import { UploadZone } from "./components/UploadZone";
 import { StatusMessage } from "./components/StatusMessage";
 import { TrackList } from "./components/TrackList/TrackList";
 import { useSelection } from "./hooks/useSelection";
-import {
-  uploadTracksWithProgress,
-  listTracks,
-  getTrackGeometries,
-} from "./api/client";
-import type { Track, TrackGeometry } from "./types/track";
+import { useViewportGeometries } from "./hooks/useViewportGeometries";
+import { uploadTracksWithProgress, listTracks } from "./api/client";
+import type { Track } from "./types/track";
 
 const queryClient = new QueryClient();
 
@@ -74,14 +71,14 @@ function AppContent() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [tracks, selectAll, clearSelection]);
 
-  const trackIds = useMemo(() => tracks.map((track) => track.id), [tracks]);
-
-  const { data: allGeometries = [] } = useQuery<TrackGeometry[]>({
-    queryKey: ["geometries"],
-    queryFn: () => getTrackGeometries(trackIds),
-    enabled: trackIds.length > 0,
-    staleTime: Infinity,
-  });
+  const {
+    geometries: allGeometries,
+    isLoading: isLoadingGeometries,
+    loadingCount: geometryLoadingCount,
+    error: geometryError,
+    onViewportChange,
+    retryFetch,
+  } = useViewportGeometries(tracks);
 
   const visibleGeometries = useMemo(() => {
     const visibleIds = new Set(
@@ -153,7 +150,73 @@ function AppContent() {
           selectedTrackIds={selectedTrackIds}
           onSelect={toggleSelection}
           onClearSelection={clearSelection}
+          onViewportChange={onViewportChange}
         />
+        {isLoadingGeometries && (
+          <div
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: "20px",
+              background: "rgba(255, 255, 255, 0.95)",
+              padding: "8px 12px",
+              borderRadius: "4px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              fontSize: "14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <div
+              style={{
+                width: "16px",
+                height: "16px",
+                border: "2px solid #ccc",
+                borderTopColor: "#666",
+                borderRadius: "50%",
+                animation: "spin 0.6s linear infinite",
+              }}
+            />
+            Loading {geometryLoadingCount}{" "}
+            {geometryLoadingCount === 1 ? "track" : "tracks"}...
+          </div>
+        )}
+        {geometryError && (
+          <div
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: "20px",
+              background: "rgba(220, 38, 38, 0.95)",
+              color: "white",
+              padding: "8px 12px",
+              borderRadius: "4px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              fontSize: "14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            {geometryError}
+            <button
+              onClick={retryFetch}
+              style={{
+                background: "white",
+                color: "#dc2626",
+                border: "none",
+                padding: "4px 8px",
+                borderRadius: "3px",
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: "bold",
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
         <UploadZone
           onFilesDropped={handleFilesDropped}
           isUploading={isUploading}
