@@ -11,8 +11,8 @@ export function expandBounds(
   bounds: ViewportBounds,
   bufferFactor: number,
 ): ViewportBounds {
-  const latRange = bounds.maxLat - bounds.minLat;
-  const lonRange = bounds.maxLon - bounds.minLon;
+  const latRange = Math.max(bounds.maxLat - bounds.minLat, 0.001);
+  const lonRange = Math.max(bounds.maxLon - bounds.minLon, 0.001);
 
   return {
     minLat: bounds.minLat - latRange * bufferFactor,

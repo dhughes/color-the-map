@@ -6,6 +6,15 @@ import * as apiClient from "./api/client";
 import type { Track } from "./types/track";
 
 vi.mock("./api/client");
+vi.mock("./hooks/useViewportGeometries", () => ({
+  useViewportGeometries: vi.fn(() => ({
+    geometries: [],
+    isLoading: false,
+    error: null,
+    onViewportChange: vi.fn(),
+    retryFetch: vi.fn(),
+  })),
+}));
 vi.mock("./components/Map", () => ({
   Map: vi.fn(({ onMapReady }) => {
     const mockZoomToBounds = vi.fn();
@@ -68,7 +77,6 @@ describe("App - Zoom to Track Feature", () => {
       mockTrackWithBounds,
       mockTrackWithNullBounds,
     ]);
-    vi.mocked(apiClient.getTrackGeometries).mockResolvedValue([]);
   });
 
   it("renders the app with track list", async () => {

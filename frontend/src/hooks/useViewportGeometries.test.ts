@@ -91,7 +91,10 @@ describe("useViewportGeometries", () => {
       { timeout: 1000 },
     );
 
-    expect(vi.mocked(apiClient.getTrackGeometries)).toHaveBeenCalledWith([1]);
+    expect(vi.mocked(apiClient.getTrackGeometries)).toHaveBeenCalled();
+    const callArgs = vi.mocked(apiClient.getTrackGeometries).mock.calls[0];
+    expect(callArgs[0]).toEqual([1]);
+    expect(callArgs[1]).toBeInstanceOf(AbortSignal);
   });
 
   it("uses cached geometries", async () => {
@@ -184,5 +187,43 @@ describe("useViewportGeometries", () => {
 
     expect(result.current.geometries).toEqual([]);
     expect(vi.mocked(apiClient.getTrackGeometries)).not.toHaveBeenCalled();
+  });
+
+  it("passes AbortSignal to API calls", async () => {
+    const tracks = [
+      createTrack(1, { minLat: 10, maxLat: 20, minLon: 30, maxLon: 40 }),
+    ];
+    const geometry: TrackGeometry = { track_id: 1, coordinates: [[0, 0]] };
+
+    vi.mocked(
+      geometryCacheModule.geometryCache.getGeometries,
+    ).mockResolvedValue([]);
+    vi.mocked(
+      geometryCacheModule.geometryCache.setGeometries,
+    ).mockResolvedValue();
+    vi.mocked(apiClient.getTrackGeometries).mockResolvedValue([geometry]);
+
+    const { result } = renderHook(() => useViewportGeometries(tracks));
+
+    const viewport: ViewportBounds = {
+      minLat: 5,
+      maxLat: 25,
+      minLon: 25,
+      maxLon: 45,
+    };
+
+    act(() => {
+      result.current.onViewportChange(viewport);
+    });
+
+    await waitFor(
+      () => {
+        expect(result.current.geometries).toHaveLength(1);
+      },
+      { timeout: 1000 },
+    );
+
+    const callArgs = vi.mocked(apiClient.getTrackGeometries).mock.calls[0];
+    expect(callArgs[1]).toBeInstanceOf(AbortSignal);
   });
 });

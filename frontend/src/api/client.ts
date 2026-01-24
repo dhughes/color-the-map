@@ -89,11 +89,13 @@ export async function listTracks(): Promise<Track[]> {
 
 export async function getTrackGeometries(
   trackIds: number[],
+  signal?: AbortSignal,
 ): Promise<TrackGeometry[]> {
   const response = await fetch(`${API_BASE}api/v1/tracks/geometry`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ track_ids: trackIds }),
+    signal,
   });
 
   if (!response.ok) {

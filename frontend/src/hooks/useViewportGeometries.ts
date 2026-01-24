@@ -30,6 +30,7 @@ export function useViewportGeometries(
     }
 
     debounceTimeoutRef.current = setTimeout(() => {
+      debounceTimeoutRef.current = undefined;
       setViewport(bounds);
     }, DEBOUNCE_MS);
   }, []);
@@ -39,20 +40,12 @@ export function useViewportGeometries(
     return getTracksInViewport(tracks, viewport);
   }, [tracks, viewport]);
 
-  const visibleTrackIds = useMemo(() => {
-    return visibleTracks.map((t) => t.id);
+  const visibleTrackIdsKey = useMemo(() => {
+    return JSON.stringify(visibleTracks.map((t) => t.id));
   }, [visibleTracks]);
 
   useEffect(() => {
-    if (visibleTrackIds.length === 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setGeometries([]);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsLoading(false);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setError(null);
-      return;
-    }
+    const visibleTrackIds = JSON.parse(visibleTrackIdsKey) as number[];
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -64,6 +57,13 @@ export function useViewportGeometries(
     let cancelled = false;
 
     const loadGeometries = async () => {
+      if (visibleTrackIds.length === 0) {
+        setGeometries([]);
+        setIsLoading(false);
+        setError(null);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
 
@@ -75,7 +75,10 @@ export function useViewportGeometries(
         if (cancelled) return;
 
         if (missingIds.length > 0) {
-          const fetched = await getTrackGeometries(missingIds);
+          const fetched = await getTrackGeometries(
+            missingIds,
+            abortController.signal,
+          );
 
           if (cancelled) return;
 
@@ -102,7 +105,7 @@ export function useViewportGeometries(
       cancelled = true;
       abortController.abort();
     };
-  }, [visibleTrackIds]);
+  }, [visibleTrackIdsKey]);
 
   const retryFetch = useCallback(() => {
     if (!viewport) return;

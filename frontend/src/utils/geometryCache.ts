@@ -106,16 +106,37 @@ class GeometryCacheImpl {
       return [];
     }
 
-    const results: TrackGeometry[] = [];
+    return new Promise((resolve) => {
+      try {
+        const transaction = this.db!.transaction([STORE_NAME], "readonly");
+        const store = transaction.objectStore(STORE_NAME);
+        const results: TrackGeometry[] = [];
+        let pending = trackIds.length;
 
-    for (const trackId of trackIds) {
-      const geometry = await this.getGeometry(trackId);
-      if (geometry) {
-        results.push(geometry);
+        trackIds.forEach((trackId) => {
+          const request = store.get(trackId);
+          request.onsuccess = () => {
+            if (request.result) {
+              results.push(request.result);
+            }
+            pending--;
+            if (pending === 0) {
+              resolve(results);
+            }
+          };
+          request.onerror = () => {
+            console.warn("Error reading track from cache:", request.error);
+            pending--;
+            if (pending === 0) {
+              resolve(results);
+            }
+          };
+        });
+      } catch (error) {
+        console.warn("Cache batch read error:", error);
+        resolve([]);
       }
-    }
-
-    return results;
+    });
   }
 
   async setGeometries(geometries: TrackGeometry[]): Promise<void> {
