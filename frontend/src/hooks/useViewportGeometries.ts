@@ -67,9 +67,6 @@ export function useViewportGeometries(
         return;
       }
 
-      setIsLoading(true);
-      setError(null);
-
       try {
         const cached = await geometryCache.getGeometries(visibleTrackIds);
         const cachedIds = new Set(cached.map((g) => g.track_id));
@@ -78,7 +75,10 @@ export function useViewportGeometries(
         if (cancelled) return;
 
         if (missingIds.length > 0) {
+          setIsLoading(true);
           setLoadingCount(missingIds.length);
+          setError(null);
+
           const fetched = await getTrackGeometries(
             missingIds,
             abortController.signal,
@@ -90,12 +90,12 @@ export function useViewportGeometries(
 
           const combined = [...cached, ...fetched];
           setGeometries(combined);
+
+          setIsLoading(false);
+          setLoadingCount(0);
         } else {
           setGeometries(cached);
         }
-
-        setIsLoading(false);
-        setLoadingCount(0);
       } catch (err) {
         if (cancelled) return;
 
