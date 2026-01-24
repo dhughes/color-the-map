@@ -10,12 +10,14 @@ import maplibregl from "maplibre-gl";
 import { config } from "../config";
 import type { TrackGeometry } from "../types/track";
 import { getUserLocation, type GeolocationResult } from "../utils/geolocation";
+import type { ViewportBounds } from "../utils/viewport";
 
 interface MapProps {
   geometries: TrackGeometry[];
   selectedTrackIds: Set<number>;
   onSelect: (trackId: number, isMultiSelect: boolean) => void;
   onClearSelection: () => void;
+  onViewportChange?: (bounds: ViewportBounds) => void;
 }
 
 export interface MapRef {
@@ -28,7 +30,13 @@ export interface MapRef {
 }
 
 export const Map = forwardRef<MapRef, MapProps>(function Map(
-  { geometries, selectedTrackIds, onSelect, onClearSelection },
+  {
+    geometries,
+    selectedTrackIds,
+    onSelect,
+    onClearSelection,
+    onViewportChange,
+  },
   ref,
 ) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -221,6 +229,28 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
 
     updateTracks(map.current, geometries);
   }, [geometries, mapLoaded, updateTracks]);
+
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !onViewportChange) return;
+
+    const handleMoveEnd = () => {
+      if (!map.current) return;
+      const bounds = map.current.getBounds();
+      onViewportChange({
+        minLat: bounds.getSouth(),
+        maxLat: bounds.getNorth(),
+        minLon: bounds.getWest(),
+        maxLon: bounds.getEast(),
+      });
+    };
+
+    map.current.on("moveend", handleMoveEnd);
+    handleMoveEnd();
+
+    return () => {
+      map.current?.off("moveend", handleMoveEnd);
+    };
+  }, [mapLoaded, onViewportChange]);
 
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
