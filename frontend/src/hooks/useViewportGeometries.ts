@@ -94,6 +94,10 @@ export function useViewportGeometries(
       } catch (err) {
         if (cancelled) return;
 
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
+
         setError(err instanceof Error ? err.message : "Failed to load tracks");
         setIsLoading(false);
       }
