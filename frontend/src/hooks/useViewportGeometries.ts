@@ -9,6 +9,7 @@ const DEBOUNCE_MS = 300;
 export interface UseViewportGeometriesResult {
   geometries: TrackGeometry[];
   isLoading: boolean;
+  loadingCount: number;
   error: string | null;
   onViewportChange: (bounds: ViewportBounds) => void;
   retryFetch: () => void;
@@ -20,6 +21,7 @@ export function useViewportGeometries(
   const [viewport, setViewport] = useState<ViewportBounds | null>(null);
   const [geometries, setGeometries] = useState<TrackGeometry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingCount, setLoadingCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const debounceTimeoutRef = useRef<number | undefined>(undefined);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -60,6 +62,7 @@ export function useViewportGeometries(
       if (visibleTrackIds.length === 0) {
         setGeometries([]);
         setIsLoading(false);
+        setLoadingCount(0);
         setError(null);
         return;
       }
@@ -75,6 +78,7 @@ export function useViewportGeometries(
         if (cancelled) return;
 
         if (missingIds.length > 0) {
+          setLoadingCount(missingIds.length);
           const fetched = await getTrackGeometries(
             missingIds,
             abortController.signal,
@@ -91,6 +95,7 @@ export function useViewportGeometries(
         }
 
         setIsLoading(false);
+        setLoadingCount(0);
       } catch (err) {
         if (cancelled) return;
 
@@ -100,6 +105,7 @@ export function useViewportGeometries(
 
         setError(err instanceof Error ? err.message : "Failed to load tracks");
         setIsLoading(false);
+        setLoadingCount(0);
       }
     };
 
@@ -127,6 +133,7 @@ export function useViewportGeometries(
   return {
     geometries,
     isLoading,
+    loadingCount,
     error,
     onViewportChange,
     retryFetch,

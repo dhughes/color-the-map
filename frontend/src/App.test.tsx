@@ -10,6 +10,7 @@ vi.mock("./hooks/useViewportGeometries", () => ({
   useViewportGeometries: vi.fn(() => ({
     geometries: [],
     isLoading: false,
+    loadingCount: 0,
     error: null,
     onViewportChange: vi.fn(),
     retryFetch: vi.fn(),

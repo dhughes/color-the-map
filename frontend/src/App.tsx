@@ -74,6 +74,7 @@ function AppContent() {
   const {
     geometries: allGeometries,
     isLoading: isLoadingGeometries,
+    loadingCount: geometryLoadingCount,
     error: geometryError,
     onViewportChange,
     retryFetch,
@@ -177,7 +178,8 @@ function AppContent() {
                 animation: "spin 0.6s linear infinite",
               }}
             />
-            Loading tracks...
+            Loading {geometryLoadingCount}{" "}
+            {geometryLoadingCount === 1 ? "track" : "tracks"}...
           </div>
         )}
         {geometryError && (
