@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TrackList } from "./TrackList";
 
@@ -50,6 +50,8 @@ describe("TrackList", () => {
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
         onZoomToTrack={mockOnZoomToTrack}
+        lastSelectedTrackId={null}
+        selectionSource={null}
       />,
       { wrapper: createWrapper() },
     );
@@ -65,6 +67,8 @@ describe("TrackList", () => {
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
         onZoomToTrack={mockOnZoomToTrack}
+        lastSelectedTrackId={null}
+        selectionSource={null}
       />,
       { wrapper: createWrapper() },
     );
@@ -80,6 +84,8 @@ describe("TrackList", () => {
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
         onZoomToTrack={mockOnZoomToTrack}
+        lastSelectedTrackId={null}
+        selectionSource={null}
       />,
       { wrapper: createWrapper() },
     );
@@ -98,10 +104,150 @@ describe("TrackList", () => {
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
         onZoomToTrack={mockOnZoomToTrack}
+        lastSelectedTrackId={null}
+        selectionSource={null}
       />,
       { wrapper: createWrapper() },
     );
 
     expect(await screen.findByText("2 selected")).toBeInTheDocument();
+  });
+
+  describe("auto-scroll behavior", () => {
+    let mockScrollIntoView: ReturnType<typeof vi.fn>;
+    let queryClient: QueryClient;
+
+    beforeEach(() => {
+      mockScrollIntoView = vi.fn();
+      Element.prototype.scrollIntoView = mockScrollIntoView;
+
+      queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      });
+      queryClient.setQueryData(["tracks"], mockTracks);
+    });
+
+    it("scrolls to track when selected from map", async () => {
+      const { rerender } = render(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            selectedTrackIds={new Set()}
+            anchorTrackId={null}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={null}
+            selectionSource={null}
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Track 1")).toBeInTheDocument();
+      });
+
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            selectedTrackIds={new Set([1])}
+            anchorTrackId={1}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={1}
+            selectionSource="map"
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockScrollIntoView).toHaveBeenCalledWith({
+          block: "center",
+          behavior: "smooth",
+        });
+      });
+    });
+
+    it("does not scroll when selected from sidebar", async () => {
+      const { rerender } = render(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            selectedTrackIds={new Set()}
+            anchorTrackId={null}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={null}
+            selectionSource={null}
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Track 1")).toBeInTheDocument();
+      });
+
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            selectedTrackIds={new Set([1])}
+            anchorTrackId={1}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={1}
+            selectionSource="sidebar"
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockScrollIntoView).not.toHaveBeenCalled();
+      });
+    });
+
+    it("does not scroll when selectionSource is null", async () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            selectedTrackIds={new Set([1])}
+            anchorTrackId={1}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={1}
+            selectionSource={null}
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Track 1")).toBeInTheDocument();
+      });
+
+      expect(mockScrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it("does not scroll when lastSelectedTrackId is null", async () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            selectedTrackIds={new Set()}
+            anchorTrackId={null}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={null}
+            selectionSource="map"
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Track 1")).toBeInTheDocument();
+      });
+
+      expect(mockScrollIntoView).not.toHaveBeenCalled();
+    });
   });
 });

@@ -113,4 +113,73 @@ describe("useSelection", () => {
     expect(result.current.selectedTrackIds.has(30)).toBe(true);
     expect(result.current.selectedTrackIds.has(40)).toBe(true);
   });
+
+  describe("selection source tracking", () => {
+    it("tracks selection source when provided", () => {
+      const { result } = renderHook(() => useSelection());
+
+      act(() => {
+        result.current.toggleSelection(1, false, "map");
+      });
+
+      expect(result.current.selectionSource).toBe("map");
+      expect(result.current.lastSelectedTrackId).toBe(1);
+    });
+
+    it("defaults to sidebar source when not provided", () => {
+      const { result } = renderHook(() => useSelection());
+
+      act(() => {
+        result.current.toggleSelection(1, false);
+      });
+
+      expect(result.current.selectionSource).toBe("sidebar");
+      expect(result.current.lastSelectedTrackId).toBe(1);
+    });
+
+    it("updates lastSelectedTrackId on each selection", () => {
+      const { result } = renderHook(() => useSelection());
+
+      act(() => {
+        result.current.toggleSelection(1, false, "map");
+      });
+
+      expect(result.current.lastSelectedTrackId).toBe(1);
+
+      act(() => {
+        result.current.toggleSelection(2, true, "map");
+      });
+
+      expect(result.current.lastSelectedTrackId).toBe(2);
+    });
+
+    it("tracks different selection sources", () => {
+      const { result } = renderHook(() => useSelection());
+
+      act(() => {
+        result.current.toggleSelection(1, false, "map");
+      });
+
+      expect(result.current.selectionSource).toBe("map");
+
+      act(() => {
+        result.current.toggleSelection(2, false, "sidebar");
+      });
+
+      expect(result.current.selectionSource).toBe("sidebar");
+
+      act(() => {
+        result.current.toggleSelection(3, false, "keyboard");
+      });
+
+      expect(result.current.selectionSource).toBe("keyboard");
+    });
+
+    it("initializes with null values", () => {
+      const { result } = renderHook(() => useSelection());
+
+      expect(result.current.lastSelectedTrackId).toBe(null);
+      expect(result.current.selectionSource).toBe(null);
+    });
+  });
 });
