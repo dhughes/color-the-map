@@ -36,6 +36,8 @@ function AppContent() {
     selectRange,
     selectAll,
     clearSelection,
+    lastSelectedTrackId,
+    selectionSource,
   } = useSelection();
 
   useEffect(() => {
@@ -148,7 +150,9 @@ function AppContent() {
           ref={mapRef}
           geometries={visibleGeometries}
           selectedTrackIds={selectedTrackIds}
-          onSelect={toggleSelection}
+          onSelect={(trackId, isMultiSelect) =>
+            toggleSelection(trackId, isMultiSelect, "map")
+          }
           onClearSelection={clearSelection}
           onViewportChange={onViewportChange}
         />
@@ -232,6 +236,8 @@ function AppContent() {
         onSelect={toggleSelection}
         onSelectRange={selectRange}
         onZoomToTrack={handleZoomToTrack}
+        lastSelectedTrackId={lastSelectedTrackId}
+        selectionSource={selectionSource}
       />
     </div>
   );

@@ -1,12 +1,23 @@
 import { useState } from "react";
 
+export type SelectionSource = "map" | "sidebar" | "keyboard";
+
 export function useSelection() {
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<number>>(
     new Set(),
   );
   const [anchorTrackId, setAnchorTrackId] = useState<number | null>(null);
+  const [lastSelectedTrackId, setLastSelectedTrackId] = useState<number | null>(
+    null,
+  );
+  const [selectionSource, setSelectionSource] =
+    useState<SelectionSource | null>(null);
 
-  const toggleSelection = (trackId: number, isMultiSelect: boolean) => {
+  const toggleSelection = (
+    trackId: number,
+    isMultiSelect: boolean,
+    source: SelectionSource = "sidebar",
+  ) => {
     if (isMultiSelect) {
       setSelectedTrackIds((prev) => {
         const newSet = new Set(prev);
@@ -22,6 +33,8 @@ export function useSelection() {
       setSelectedTrackIds(new Set([trackId]));
       setAnchorTrackId(trackId);
     }
+    setLastSelectedTrackId(trackId);
+    setSelectionSource(source);
   };
 
   const selectRange = (trackIds: number[], startId: number, endId: number) => {
@@ -54,5 +67,7 @@ export function useSelection() {
     selectRange,
     selectAll,
     clearSelection,
+    lastSelectedTrackId,
+    selectionSource,
   };
 }

@@ -4,6 +4,7 @@ import { listTracks, updateTrack, deleteTracks } from "../../api/client";
 import { TrackListItem } from "./TrackListItem";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
+import type { SelectionSource } from "../../hooks/useSelection";
 
 interface TrackListProps {
   selectedTrackIds: Set<number>;
@@ -11,6 +12,8 @@ interface TrackListProps {
   onSelect: (trackId: number, isMultiSelect: boolean) => void;
   onSelectRange: (trackIds: number[], startId: number, endId: number) => void;
   onZoomToTrack: (track: Track) => void;
+  lastSelectedTrackId: number | null;
+  selectionSource: SelectionSource | null;
 }
 
 export function TrackList({
@@ -19,6 +22,8 @@ export function TrackList({
   onSelect,
   onSelectRange,
   onZoomToTrack,
+  lastSelectedTrackId,
+  selectionSource,
 }: TrackListProps) {
   const queryClient = useQueryClient();
   const listRef = useRef<HTMLDivElement>(null);
@@ -105,6 +110,20 @@ export function TrackList({
   const handleCancelDelete = () => {
     setConfirmDelete(null);
   };
+
+  useEffect(() => {
+    if (selectionSource !== "map" || !lastSelectedTrackId || !listRef.current) {
+      return;
+    }
+
+    const item = listRef.current.querySelector(
+      `[data-track-id="${lastSelectedTrackId}"]`,
+    );
+
+    if (item) {
+      item.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [lastSelectedTrackId, selectionSource]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
