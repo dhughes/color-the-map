@@ -144,6 +144,7 @@ class TrackService:
         deleted = 0
         failed = 0
         errors = []
+        files_to_delete = []
 
         for track_id in track_ids:
             try:
@@ -162,12 +163,16 @@ class TrackService:
                 session.delete(track_model)
                 session.flush()
 
-                self.storage.delete_gpx(user_id, gpx_hash)
-
+                files_to_delete.append((user_id, gpx_hash))
                 deleted += 1
 
             except Exception as e:
                 failed += 1
                 errors.append(f"Track {track_id}: {str(e)}")
 
-        return {"deleted": deleted, "failed": failed, "errors": errors}
+        return {
+            "deleted": deleted,
+            "failed": failed,
+            "errors": errors,
+            "files_to_delete": files_to_delete,
+        }

@@ -134,7 +134,14 @@ async def delete_tracks(
 ):
     result = track_service.delete_tracks(request.track_ids, str(user.id), session)
     session.commit()
-    return DeleteResult(**result)
+
+    # Delete files only after successful commit
+    for user_id, gpx_hash in result.get("files_to_delete", []):
+        storage.delete_gpx(user_id, gpx_hash)
+
+    # Remove files_to_delete from result before returning
+    result_without_files = {k: v for k, v in result.items() if k != "files_to_delete"}
+    return DeleteResult(**result_without_files)
 
 
 @router.get("/location", response_model=LocationResponse)

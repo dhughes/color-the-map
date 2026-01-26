@@ -141,6 +141,10 @@ def test_delete_single_track(track_service, sample_gpx, db_session, test_gpx_dir
     delete_result = track_service.delete_tracks([track_id], "test-user-id", db_session)
     db_session.commit()
 
+    # Delete files after successful commit (mimicking route handler behavior)
+    for user_id, gpx_hash in delete_result.get("files_to_delete", []):
+        track_service.storage.delete_gpx(user_id, gpx_hash)
+
     assert delete_result["deleted"] == 1
     assert delete_result["failed"] == 0
     assert len(delete_result["errors"]) == 0
