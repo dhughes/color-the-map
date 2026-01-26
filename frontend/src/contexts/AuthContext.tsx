@@ -4,8 +4,8 @@ import {
   useState,
   useEffect,
   useCallback,
-  ReactNode,
 } from "react";
+import type { ReactNode } from "react";
 
 interface User {
   id: string;
