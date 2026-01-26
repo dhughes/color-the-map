@@ -73,7 +73,7 @@ describe("API Client", () => {
 
       const result = await listTracks();
 
-      expect(globalThis.fetch).toHaveBeenCalledWith("api/v1/tracks");
+      expect(globalThis.fetch).toHaveBeenCalledWith("api/v1/tracks", {});
       expect(result).toEqual(mockTracks);
     });
 

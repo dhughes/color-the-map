@@ -13,7 +13,7 @@ vi.mock("../contexts/AuthContext", async () => {
 describe("LoginModal", () => {
   const mockLogin = vi.fn();
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     const { useAuth } = await import("../contexts/AuthContext");
     vi.mocked(useAuth).mockReturnValue({
@@ -100,7 +100,7 @@ describe("LoginModal", () => {
 
     expect(screen.getByLabelText("Email")).toBeDisabled();
     expect(screen.getByLabelText("Password")).toBeDisabled();
-    expect(screen.getByRole("button", { name: /navigating/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /signing in/i })).toBeDisabled();
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalled();
