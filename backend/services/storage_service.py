@@ -19,20 +19,20 @@ class StorageService:
         text = text.strip()
         return text.encode("utf-8")
 
-    def store_gpx(self, gpx_hash: str, content: bytes) -> Path:
-        file_path = self.storage_path / f"{gpx_hash}.gpx"
+    def store_gpx(self, user_id: str, gpx_hash: str, content: bytes) -> Path:
+        file_path = self.storage_path / f"{user_id}_{gpx_hash}.gpx"
         if not file_path.exists():
             file_path.write_bytes(content)
         return file_path
 
-    def load_gpx(self, gpx_hash: str) -> Optional[bytes]:
-        file_path = self.storage_path / f"{gpx_hash}.gpx"
+    def load_gpx(self, user_id: str, gpx_hash: str) -> Optional[bytes]:
+        file_path = self.storage_path / f"{user_id}_{gpx_hash}.gpx"
         if not file_path.exists():
             return None
         return file_path.read_bytes()
 
-    def delete_gpx(self, gpx_hash: str) -> bool:
-        file_path = self.storage_path / f"{gpx_hash}.gpx"
+    def delete_gpx(self, user_id: str, gpx_hash: str) -> bool:
+        file_path = self.storage_path / f"{user_id}_{gpx_hash}.gpx"
         if file_path.exists():
             file_path.unlink()
             return True

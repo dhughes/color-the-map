@@ -43,7 +43,9 @@
       "Bash(ruff format:*)",
       "Bash(mypy:*)",
       "Skill(tdd-feature-dev:tdd-feature-development)",
-      "WebSearch"
+      "WebSearch",
+      "mcp__chrome__browser_type",
+      "mcp__chrome__browser_run_code"
     ]
   }
 }

@@ -3,6 +3,9 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router as api_router
+from .auth.routes import router as auth_router
+from .auth.database import engine
+from .auth.models import Base
 from .config import config
 from .services.geoip_service import GeoIPService
 import logging
@@ -22,6 +25,10 @@ async def lifespan(app: FastAPI):
     global geoip_service
 
     # Startup
+    # Create SQLAlchemy tables (auth only)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
     if config.MAXMIND_ACCOUNT_ID and config.MAXMIND_LICENSE_KEY:
         geoip_service = GeoIPService(
             config.GEOIP_DB_PATH,
@@ -57,6 +64,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(api_router, prefix="/api/v1", tags=["tracks"])
 
 

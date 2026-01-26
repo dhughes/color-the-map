@@ -6,6 +6,7 @@ from typing import Optional
 @dataclass
 class Track:
     id: int
+    user_id: str
     hash: str
     name: str
     filename: str
@@ -44,6 +45,7 @@ class Track:
 
         return cls(
             id=row["id"],
+            user_id=row["user_id"],
             hash=row["hash"],
             name=row["name"],
             filename=row["filename"],

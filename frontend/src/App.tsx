@@ -9,14 +9,22 @@ import { Map, type MapRef } from "./components/Map";
 import { UploadZone } from "./components/UploadZone";
 import { StatusMessage } from "./components/StatusMessage";
 import { TrackList } from "./components/TrackList/TrackList";
+import { LoginModal } from "./components/LoginModal";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { useSelection } from "./hooks/useSelection";
 import { useViewportGeometries } from "./hooks/useViewportGeometries";
-import { uploadTracksWithProgress, listTracks } from "./api/client";
+import {
+  uploadTracksWithProgress,
+  listTracks,
+  setAccessToken,
+} from "./api/client";
 import type { Track } from "./types/track";
 
 const queryClient = new QueryClient();
 
 function AppContent() {
+  const { isAuthenticated, isLoading, accessToken, logout } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{
     current: number;
@@ -40,6 +48,20 @@ function AppContent() {
     selectionSource,
   } = useSelection();
 
+  const { data: tracks = [] } = useQuery<Track[]>({
+    queryKey: ["tracks"],
+    queryFn: listTracks,
+    enabled: isAuthenticated,
+  });
+
+  useEffect(() => {
+    setAccessToken(accessToken);
+  }, [accessToken]);
+
+  useEffect(() => {
+    setShowLoginModal(!isAuthenticated && !isLoading);
+  }, [isAuthenticated, isLoading]);
+
   useEffect(() => {
     return () => {
       if (statusTimeoutRef.current) {
@@ -47,11 +69,6 @@ function AppContent() {
       }
     };
   }, []);
-
-  const { data: tracks = [] } = useQuery<Track[]>({
-    queryKey: ["tracks"],
-    queryFn: listTracks,
-  });
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -143,110 +160,176 @@ function AppContent() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          fontFamily: "system-ui, sans-serif",
+          color: "#666",
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
   return (
-    <div className="app-container">
-      <div className="app-main">
-        <Map
-          ref={mapRef}
-          geometries={visibleGeometries}
-          selectedTrackIds={selectedTrackIds}
-          onSelect={(trackId, isMultiSelect) =>
-            toggleSelection(trackId, isMultiSelect, "map")
-          }
-          onClearSelection={clearSelection}
-          onViewportChange={onViewportChange}
-        />
-        {isLoadingGeometries && (
-          <div
+    <>
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
+      <div className="app-container">
+        {isAuthenticated && (
+          <button
+            onClick={logout}
             style={{
               position: "absolute",
-              top: "20px",
-              right: "20px",
-              background: "rgba(255, 255, 255, 0.95)",
-              padding: "8px 12px",
-              borderRadius: "4px",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              fontSize: "14px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
+              top: "16px",
+              left: "16px",
+              zIndex: 100,
+              padding: "8px 16px",
+              background: "var(--color-overlay, #fffef9)",
+              color: "var(--color-text, #1a1a1a)",
+              border: "1px solid var(--color-border, #e8e8e6)",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "0.875rem",
+              fontWeight: "500",
+              letterSpacing: "-0.01em",
+              fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+              boxShadow: "var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.06))",
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--color-bg, #fafaf8)";
+              e.currentTarget.style.borderColor = "rgba(107, 107, 107, 0.3)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow =
+                "var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.08))";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background =
+                "var(--color-overlay, #fffef9)";
+              e.currentTarget.style.borderColor =
+                "var(--color-border, #e8e8e6)";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow =
+                "var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.06))";
             }}
           >
+            Logout
+          </button>
+        )}
+        <div className="app-main">
+          <Map
+            ref={mapRef}
+            geometries={visibleGeometries}
+            selectedTrackIds={selectedTrackIds}
+            onSelect={(trackId, isMultiSelect) =>
+              toggleSelection(trackId, isMultiSelect, "map")
+            }
+            onClearSelection={clearSelection}
+            onViewportChange={onViewportChange}
+          />
+          {isLoadingGeometries && (
             <div
               style={{
-                width: "16px",
-                height: "16px",
-                border: "2px solid #ccc",
-                borderTopColor: "#666",
-                borderRadius: "50%",
-                animation: "spin 0.6s linear infinite",
-              }}
-            />
-            Loading {geometryLoadingCount}{" "}
-            {geometryLoadingCount === 1 ? "track" : "tracks"}...
-          </div>
-        )}
-        {geometryError && (
-          <div
-            style={{
-              position: "absolute",
-              top: "20px",
-              right: "20px",
-              background: "rgba(220, 38, 38, 0.95)",
-              color: "white",
-              padding: "8px 12px",
-              borderRadius: "4px",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              fontSize: "14px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            {geometryError}
-            <button
-              onClick={retryFetch}
-              style={{
-                background: "white",
-                color: "#dc2626",
-                border: "none",
-                padding: "4px 8px",
-                borderRadius: "3px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
+                position: "absolute",
+                top: "20px",
+                right: "20px",
+                background: "rgba(255, 255, 255, 0.95)",
+                padding: "8px 12px",
+                borderRadius: "4px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                fontSize: "14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
               }}
             >
-              Retry
-            </button>
-          </div>
-        )}
-        <UploadZone
-          onFilesDropped={handleFilesDropped}
-          isUploading={isUploading}
-          uploadProgress={uploadProgress}
+              <div
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  border: "2px solid #ccc",
+                  borderTopColor: "#666",
+                  borderRadius: "50%",
+                  animation: "spin 0.6s linear infinite",
+                }}
+              />
+              Loading {geometryLoadingCount}{" "}
+              {geometryLoadingCount === 1 ? "track" : "tracks"}...
+            </div>
+          )}
+          {geometryError && (
+            <div
+              style={{
+                position: "absolute",
+                top: "20px",
+                right: "20px",
+                background: "rgba(220, 38, 38, 0.95)",
+                color: "white",
+                padding: "8px 12px",
+                borderRadius: "4px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                fontSize: "14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              {geometryError}
+              <button
+                onClick={retryFetch}
+                style={{
+                  background: "white",
+                  color: "#dc2626",
+                  border: "none",
+                  padding: "4px 8px",
+                  borderRadius: "3px",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          <UploadZone
+            onFilesDropped={handleFilesDropped}
+            isUploading={isUploading}
+            uploadProgress={uploadProgress}
+          />
+          {status && (
+            <StatusMessage message={status.message} type={status.type} />
+          )}
+        </div>
+        <TrackList
+          selectedTrackIds={selectedTrackIds}
+          anchorTrackId={anchorTrackId}
+          onSelect={toggleSelection}
+          onSelectRange={selectRange}
+          onZoomToTrack={handleZoomToTrack}
+          lastSelectedTrackId={lastSelectedTrackId}
+          selectionSource={selectionSource}
         />
-        {status && (
-          <StatusMessage message={status.message} type={status.type} />
-        )}
       </div>
-      <TrackList
-        selectedTrackIds={selectedTrackIds}
-        anchorTrackId={anchorTrackId}
-        onSelect={toggleSelection}
-        onSelectRange={selectRange}
-        onZoomToTrack={handleZoomToTrack}
-        lastSelectedTrackId={lastSelectedTrackId}
-        selectionSource={selectionSource}
-      />
-    </div>
+    </>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
