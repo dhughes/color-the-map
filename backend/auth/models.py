@@ -36,7 +36,6 @@ class RefreshToken(Base):
         String(36),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     token_hash: Mapped[str] = mapped_column(
         String(64), unique=True, nullable=False, index=True
