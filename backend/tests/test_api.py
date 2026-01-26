@@ -2,7 +2,6 @@ import pytest
 from pathlib import Path
 from fastapi.testclient import TestClient
 from backend.main import app
-from backend.config import config
 from backend.auth.database import async_session_maker
 from backend.auth.models import User, RefreshToken
 from passlib.context import CryptContext
@@ -14,40 +13,43 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @pytest.fixture(scope="function", autouse=True)
-def clean_test_db(tmp_path):
-    test_db_path = tmp_path / "test.db"
-    test_gpx_dir = tmp_path / "gpx"
+def setup_api_test_environment(test_gpx_dir, tmp_path):
+    """Setup API test-specific overrides
 
-    original_db_path = config.DB_PATH
-    original_gpx_dir = config.GPX_DIR
-
-    config.DB_PATH = test_db_path
-    config.GPX_DIR = test_gpx_dir
-
+    Note: Does NOT override config (conftest.py already handles that).
+    Creates separate database file for API tests since TestClient needs
+    independent database access from the conftest.py session fixture.
+    Each test gets a fresh database to ensure isolation.
+    """
     from backend.services.storage_service import StorageService
     from backend.services.gpx_parser import GPXParser
     from backend.services.track_service import TrackService
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
+    from backend.auth.models import Base
+    import backend.api.routes as routes_module
 
+    # Use GPX dir from conftest, but create our own database file for API tests
     new_storage = StorageService(test_gpx_dir)
     new_parser = GPXParser()
     new_track_service = TrackService(new_storage, new_parser)
 
-    test_sync_engine = create_engine(f"sqlite:///{test_db_path}")
+    # Create separate database file for each test (ensures complete isolation)
+    api_test_db_path = tmp_path / "api_test.db"
+    test_sync_engine = create_engine(f"sqlite:///{api_test_db_path}")
     test_session_local = sessionmaker(bind=test_sync_engine, expire_on_commit=False)
-
-    from backend.auth.models import Base
 
     Base.metadata.create_all(test_sync_engine)
 
-    import backend.api.routes as routes_module
-
+    # Override module-level variables for API tests
     routes_module.storage = new_storage
     routes_module.track_service = new_track_service
     routes_module.sync_engine = test_sync_engine
     routes_module.SessionLocal = test_session_local
 
+    yield
+
+    # Clean up auth database after test
     async def cleanup_auth():
         async with async_session_maker() as session:
             await session.execute(delete(RefreshToken))
@@ -55,11 +57,6 @@ def clean_test_db(tmp_path):
             await session.commit()
 
     asyncio.run(cleanup_auth())
-
-    yield
-
-    config.DB_PATH = original_db_path
-    config.GPX_DIR = original_gpx_dir
 
 
 client = TestClient(app)
