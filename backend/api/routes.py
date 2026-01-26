@@ -37,14 +37,18 @@ def get_db_session():
         session.close()
 
 
-@router.post(
-    "/tracks", response_model=UploadResult, status_code=status.HTTP_201_CREATED
-)
+@router.post("/tracks", response_model=UploadResult)
 async def upload_tracks(
     files: List[UploadFile] = File(...),
     user: User = Depends(current_active_user),
     session: Session = Depends(get_db_session),
 ):
+    import logging
+    from sqlalchemy.exc import IntegrityError
+    from fastapi.responses import JSONResponse
+
+    logger = logging.getLogger(__name__)
+
     uploaded = 0
     failed = 0
     track_ids = []
@@ -76,14 +80,37 @@ async def upload_tracks(
 
             session.commit()
 
+        except IntegrityError as e:
+            session.rollback()
+            failed += 1
+            logger.error(f"IntegrityError uploading {file.filename}: {str(e)}")
+            errors.append(f"{file.filename}: This file has already been uploaded")
+        except ValueError as e:
+            session.rollback()
+            failed += 1
+            logger.error(f"ValueError uploading {file.filename}: {str(e)}")
+            errors.append(f"{file.filename}: {str(e)}")
         except Exception as e:
             session.rollback()
             failed += 1
-            errors.append(f"{file.filename}: {str(e)}")
+            logger.error(f"Unexpected error uploading {file.filename}: {str(e)}")
+            errors.append(f"{file.filename}: Upload failed")
 
-    return UploadResult(
-        uploaded=uploaded, failed=failed, track_ids=track_ids, errors=errors
-    )
+    response_data = {
+        "uploaded": uploaded,
+        "failed": failed,
+        "track_ids": track_ids,
+        "errors": errors,
+    }
+
+    if uploaded > 0:
+        return JSONResponse(content=response_data, status_code=status.HTTP_201_CREATED)
+    elif failed > 0:
+        return JSONResponse(
+            content=response_data, status_code=status.HTTP_400_BAD_REQUEST
+        )
+    else:
+        return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
 
 
 @router.get("/tracks", response_model=List[TrackResponse])

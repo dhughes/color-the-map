@@ -23,13 +23,18 @@ class TrackService:
         gpx_hash = self.storage.calculate_hash(content)
 
         existing = session.execute(
-            select(TrackModel).where(
-                TrackModel.hash == gpx_hash, TrackModel.user_id == user_id
-            )
+            select(TrackModel).where(TrackModel.hash == gpx_hash)
         ).scalar_one_or_none()
 
         if existing:
-            return UploadResult(duplicate=True, track=Track.from_sqlalchemy(existing))
+            if existing.user_id == user_id:
+                return UploadResult(
+                    duplicate=True, track=Track.from_sqlalchemy(existing)
+                )
+            else:
+                raise ValueError(
+                    "This GPX file has already been uploaded by another user"
+                )
 
         try:
             gpx_data = self.parser.parse(content)
