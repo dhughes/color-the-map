@@ -74,11 +74,12 @@ async def upload_tracks(
                 uploaded += 1
                 track_ids.append(result.track.id)
 
+            session.commit()
+
         except Exception as e:
+            session.rollback()
             failed += 1
             errors.append(f"{file.filename}: {str(e)}")
-
-    session.commit()
 
     return UploadResult(
         uploaded=uploaded, failed=failed, track_ids=track_ids, errors=errors
