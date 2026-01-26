@@ -55,17 +55,13 @@ class Track(Base):
     __tablename__ = "tracks"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
-    hash: Mapped[str] = mapped_column(
-        String(64), unique=True, nullable=False, index=True
-    )
+    user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     filename: Mapped[str] = mapped_column(String, nullable=False)
-    activity_type: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    activity_type: Mapped[str | None] = mapped_column(String, nullable=True)
     activity_type_inferred: Mapped[str | None] = mapped_column(String, nullable=True)
-    activity_date: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, index=True
-    )
+    activity_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     distance_meters: Mapped[float | None] = mapped_column(Float, nullable=True)
