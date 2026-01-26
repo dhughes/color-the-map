@@ -1,8 +1,10 @@
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+from sqlalchemy.orm import Session
+from sqlalchemy import select
 from .gpx_parser import GPXParser
 from .storage_service import StorageService
-from ..db.database import Database
+from ..auth.models import Track as TrackModel
 from ..models.track import Track
 from ..models.upload_result import UploadResult
 from ..models.track_geometry import TrackGeometry
@@ -11,23 +13,23 @@ ALLOWED_UPDATE_FIELDS = {"visible", "name", "activity_type", "description"}
 
 
 class TrackService:
-    def __init__(self, db: Database, storage: StorageService, parser: GPXParser):
-        self.db = db
+    def __init__(self, storage: StorageService, parser: GPXParser):
         self.storage = storage
         self.parser = parser
 
-    def upload_track(self, filename: str, content: bytes, user_id: str) -> UploadResult:
+    def upload_track(
+        self, filename: str, content: bytes, user_id: str, session: Session
+    ) -> UploadResult:
         gpx_hash = self.storage.calculate_hash(content)
 
-        with self.db.get_connection() as conn:
-            cursor = conn.execute(
-                "SELECT * FROM tracks WHERE hash = ? AND user_id = ?",
-                (gpx_hash, user_id),
+        existing = session.execute(
+            select(TrackModel).where(
+                TrackModel.hash == gpx_hash, TrackModel.user_id == user_id
             )
-            existing = cursor.fetchone()
+        ).scalar_one_or_none()
 
         if existing:
-            return UploadResult(duplicate=True, track=Track.from_db_row(existing))
+            return UploadResult(duplicate=True, track=Track.from_sqlalchemy(existing))
 
         try:
             gpx_data = self.parser.parse(content)
@@ -38,91 +40,60 @@ class TrackService:
 
         name = Path(filename).stem
         activity_type = "Unknown"
-        with self.db.get_connection() as conn:
-            cursor = conn.execute(
-                """
-                INSERT INTO tracks (
-                    user_id, hash, name, filename, activity_type, activity_type_inferred,
-                    activity_date, distance_meters, duration_seconds,
-                    avg_speed_ms, max_speed_ms, min_speed_ms,
-                    elevation_gain_meters, elevation_loss_meters,
-                    bounds_min_lat, bounds_max_lat,
-                    bounds_min_lon, bounds_max_lon
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-                (
-                    user_id,
-                    gpx_hash,
-                    name,
-                    filename,
-                    activity_type,
-                    activity_type,
-                    gpx_data.activity_date,
-                    gpx_data.distance_meters,
-                    gpx_data.duration_seconds,
-                    gpx_data.avg_speed_ms,
-                    gpx_data.max_speed_ms,
-                    gpx_data.min_speed_ms,
-                    gpx_data.elevation_gain_meters,
-                    gpx_data.elevation_loss_meters,
-                    gpx_data.bounds_min_lat,
-                    gpx_data.bounds_max_lat,
-                    gpx_data.bounds_min_lon,
-                    gpx_data.bounds_max_lon,
-                ),
+
+        track_model = TrackModel(
+            user_id=user_id,
+            hash=gpx_hash,
+            name=name,
+            filename=filename,
+            activity_type=activity_type,
+            activity_type_inferred=activity_type,
+            activity_date=gpx_data.activity_date,
+            distance_meters=gpx_data.distance_meters,
+            duration_seconds=gpx_data.duration_seconds,
+            avg_speed_ms=gpx_data.avg_speed_ms,
+            max_speed_ms=gpx_data.max_speed_ms,
+            min_speed_ms=gpx_data.min_speed_ms,
+            elevation_gain_meters=gpx_data.elevation_gain_meters,
+            elevation_loss_meters=gpx_data.elevation_loss_meters,
+            bounds_min_lat=gpx_data.bounds_min_lat,
+            bounds_max_lat=gpx_data.bounds_max_lat,
+            bounds_min_lon=gpx_data.bounds_min_lon,
+            bounds_max_lon=gpx_data.bounds_max_lon,
+        )
+
+        session.add(track_model)
+        session.flush()
+
+        return UploadResult(duplicate=False, track=Track.from_sqlalchemy(track_model))
+
+    def get_track_metadata(
+        self, track_id: int, user_id: str, session: Session
+    ) -> Optional[Track]:
+        track_model = session.execute(
+            select(TrackModel).where(
+                TrackModel.id == track_id, TrackModel.user_id == user_id
             )
+        ).scalar_one_or_none()
 
-            track_id = cursor.lastrowid
-
-            conn.execute(
-                """
-                INSERT INTO track_spatial (id, min_lat, max_lat, min_lon, max_lon)
-                VALUES (?, ?, ?, ?, ?)
-            """,
-                (
-                    track_id,
-                    gpx_data.bounds_min_lat,
-                    gpx_data.bounds_max_lat,
-                    gpx_data.bounds_min_lon,
-                    gpx_data.bounds_max_lon,
-                ),
-            )
-
-            cursor = conn.execute("SELECT * FROM tracks WHERE id = ?", (track_id,))
-            track = Track.from_db_row(cursor.fetchone())
-
-        return UploadResult(duplicate=False, track=track)
-
-    def get_track_metadata(self, track_id: int, user_id: str) -> Optional[Track]:
-        with self.db.get_connection() as conn:
-            cursor = conn.execute(
-                "SELECT * FROM tracks WHERE id = ? AND user_id = ?", (track_id, user_id)
-            )
-            track = cursor.fetchone()
-
-        if not track:
+        if not track_model:
             return None
 
-        return Track.from_db_row(track)
+        return Track.from_sqlalchemy(track_model)
 
-    def list_tracks(self, user_id: str) -> List[Track]:
-        with self.db.get_connection() as conn:
-            cursor = conn.execute(
-                """
-                SELECT * FROM tracks
-                WHERE user_id = ?
-                ORDER BY activity_date DESC
-            """,
-                (user_id,),
-            )
-            tracks = [Track.from_db_row(row) for row in cursor.fetchall()]
+    def list_tracks(self, user_id: str, session: Session) -> List[Track]:
+        track_models = session.execute(
+            select(TrackModel)
+            .where(TrackModel.user_id == user_id)
+            .order_by(TrackModel.activity_date.desc())
+        ).scalars()
 
-        return tracks
+        return [Track.from_sqlalchemy(model) for model in track_models]
 
     def get_track_geometry(
-        self, track_id: int, user_id: str
+        self, track_id: int, user_id: str, session: Session
     ) -> Optional[TrackGeometry]:
-        track = self.get_track_metadata(track_id, user_id)
+        track = self.get_track_metadata(track_id, user_id, session)
         if not track:
             return None
 
@@ -135,67 +106,63 @@ class TrackService:
         return TrackGeometry(track_id=track_id, coordinates=gpx_data.coordinates)
 
     def get_multiple_geometries(
-        self, track_ids: List[int], user_id: str
+        self, track_ids: List[int], user_id: str, session: Session
     ) -> List[TrackGeometry]:
         geometries = []
         for track_id in track_ids:
-            geometry = self.get_track_geometry(track_id, user_id)
+            geometry = self.get_track_geometry(track_id, user_id, session)
             if geometry:
                 geometries.append(geometry)
         return geometries
 
     def update_track(
-        self, track_id: int, updates: Dict[str, Any], user_id: str
+        self, track_id: int, updates: Dict[str, Any], user_id: str, session: Session
     ) -> Optional[Track]:
         allowed_updates = {
             key: value for key, value in updates.items() if key in ALLOWED_UPDATE_FIELDS
         }
 
-        if not allowed_updates:
-            return self.get_track_metadata(track_id, user_id)
-
-        with self.db.get_connection() as conn:
-            set_clause = ", ".join(f"{field} = ?" for field in allowed_updates.keys())
-            params = list(allowed_updates.values()) + [track_id, user_id]
-            query = f"UPDATE tracks SET {set_clause} WHERE id = ? AND user_id = ?"
-            conn.execute(query, tuple(params))
-
-            cursor = conn.execute(
-                "SELECT * FROM tracks WHERE id = ? AND user_id = ?", (track_id, user_id)
+        track_model = session.execute(
+            select(TrackModel).where(
+                TrackModel.id == track_id, TrackModel.user_id == user_id
             )
-            track = cursor.fetchone()
+        ).scalar_one_or_none()
 
-        if not track:
+        if not track_model:
             return None
 
-        return Track.from_db_row(track)
+        for key, value in allowed_updates.items():
+            setattr(track_model, key, value)
 
-    def delete_tracks(self, track_ids: List[int], user_id: str) -> Dict[str, Any]:
+        session.flush()
+
+        return Track.from_sqlalchemy(track_model)
+
+    def delete_tracks(
+        self, track_ids: List[int], user_id: str, session: Session
+    ) -> Dict[str, Any]:
         deleted = 0
         failed = 0
         errors = []
 
         for track_id in track_ids:
             try:
-                track = self.get_track_metadata(track_id, user_id)
-                if not track:
+                track_model = session.execute(
+                    select(TrackModel).where(
+                        TrackModel.id == track_id, TrackModel.user_id == user_id
+                    )
+                ).scalar_one_or_none()
+
+                if not track_model:
                     failed += 1
                     errors.append(f"Track {track_id}: Not found")
                     continue
 
-                with self.db.get_connection() as conn:
-                    conn.execute("DELETE FROM track_spatial WHERE id = ?", (track_id,))
-                    cursor = conn.execute(
-                        "DELETE FROM tracks WHERE id = ? AND user_id = ?",
-                        (track_id, user_id),
-                    )
+                gpx_hash = track_model.hash
+                session.delete(track_model)
+                session.flush()
 
-                    if cursor.rowcount == 0:
-                        failed += 1
-                        errors.append(f"Track {track_id}: Database deletion failed")
-                        continue
-
-                self.storage.delete_gpx(user_id, track.hash)
+                self.storage.delete_gpx(user_id, gpx_hash)
 
                 deleted += 1
 

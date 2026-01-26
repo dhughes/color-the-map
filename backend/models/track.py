@@ -35,6 +35,36 @@ class Track:
     updated_at: datetime
 
     @classmethod
+    def from_sqlalchemy(cls, model) -> "Track":
+        """Create Track from SQLAlchemy model"""
+        return cls(
+            id=model.id,
+            user_id=model.user_id,
+            hash=model.hash,
+            name=model.name,
+            filename=model.filename,
+            activity_type=model.activity_type,
+            activity_type_inferred=model.activity_type_inferred,
+            activity_date=model.activity_date,
+            uploaded_at=model.uploaded_at,
+            distance_meters=model.distance_meters,
+            duration_seconds=model.duration_seconds,
+            avg_speed_ms=model.avg_speed_ms,
+            max_speed_ms=model.max_speed_ms,
+            min_speed_ms=model.min_speed_ms,
+            elevation_gain_meters=model.elevation_gain_meters,
+            elevation_loss_meters=model.elevation_loss_meters,
+            bounds_min_lat=model.bounds_min_lat,
+            bounds_min_lon=model.bounds_min_lon,
+            bounds_max_lat=model.bounds_max_lat,
+            bounds_max_lon=model.bounds_max_lon,
+            visible=model.visible,
+            description=model.description,
+            created_at=model.created_at,
+            updated_at=model.updated_at,
+        )
+
+    @classmethod
     def from_db_row(cls, row) -> "Track":
         """Create Track from sqlite3.Row, parsing datetime strings"""
 

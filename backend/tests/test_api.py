@@ -3,7 +3,6 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 from backend.main import app
 from backend.config import config
-from backend.db.database import Database
 from backend.auth.database import async_session_maker
 from backend.auth.models import User, RefreshToken
 from passlib.context import CryptContext
@@ -25,20 +24,29 @@ def clean_test_db(tmp_path):
     config.DB_PATH = test_db_path
     config.GPX_DIR = test_gpx_dir
 
-    new_db = Database(test_db_path)
     from backend.services.storage_service import StorageService
     from backend.services.gpx_parser import GPXParser
     from backend.services.track_service import TrackService
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
 
     new_storage = StorageService(test_gpx_dir)
     new_parser = GPXParser()
-    new_track_service = TrackService(new_db, new_storage, new_parser)
+    new_track_service = TrackService(new_storage, new_parser)
+
+    test_sync_engine = create_engine(f"sqlite:///{test_db_path}")
+    test_session_local = sessionmaker(bind=test_sync_engine, expire_on_commit=False)
+
+    from backend.auth.models import Base
+
+    Base.metadata.create_all(test_sync_engine)
 
     import backend.api.routes as routes_module
 
-    routes_module.db = new_db
     routes_module.storage = new_storage
     routes_module.track_service = new_track_service
+    routes_module.sync_engine = test_sync_engine
+    routes_module.SessionLocal = test_session_local
 
     async def cleanup_auth():
         async with async_session_maker() as session:
