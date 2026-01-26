@@ -55,7 +55,7 @@ class Track(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[str] = mapped_column(String(36), nullable=False)
-    hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    hash: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     filename: Mapped[str] = mapped_column(String, nullable=False)
     activity_type: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -89,4 +89,5 @@ class Track(Base):
         Index("idx_tracks_date", "activity_date"),
         Index("idx_tracks_type", "activity_type"),
         Index("idx_tracks_user_id", "user_id"),
+        Index("idx_tracks_user_hash", "user_id", "hash", unique=True),
     )

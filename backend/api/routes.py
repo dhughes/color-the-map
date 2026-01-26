@@ -83,18 +83,24 @@ async def upload_tracks(
         except IntegrityError as e:
             session.rollback()
             failed += 1
-            logger.error(f"IntegrityError uploading {file.filename}: {str(e)}")
-            errors.append(f"{file.filename}: This file has already been uploaded")
+            logger.error(
+                f"Database integrity error uploading {file.filename} for user {user.id}: {str(e)}",
+                exc_info=True,
+            )
+            errors.append(f"{file.filename}: Unable to process file")
         except ValueError as e:
             session.rollback()
             failed += 1
-            logger.error(f"ValueError uploading {file.filename}: {str(e)}")
-            errors.append(f"{file.filename}: {str(e)}")
+            logger.warning(f"Validation error uploading {file.filename}: {str(e)}")
+            errors.append(f"{file.filename}: Invalid GPX file")
         except Exception as e:
             session.rollback()
             failed += 1
-            logger.error(f"Unexpected error uploading {file.filename}: {str(e)}")
-            errors.append(f"{file.filename}: Upload failed")
+            logger.error(
+                f"Unexpected error uploading {file.filename} for user {user.id}: {str(e)}",
+                exc_info=True,
+            )
+            errors.append(f"{file.filename}: Unable to process file")
 
     response_data = {
         "uploaded": uploaded,
