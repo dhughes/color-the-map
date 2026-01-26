@@ -4,6 +4,14 @@ from fastapi.testclient import TestClient
 from backend.main import app
 from backend.config import config
 from backend.db.database import Database
+from backend.auth.database import async_session_maker
+from backend.auth.models import User, RefreshToken
+from passlib.context import CryptContext
+from sqlalchemy import delete
+import uuid
+import asyncio
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -32,6 +40,14 @@ def clean_test_db(tmp_path):
     routes_module.storage = new_storage
     routes_module.track_service = new_track_service
 
+    async def cleanup_auth():
+        async with async_session_maker() as session:
+            await session.execute(delete(RefreshToken))
+            await session.execute(delete(User))
+            await session.commit()
+
+    asyncio.run(cleanup_auth())
+
     yield
 
     config.DB_PATH = original_db_path
@@ -39,6 +55,31 @@ def clean_test_db(tmp_path):
 
 
 client = TestClient(app)
+
+
+@pytest.fixture
+def auth_token():
+    user = User(
+        id=str(uuid.uuid4()),
+        email="testapi@example.com",
+        hashed_password=pwd_context.hash("testpass"),
+        is_active=True,
+        is_verified=True,
+        is_superuser=False,
+    )
+
+    async def create_user():
+        async with async_session_maker() as session:
+            session.add(user)
+            await session.commit()
+
+    asyncio.run(create_user())
+
+    response = client.post(
+        "/api/v1/auth/login",
+        data={"username": "testapi@example.com", "password": "testpass"},
+    )
+    return response.json()["access_token"]
 
 
 @pytest.fixture
@@ -57,10 +98,11 @@ def test_health_check():
     assert response.json() == {"status": "healthy"}
 
 
-def test_upload_track(sample_gpx_file):
+def test_upload_track(sample_gpx_file, auth_token):
     response = client.post(
         "/api/v1/tracks",
         files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
+        headers={"Authorization": f"Bearer {auth_token}"},
     )
 
     assert response.status_code == 201
@@ -70,13 +112,16 @@ def test_upload_track(sample_gpx_file):
     assert len(data["track_ids"]) == 1
 
 
-def test_list_tracks(sample_gpx_file):
+def test_list_tracks(sample_gpx_file, auth_token):
     client.post(
         "/api/v1/tracks",
         files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
+        headers={"Authorization": f"Bearer {auth_token}"},
     )
 
-    response = client.get("/api/v1/tracks")
+    response = client.get(
+        "/api/v1/tracks", headers={"Authorization": f"Bearer {auth_token}"}
+    )
 
     assert response.status_code == 200
     tracks = response.json()
@@ -86,14 +131,19 @@ def test_list_tracks(sample_gpx_file):
     assert "distance_meters" in tracks[0]
 
 
-def test_get_track_geometry(sample_gpx_file):
+def test_get_track_geometry(sample_gpx_file, auth_token):
     upload_response = client.post(
         "/api/v1/tracks",
         files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
+        headers={"Authorization": f"Bearer {auth_token}"},
     )
     track_id = upload_response.json()["track_ids"][0]
 
-    response = client.post("/api/v1/tracks/geometry", json={"track_ids": [track_id]})
+    response = client.post(
+        "/api/v1/tracks/geometry",
+        json={"track_ids": [track_id]},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
 
     assert response.status_code == 200
     geometries = response.json()
@@ -102,15 +152,18 @@ def test_get_track_geometry(sample_gpx_file):
     assert len(geometries[0]["coordinates"]) > 0
 
 
-def test_update_track(sample_gpx_file):
+def test_update_track(sample_gpx_file, auth_token):
     upload_response = client.post(
         "/api/v1/tracks",
         files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
+        headers={"Authorization": f"Bearer {auth_token}"},
     )
     track_id = upload_response.json()["track_ids"][0]
 
     response = client.patch(
-        f"/api/v1/tracks/{track_id}", json={"visible": False, "name": "Updated Name"}
+        f"/api/v1/tracks/{track_id}",
+        json={"visible": False, "name": "Updated Name"},
+        headers={"Authorization": f"Bearer {auth_token}"},
     )
 
     assert response.status_code == 200
@@ -119,20 +172,28 @@ def test_update_track(sample_gpx_file):
     assert data["name"] == "Updated Name"
 
 
-def test_update_nonexistent_track():
-    response = client.patch("/api/v1/tracks/9999", json={"visible": False})
+def test_update_nonexistent_track(auth_token):
+    response = client.patch(
+        "/api/v1/tracks/9999",
+        json={"visible": False},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
     assert response.status_code == 404
 
 
-def test_delete_single_track(sample_gpx_file):
+def test_delete_single_track(sample_gpx_file, auth_token):
     upload_response = client.post(
         "/api/v1/tracks",
         files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
+        headers={"Authorization": f"Bearer {auth_token}"},
     )
     track_id = upload_response.json()["track_ids"][0]
 
     response = client.request(
-        "DELETE", "/api/v1/tracks", json={"track_ids": [track_id]}
+        "DELETE",
+        "/api/v1/tracks",
+        json={"track_ids": [track_id]},
+        headers={"Authorization": f"Bearer {auth_token}"},
     )
 
     assert response.status_code == 200
@@ -141,12 +202,14 @@ def test_delete_single_track(sample_gpx_file):
     assert data["failed"] == 0
     assert len(data["errors"]) == 0
 
-    get_response = client.get("/api/v1/tracks")
+    get_response = client.get(
+        "/api/v1/tracks", headers={"Authorization": f"Bearer {auth_token}"}
+    )
     tracks = get_response.json()
     assert not any(t["id"] == track_id for t in tracks)
 
 
-def test_delete_multiple_tracks():
+def test_delete_multiple_tracks(auth_token):
     test_dir = Path(__file__).parent
     gpx1_path = (
         test_dir / ".." / ".." / "sample-gpx-files" / "Cycling 2025-12-19T211415Z.gpx"
@@ -164,10 +227,16 @@ def test_delete_multiple_tracks():
             ("files", ("test1.gpx", content1, "application/gpx+xml")),
             ("files", ("test2.gpx", content2, "application/gpx+xml")),
         ],
+        headers={"Authorization": f"Bearer {auth_token}"},
     )
     track_ids = upload_response.json()["track_ids"]
 
-    response = client.request("DELETE", "/api/v1/tracks", json={"track_ids": track_ids})
+    response = client.request(
+        "DELETE",
+        "/api/v1/tracks",
+        json={"track_ids": track_ids},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -175,8 +244,13 @@ def test_delete_multiple_tracks():
     assert data["failed"] == 0
 
 
-def test_delete_nonexistent_track():
-    response = client.request("DELETE", "/api/v1/tracks", json={"track_ids": [9999]})
+def test_delete_nonexistent_track(auth_token):
+    response = client.request(
+        "DELETE",
+        "/api/v1/tracks",
+        json={"track_ids": [9999]},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -185,15 +259,19 @@ def test_delete_nonexistent_track():
     assert len(data["errors"]) == 1
 
 
-def test_delete_partial_failure(sample_gpx_file):
+def test_delete_partial_failure(sample_gpx_file, auth_token):
     upload_response = client.post(
         "/api/v1/tracks",
         files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
+        headers={"Authorization": f"Bearer {auth_token}"},
     )
     existing_id = upload_response.json()["track_ids"][0]
 
     response = client.request(
-        "DELETE", "/api/v1/tracks", json={"track_ids": [9999, existing_id, 8888]}
+        "DELETE",
+        "/api/v1/tracks",
+        json={"track_ids": [9999, existing_id, 8888]},
+        headers={"Authorization": f"Bearer {auth_token}"},
     )
 
     assert response.status_code == 200

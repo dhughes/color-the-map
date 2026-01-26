@@ -7,6 +7,7 @@ def test_track_from_db_row():
         def __getitem__(self, key):
             row_data = {
                 "id": 1,
+                "user_id": "test-user-id",
                 "hash": "abc123",
                 "name": "Test Track",
                 "filename": "test.gpx",
@@ -46,6 +47,7 @@ def test_track_boolean_conversion():
         def __getitem__(self, key):
             row_data = {
                 "id": 1,
+                "user_id": "test-user-id",
                 "hash": "abc",
                 "name": "Test",
                 "filename": "test.gpx",

@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS tracks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
     hash TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     filename TEXT NOT NULL,
@@ -31,6 +32,7 @@ CREATE TABLE IF NOT EXISTS tracks (
 CREATE INDEX IF NOT EXISTS idx_tracks_hash ON tracks(hash);
 CREATE INDEX IF NOT EXISTS idx_tracks_date ON tracks(activity_date DESC);
 CREATE INDEX IF NOT EXISTS idx_tracks_type ON tracks(activity_type);
+CREATE INDEX IF NOT EXISTS idx_tracks_user_id ON tracks(user_id);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS track_spatial USING rtree(
     id,

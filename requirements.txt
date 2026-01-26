@@ -2,7 +2,7 @@ fastapi==0.115.0
 uvicorn[standard]==0.32.0
 gpxpy==1.6.2
 pydantic==2.10.0
-python-multipart==0.0.12
+python-multipart==0.0.9
 pytest==8.3.4
 pytest-cov==6.0.0
 pytest-asyncio==0.25.2
@@ -10,3 +10,8 @@ httpx==0.28.1
 python-dotenv==1.0.0
 APScheduler==3.10.4
 geoip2>=4.8.0
+
+# Authentication dependencies
+fastapi-users[sqlalchemy]==13.0.0
+aiosqlite==0.20.0
+passlib[bcrypt]==1.7.4

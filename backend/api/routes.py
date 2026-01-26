@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, status, Request
+from fastapi import APIRouter, UploadFile, File, HTTPException, status, Request, Depends
 from typing import List
 from .models import (
     TrackResponse,
@@ -15,6 +15,8 @@ from ..config import config
 from ..db.database import Database
 from ..services.storage_service import StorageService
 from ..services.gpx_parser import GPXParser
+from ..auth.dependencies import current_active_user
+from ..auth.models import User
 
 router = APIRouter()
 
@@ -27,7 +29,9 @@ track_service = TrackService(db, storage, parser)
 @router.post(
     "/tracks", response_model=UploadResult, status_code=status.HTTP_201_CREATED
 )
-async def upload_tracks(files: List[UploadFile] = File(...)):
+async def upload_tracks(
+    files: List[UploadFile] = File(...), user: User = Depends(current_active_user)
+):
     uploaded = 0
     failed = 0
     track_ids = []
@@ -47,7 +51,7 @@ async def upload_tracks(files: List[UploadFile] = File(...)):
                 errors.append(f"{file.filename}: File too large")
                 continue
 
-            result = track_service.upload_track(file.filename, content)
+            result = track_service.upload_track(file.filename, content, str(user.id))
 
             if result.duplicate:
                 track_ids.append(result.track.id)
@@ -65,20 +69,26 @@ async def upload_tracks(files: List[UploadFile] = File(...)):
 
 
 @router.get("/tracks", response_model=List[TrackResponse])
-async def list_tracks():
-    tracks = track_service.list_tracks()
+async def list_tracks(user: User = Depends(current_active_user)):
+    tracks = track_service.list_tracks(str(user.id))
     return [TrackResponse.from_domain(track) for track in tracks]
 
 
 @router.post("/tracks/geometry", response_model=List[TrackGeometry])
-async def get_track_geometries(request: GeometryRequest):
-    geometries = track_service.get_multiple_geometries(request.track_ids)
+async def get_track_geometries(
+    request: GeometryRequest, user: User = Depends(current_active_user)
+):
+    geometries = track_service.get_multiple_geometries(request.track_ids, str(user.id))
     return [TrackGeometry.from_domain(geometry) for geometry in geometries]
 
 
 @router.patch("/tracks/{track_id}", response_model=TrackResponse)
-async def update_track(track_id: int, update: TrackUpdate):
-    track = track_service.update_track(track_id, update.model_dump(exclude_unset=True))
+async def update_track(
+    track_id: int, update: TrackUpdate, user: User = Depends(current_active_user)
+):
+    track = track_service.update_track(
+        track_id, update.model_dump(exclude_unset=True), str(user.id)
+    )
 
     if not track:
         raise HTTPException(status_code=404, detail="Track not found")
@@ -87,8 +97,10 @@ async def update_track(track_id: int, update: TrackUpdate):
 
 
 @router.delete("/tracks", response_model=DeleteResult)
-async def delete_tracks(request: DeleteRequest):
-    result = track_service.delete_tracks(request.track_ids)
+async def delete_tracks(
+    request: DeleteRequest, user: User = Depends(current_active_user)
+):
+    result = track_service.delete_tracks(request.track_ids, str(user.id))
     return DeleteResult(**result)
 
 

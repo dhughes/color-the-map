@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 class TrackResponse(BaseModel):
     id: int
+    user_id: str
     hash: str
     name: str
     filename: str

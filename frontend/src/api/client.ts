@@ -7,11 +7,31 @@ import type {
 
 const API_BASE = "";
 
+let currentAccessToken: string | null = null;
+
+export function setAccessToken(token: string | null) {
+  currentAccessToken = token;
+}
+
+async function fetchWithAuth(
+  url: string,
+  options: RequestInit = {},
+): Promise<Response> {
+  if (currentAccessToken) {
+    options.headers = {
+      ...options.headers,
+      Authorization: `Bearer ${currentAccessToken}`,
+    };
+  }
+
+  return fetch(url, options);
+}
+
 export async function uploadTracks(files: File[]): Promise<UploadResult> {
   const formData = new FormData();
   files.forEach((file) => formData.append("files", file));
 
-  const response = await fetch(`${API_BASE}api/v1/tracks`, {
+  const response = await fetchWithAuth(`${API_BASE}api/v1/tracks`, {
     method: "POST",
     body: formData,
   });
@@ -43,7 +63,7 @@ export async function uploadTracksWithProgress(
       const formData = new FormData();
       formData.append("files", files[i]);
 
-      const response = await fetch(`${API_BASE}api/v1/tracks`, {
+      const response = await fetchWithAuth(`${API_BASE}api/v1/tracks`, {
         method: "POST",
         body: formData,
       });
@@ -78,7 +98,7 @@ export async function uploadTracksWithProgress(
 }
 
 export async function listTracks(): Promise<Track[]> {
-  const response = await fetch(`${API_BASE}api/v1/tracks`);
+  const response = await fetchWithAuth(`${API_BASE}api/v1/tracks`);
 
   if (!response.ok) {
     throw new Error("Failed to load tracks");
@@ -91,7 +111,7 @@ export async function getTrackGeometries(
   trackIds: number[],
   signal?: AbortSignal,
 ): Promise<TrackGeometry[]> {
-  const response = await fetch(`${API_BASE}api/v1/tracks/geometry`, {
+  const response = await fetchWithAuth(`${API_BASE}api/v1/tracks/geometry`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ track_ids: trackIds }),
@@ -114,7 +134,7 @@ export async function updateTrack(
     description?: string;
   },
 ): Promise<Track> {
-  const response = await fetch(`${API_BASE}api/v1/tracks/${trackId}`, {
+  const response = await fetchWithAuth(`${API_BASE}api/v1/tracks/${trackId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(updates),
@@ -128,7 +148,7 @@ export async function updateTrack(
 }
 
 export async function deleteTracks(trackIds: number[]): Promise<DeleteResult> {
-  const response = await fetch(`${API_BASE}api/v1/tracks`, {
+  const response = await fetchWithAuth(`${API_BASE}api/v1/tracks`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ track_ids: trackIds }),
