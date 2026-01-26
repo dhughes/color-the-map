@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timezone
 from typing import Optional
-from fastapi import Depends
+from fastapi import Depends, Request, Response
 from fastapi_users import BaseUserManager, UUIDIDMixin
 from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,14 +11,19 @@ from .config import auth_config
 from .database import get_async_session
 
 
-class UserManager(UUIDIDMixin, BaseUserManager[User, str]):
+class UserManager(UUIDIDMixin, BaseUserManager[User, str]):  # type: ignore[misc]
     reset_password_token_secret = auth_config.SECRET_KEY
     verification_token_secret = auth_config.SECRET_KEY
 
-    async def on_after_register(self, user: User, request: Optional[None] = None):
+    async def on_after_register(self, user: User, request: Optional[Request] = None):
         print(f"User {user.email} has registered.")
 
-    async def on_after_login(self, user: User, request: Optional[None] = None):
+    async def on_after_login(
+        self,
+        user: User,
+        request: Optional[Request] = None,
+        response: Optional[Response] = None,
+    ):
         print(f"User {user.email} has logged in.")
 
 

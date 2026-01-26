@@ -150,6 +150,7 @@ async def get_client_location(request: Request):
     cf_connecting_ip = request.headers.get("CF-Connecting-IP")
     forwarded_for = request.headers.get("X-Forwarded-For")
 
+    client_ip: str | None
     if cf_connecting_ip:
         client_ip = cf_connecting_ip.strip()
         logger.info(
@@ -179,4 +180,7 @@ async def get_client_location(request: Request):
         f"({location['latitude']}, {location['longitude']})"
     )
 
-    return LocationResponse(**location)
+    return LocationResponse(
+        latitude=float(location["latitude"]),  # type: ignore[arg-type]
+        longitude=float(location["longitude"]),  # type: ignore[arg-type]
+    )
