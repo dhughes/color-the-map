@@ -108,11 +108,27 @@ class TrackService:
     def get_multiple_geometries(
         self, track_ids: List[int], user_id: str, session: Session
     ) -> List[TrackGeometry]:
+        if not track_ids:
+            return []
+
+        # Batch query all tracks at once to avoid N+1 problem
+        track_models = session.execute(
+            select(TrackModel).where(
+                TrackModel.id.in_(track_ids), TrackModel.user_id == user_id
+            )
+        ).scalars()
+
         geometries = []
-        for track_id in track_ids:
-            geometry = self.get_track_geometry(track_id, user_id, session)
-            if geometry:
-                geometries.append(geometry)
+        for track_model in track_models:
+            gpx_content = self.storage.load_gpx(user_id, track_model.hash)
+            if not gpx_content:
+                continue
+
+            gpx_data = self.parser.parse(gpx_content)
+            geometries.append(
+                TrackGeometry(track_id=track_model.id, coordinates=gpx_data.coordinates)
+            )
+
         return geometries
 
     def update_track(
