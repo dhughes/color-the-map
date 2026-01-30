@@ -1,7 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, status, Request, Depends
 from typing import List
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 from .models import (
     TrackResponse,
     UploadResult,
@@ -18,6 +17,7 @@ from ..services.storage_service import StorageService
 from ..services.gpx_parser import GPXParser
 from ..auth.dependencies import current_active_user
 from ..auth.models import User
+from ..auth.database import get_async_session
 
 router = APIRouter()
 
@@ -25,23 +25,12 @@ storage = StorageService(config.GPX_DIR)
 parser = GPXParser()
 track_service = TrackService(storage, parser)
 
-sync_engine = create_engine(f"sqlite:///{config.DB_PATH}")
-SessionLocal = sessionmaker(bind=sync_engine, expire_on_commit=False)
-
-
-def get_db_session():
-    session = SessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
-
 
 @router.post("/tracks", response_model=UploadResult)
 async def upload_tracks(
     files: List[UploadFile] = File(...),
     user: User = Depends(current_active_user),
-    session: Session = Depends(get_db_session),
+    session: AsyncSession = Depends(get_async_session),
 ):
     import logging
     from sqlalchemy.exc import IntegrityError
@@ -68,7 +57,7 @@ async def upload_tracks(
                 errors.append(f"{file.filename}: File too large")
                 continue
 
-            result = track_service.upload_track(
+            result = await track_service.upload_track(
                 file.filename, content, str(user.id), session
             )
 
@@ -78,10 +67,10 @@ async def upload_tracks(
                 uploaded += 1
                 track_ids.append(result.track.id)
 
-            session.commit()
+            await session.commit()
 
         except IntegrityError as e:
-            session.rollback()
+            await session.rollback()
             failed += 1
             logger.error(
                 f"Database integrity error uploading {file.filename} for user {user.id}: {str(e)}",
@@ -89,12 +78,12 @@ async def upload_tracks(
             )
             errors.append(f"{file.filename}: Unable to process file")
         except ValueError as e:
-            session.rollback()
+            await session.rollback()
             failed += 1
             logger.warning(f"Validation error uploading {file.filename}: {str(e)}")
             errors.append(f"{file.filename}: Invalid GPX file")
         except Exception as e:
-            session.rollback()
+            await session.rollback()
             failed += 1
             logger.error(
                 f"Unexpected error uploading {file.filename} for user {user.id}: {str(e)}",
@@ -122,9 +111,9 @@ async def upload_tracks(
 @router.get("/tracks", response_model=List[TrackResponse])
 async def list_tracks(
     user: User = Depends(current_active_user),
-    session: Session = Depends(get_db_session),
+    session: AsyncSession = Depends(get_async_session),
 ):
-    tracks = track_service.list_tracks(str(user.id), session)
+    tracks = await track_service.list_tracks(str(user.id), session)
     return [TrackResponse.from_domain(track) for track in tracks]
 
 
@@ -132,9 +121,9 @@ async def list_tracks(
 async def get_track_geometries(
     request: GeometryRequest,
     user: User = Depends(current_active_user),
-    session: Session = Depends(get_db_session),
+    session: AsyncSession = Depends(get_async_session),
 ):
-    geometries = track_service.get_multiple_geometries(
+    geometries = await track_service.get_multiple_geometries(
         request.track_ids, str(user.id), session
     )
     return [TrackGeometry.from_domain(geometry) for geometry in geometries]
@@ -145,16 +134,16 @@ async def update_track(
     track_id: int,
     update: TrackUpdate,
     user: User = Depends(current_active_user),
-    session: Session = Depends(get_db_session),
+    session: AsyncSession = Depends(get_async_session),
 ):
-    track = track_service.update_track(
+    track = await track_service.update_track(
         track_id, update.model_dump(exclude_unset=True), str(user.id), session
     )
 
     if not track:
         raise HTTPException(status_code=404, detail="Track not found")
 
-    session.commit()
+    await session.commit()
 
     return TrackResponse.from_domain(track)
 
@@ -163,10 +152,10 @@ async def update_track(
 async def delete_tracks(
     request: DeleteRequest,
     user: User = Depends(current_active_user),
-    session: Session = Depends(get_db_session),
+    session: AsyncSession = Depends(get_async_session),
 ):
-    result = track_service.delete_tracks(request.track_ids, str(user.id), session)
-    session.commit()
+    result = await track_service.delete_tracks(request.track_ids, str(user.id), session)
+    await session.commit()
 
     # Delete files only after successful commit
     for user_id, gpx_hash in result.get("files_to_delete", []):

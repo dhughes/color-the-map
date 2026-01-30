@@ -5,6 +5,7 @@ from httpx import ASGITransport, AsyncClient
 from backend.main import app
 from backend.auth.database import async_session_maker
 from backend.auth.models import User, RefreshToken
+from backend.config import config
 from passlib.context import CryptContext
 from sqlalchemy import delete
 import uuid
@@ -13,41 +14,25 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def clean_auth_db(tmp_path):
-    from backend.config import config
+async def clean_auth_db(test_gpx_dir, monkeypatch):
+    """Clean auth database and override services for isolation tests
 
-    test_db_path = tmp_path / "test.db"
-    test_gpx_dir = tmp_path / "gpx"
-
-    original_db_path = config.DB_PATH
-    original_gpx_dir = config.GPX_DIR
-
-    config.DB_PATH = test_db_path
-    config.GPX_DIR = test_gpx_dir
-
+    Uses monkeypatch for thread-safe config overrides (conftest handles DB_PATH).
+    Creates new service instances to ensure proper test isolation.
+    """
     from backend.services.storage_service import StorageService
     from backend.services.gpx_parser import GPXParser
     from backend.services.track_service import TrackService
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
+    import backend.api.routes as routes_module
+
+    monkeypatch.setattr(config, "GPX_DIR", test_gpx_dir)
 
     new_storage = StorageService(test_gpx_dir)
     new_parser = GPXParser()
     new_track_service = TrackService(new_storage, new_parser)
 
-    test_sync_engine = create_engine(f"sqlite:///{test_db_path}")
-    test_session_local = sessionmaker(bind=test_sync_engine, expire_on_commit=False)
-
-    from backend.auth.models import Base
-
-    Base.metadata.create_all(test_sync_engine)
-
-    import backend.api.routes as routes_module
-
     routes_module.storage = new_storage
     routes_module.track_service = new_track_service
-    routes_module.sync_engine = test_sync_engine
-    routes_module.SessionLocal = test_session_local
 
     async with async_session_maker() as session:
         await session.execute(delete(RefreshToken))
@@ -55,9 +40,6 @@ async def clean_auth_db(tmp_path):
         await session.commit()
 
     yield
-
-    config.DB_PATH = original_db_path
-    config.GPX_DIR = original_gpx_dir
 
 
 @pytest_asyncio.fixture

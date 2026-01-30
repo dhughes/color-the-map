@@ -13,39 +13,25 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @pytest.fixture(scope="function", autouse=True)
-def setup_api_test_environment(test_gpx_dir, tmp_path):
+def setup_api_test_environment(test_gpx_dir):
     """Setup API test-specific overrides
 
-    Note: Does NOT override config (conftest.py already handles that).
-    Creates separate database file for API tests since TestClient needs
-    independent database access from the conftest.py session fixture.
-    Each test gets a fresh database to ensure isolation.
+    Note: conftest.py handles config overrides via monkeypatch.
+    Creates new service instances for test isolation.
     """
     from backend.services.storage_service import StorageService
     from backend.services.gpx_parser import GPXParser
     from backend.services.track_service import TrackService
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-    from backend.auth.models import Base
     import backend.api.routes as routes_module
 
-    # Use GPX dir from conftest, but create our own database file for API tests
+    # Use GPX dir from conftest
     new_storage = StorageService(test_gpx_dir)
     new_parser = GPXParser()
     new_track_service = TrackService(new_storage, new_parser)
 
-    # Create separate database file for each test (ensures complete isolation)
-    api_test_db_path = tmp_path / "api_test.db"
-    test_sync_engine = create_engine(f"sqlite:///{api_test_db_path}")
-    test_session_local = sessionmaker(bind=test_sync_engine, expire_on_commit=False)
-
-    Base.metadata.create_all(test_sync_engine)
-
-    # Override module-level variables for API tests
+    # Override module-level service instances for API tests
     routes_module.storage = new_storage
     routes_module.track_service = new_track_service
-    routes_module.sync_engine = test_sync_engine
-    routes_module.SessionLocal = test_session_local
 
     yield
 
