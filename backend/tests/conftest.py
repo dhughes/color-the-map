@@ -27,7 +27,7 @@ def test_engine(test_db_path):
 
 @pytest.fixture(scope="function")
 def db_session(test_engine):
-    """Create a new database session for each test"""
+    """Create a new database session for each test with proper cleanup order"""
     connection = test_engine.connect()
     transaction = connection.begin()
     session_maker = sessionmaker(bind=connection)
@@ -35,8 +35,12 @@ def db_session(test_engine):
 
     yield session
 
-    session.close()
+    # Cleanup order is critical:
+    # 1. Rollback the transaction first (undoes all changes)
+    # 2. Close the session (releases resources)
+    # 3. Close the connection (returns to pool)
     transaction.rollback()
+    session.close()
     connection.close()
 
 
