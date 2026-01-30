@@ -53,15 +53,12 @@ def test_gpx_dir(tmp_path):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def setup_test_config(test_db_path, test_gpx_dir):
-    """Override config paths for tests"""
-    original_db_path = config.DB_PATH
-    original_gpx_dir = config.GPX_DIR
+def setup_test_config(test_db_path, test_gpx_dir, monkeypatch):
+    """Override config paths for tests using monkeypatch for thread-safety
 
-    config.DB_PATH = test_db_path
-    config.GPX_DIR = test_gpx_dir
-
-    yield
-
-    config.DB_PATH = original_db_path
-    config.GPX_DIR = original_gpx_dir
+    Using monkeypatch instead of direct mutation ensures thread-safety when
+    tests run in parallel (pytest-xdist). monkeypatch handles cleanup
+    automatically and prevents race conditions from concurrent config changes.
+    """
+    monkeypatch.setattr(config, "DB_PATH", test_db_path)
+    monkeypatch.setattr(config, "GPX_DIR", test_gpx_dir)
