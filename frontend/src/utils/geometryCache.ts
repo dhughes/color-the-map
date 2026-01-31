@@ -40,6 +40,10 @@ class GeometryCacheImpl {
         request.onupgradeneeded = (event) => {
           const db = (event.target as IDBOpenDBRequest).result;
           if (db.objectStoreNames.contains(STORE_NAME)) {
+            // Migration from v1 to v2: Intentionally deleting all cached data
+            // because v1 used track_id as key (which can be recycled by SQLite)
+            // and v2 uses hash (immutable). There's no way to retrieve hashes
+            // for existing cached geometries, so we start fresh.
             db.deleteObjectStore(STORE_NAME);
           }
           db.createObjectStore(STORE_NAME, { keyPath: "hash" });
