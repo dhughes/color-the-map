@@ -35,6 +35,9 @@ jobs:
       - name: Run mypy type checking
         run: mypy backend/ --ignore-missing-imports
 
+      - name: Run database migrations
+        run: alembic upgrade head
+
       - name: Run pytest
         run: pytest backend/tests/ -v --cov=backend --cov-report=term-missing
 
