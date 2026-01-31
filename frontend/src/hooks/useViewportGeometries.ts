@@ -46,16 +46,8 @@ export function useViewportGeometries(
     return JSON.stringify(visibleTracks.map((t) => t.id));
   }, [visibleTracks]);
 
-  const trackHashesKey = useMemo(() => {
-    return JSON.stringify(tracks.map((t) => ({ id: t.id, hash: t.hash })));
-  }, [tracks]);
-
   useEffect(() => {
     const visibleTrackIds = JSON.parse(visibleTrackIdsKey) as number[];
-    const trackHashes = JSON.parse(trackHashesKey) as Array<{
-      id: number;
-      hash: string;
-    }>;
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -77,8 +69,8 @@ export function useViewportGeometries(
 
       try {
         const trackIdToHashMap = new Map<number, string>();
-        trackHashes.forEach(({ id, hash }) => {
-          trackIdToHashMap.set(id, hash);
+        visibleTracks.forEach((track) => {
+          trackIdToHashMap.set(track.id, track.hash);
         });
 
         const visibleHashes = Array.from(trackIdToHashMap.values());
@@ -142,7 +134,11 @@ export function useViewportGeometries(
       cancelled = true;
       abortController.abort();
     };
-  }, [visibleTrackIdsKey, trackHashesKey]);
+    // visibleTracks is intentionally omitted - visibleTrackIdsKey already captures
+    // when visible tracks change. Including visibleTracks would cause infinite loop
+    // since it's a new array reference on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleTrackIdsKey]);
 
   const retryFetch = useCallback(() => {
     if (!viewport) return;
