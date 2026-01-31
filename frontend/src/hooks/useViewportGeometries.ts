@@ -68,9 +68,12 @@ export function useViewportGeometries(
       }
 
       try {
+        const visibleTrackIdSet = new Set(visibleTrackIds);
         const trackIdToHash = new Map<number, string>();
-        visibleTracks.forEach((track) => {
-          trackIdToHash.set(track.id, track.hash);
+        tracks.forEach((track) => {
+          if (visibleTrackIdSet.has(track.id)) {
+            trackIdToHash.set(track.id, track.hash);
+          }
         });
 
         const visibleHashes = Array.from(trackIdToHash.values());
@@ -134,7 +137,7 @@ export function useViewportGeometries(
       cancelled = true;
       abortController.abort();
     };
-  }, [visibleTrackIdsKey, visibleTracks]);
+  }, [visibleTrackIdsKey, tracks]);
 
   const retryFetch = useCallback(() => {
     if (!viewport) return;
