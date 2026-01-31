@@ -68,12 +68,12 @@ export function useViewportGeometries(
       }
 
       try {
-        const trackIdToHash = new Map<number, string>();
+        const trackIdToHashMap = new Map<number, string>();
         visibleTracks.forEach((track) => {
-          trackIdToHash.set(track.id, track.hash);
+          trackIdToHashMap.set(track.id, track.hash);
         });
 
-        const visibleHashes = Array.from(trackIdToHash.values());
+        const visibleHashes = Array.from(trackIdToHashMap.values());
         const cached = await geometryCache.getGeometries(visibleHashes);
         const cachedIds = new Set(cached.map((g) => g.track_id));
         const missingIds = visibleTrackIds.filter((id) => !cachedIds.has(id));
@@ -94,7 +94,7 @@ export function useViewportGeometries(
 
           const fetchedWithHash: CachedGeometry[] = fetched
             .map((geometry) => {
-              const hash = trackIdToHash.get(geometry.track_id);
+              const hash = trackIdToHashMap.get(geometry.track_id);
               if (!hash) {
                 console.error(
                   `No hash found for track_id ${geometry.track_id}`,
@@ -134,7 +134,11 @@ export function useViewportGeometries(
       cancelled = true;
       abortController.abort();
     };
-  }, [visibleTrackIdsKey, visibleTracks]);
+    // visibleTracks is intentionally omitted - visibleTrackIdsKey already captures
+    // when visible tracks change. Including visibleTracks would cause infinite loop
+    // since it's a new array reference on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleTrackIdsKey]);
 
   const retryFetch = useCallback(() => {
     if (!viewport) return;
