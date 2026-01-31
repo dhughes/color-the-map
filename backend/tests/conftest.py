@@ -5,7 +5,7 @@ import pytest_asyncio
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from backend.auth.models import Base
+from backend.database import Base
 from backend.config import config
 
 project_root = Path(__file__).parent.parent.parent

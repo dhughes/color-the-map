@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from .gpx_parser import GPXParser
 from .storage_service import StorageService
-from ..auth.models import Track as TrackModel
+from ..models.track_model import Track as TrackModel
 from ..models.track import Track
 from ..models.upload_result import UploadResult
 from ..models.track_geometry import TrackGeometry
