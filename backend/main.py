@@ -5,10 +5,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router as api_router
 from .auth.routes import router as auth_router
 from .auth.database import engine
-from .auth.models import Base
+from .database import Base
 from .config import config
 from .services.geoip_service import GeoIPService
 import logging
+
+# Import models to register them with Base
+from .auth.models import User, RefreshToken  # noqa: F401
+from .models.track_model import Track  # noqa: F401
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -25,7 +29,7 @@ async def lifespan(app: FastAPI):
     global geoip_service
 
     # Startup
-    # Create SQLAlchemy tables (auth only)
+    # Create SQLAlchemy tables (all models)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
