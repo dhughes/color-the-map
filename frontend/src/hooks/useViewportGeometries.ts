@@ -46,8 +46,16 @@ export function useViewportGeometries(
     return JSON.stringify(visibleTracks.map((t) => t.id));
   }, [visibleTracks]);
 
+  const trackHashesKey = useMemo(() => {
+    return JSON.stringify(tracks.map((t) => ({ id: t.id, hash: t.hash })));
+  }, [tracks]);
+
   useEffect(() => {
     const visibleTrackIds = JSON.parse(visibleTrackIdsKey) as number[];
+    const trackHashes = JSON.parse(trackHashesKey) as Array<{
+      id: number;
+      hash: string;
+    }>;
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -68,12 +76,9 @@ export function useViewportGeometries(
       }
 
       try {
-        const visibleTrackIdSet = new Set(visibleTrackIds);
-        const trackIdToHash = new Map<number, string>();
-        tracks.forEach((track) => {
-          if (visibleTrackIdSet.has(track.id)) {
-            trackIdToHash.set(track.id, track.hash);
-          }
+        const trackIdToHashMap = new Map<number, string>();
+        trackHashes.forEach(({ id, hash }) => {
+          trackIdToHashMap.set(id, hash);
         });
 
         const visibleHashes = Array.from(trackIdToHash.values());
@@ -97,7 +102,7 @@ export function useViewportGeometries(
 
           const fetchedWithHash: CachedGeometry[] = fetched
             .map((geometry) => {
-              const hash = trackIdToHash.get(geometry.track_id);
+              const hash = trackIdToHashMap.get(geometry.track_id);
               if (!hash) {
                 console.error(
                   `No hash found for track_id ${geometry.track_id}`,
@@ -137,7 +142,7 @@ export function useViewportGeometries(
       cancelled = true;
       abortController.abort();
     };
-  }, [visibleTrackIdsKey, tracks]);
+  }, [visibleTrackIdsKey, trackHashesKey]);
 
   const retryFetch = useCallback(() => {
     if (!viewport) return;
