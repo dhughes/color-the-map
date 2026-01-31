@@ -92,10 +92,18 @@ export function useViewportGeometries(
 
           if (cancelled) return;
 
-          const fetchedWithHash: CachedGeometry[] = fetched.map((geometry) => ({
-            ...geometry,
-            hash: trackIdToHash.get(geometry.track_id)!,
-          }));
+          const fetchedWithHash: CachedGeometry[] = fetched
+            .map((geometry) => {
+              const hash = trackIdToHash.get(geometry.track_id);
+              if (!hash) {
+                console.error(
+                  `No hash found for track_id ${geometry.track_id}`,
+                );
+                return null;
+              }
+              return { ...geometry, hash };
+            })
+            .filter((g): g is CachedGeometry => g !== null);
 
           await geometryCache.setGeometries(fetchedWithHash);
 
