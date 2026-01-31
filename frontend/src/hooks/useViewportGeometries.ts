@@ -81,7 +81,7 @@ export function useViewportGeometries(
           trackIdToHashMap.set(id, hash);
         });
 
-        const visibleHashes = Array.from(trackIdToHash.values());
+        const visibleHashes = Array.from(trackIdToHashMap.values());
         const cached = await geometryCache.getGeometries(visibleHashes);
         const cachedIds = new Set(cached.map((g) => g.track_id));
         const missingIds = visibleTrackIds.filter((id) => !cachedIds.has(id));
