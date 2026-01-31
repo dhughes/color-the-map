@@ -2,8 +2,6 @@ import pytest
 from pathlib import Path
 from fastapi.testclient import TestClient
 from backend.main import app
-from backend.config import config
-from backend.db.database import Database
 from backend.auth.database import async_session_maker
 from backend.auth.models import User, RefreshToken
 from passlib.context import CryptContext
@@ -15,31 +13,29 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @pytest.fixture(scope="function", autouse=True)
-def clean_test_db(tmp_path):
-    test_db_path = tmp_path / "test.db"
-    test_gpx_dir = tmp_path / "gpx"
+def setup_api_test_environment(test_gpx_dir):
+    """Setup API test-specific overrides
 
-    original_db_path = config.DB_PATH
-    original_gpx_dir = config.GPX_DIR
-
-    config.DB_PATH = test_db_path
-    config.GPX_DIR = test_gpx_dir
-
-    new_db = Database(test_db_path)
+    Note: conftest.py handles config overrides via monkeypatch.
+    Creates new service instances for test isolation.
+    """
     from backend.services.storage_service import StorageService
     from backend.services.gpx_parser import GPXParser
     from backend.services.track_service import TrackService
-
-    new_storage = StorageService(test_gpx_dir)
-    new_parser = GPXParser()
-    new_track_service = TrackService(new_db, new_storage, new_parser)
-
     import backend.api.routes as routes_module
 
-    routes_module.db = new_db
+    # Use GPX dir from conftest
+    new_storage = StorageService(test_gpx_dir)
+    new_parser = GPXParser()
+    new_track_service = TrackService(new_storage, new_parser)
+
+    # Override module-level service instances for API tests
     routes_module.storage = new_storage
     routes_module.track_service = new_track_service
 
+    yield
+
+    # Clean up auth database after test
     async def cleanup_auth():
         async with async_session_maker() as session:
             await session.execute(delete(RefreshToken))
@@ -47,11 +43,6 @@ def clean_test_db(tmp_path):
             await session.commit()
 
     asyncio.run(cleanup_auth())
-
-    yield
-
-    config.DB_PATH = original_db_path
-    config.GPX_DIR = original_gpx_dir
 
 
 client = TestClient(app)

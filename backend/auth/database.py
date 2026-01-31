@@ -12,5 +12,14 @@ async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def get_async_session():
+    """Provide async database session with automatic rollback on exception
+
+    If the request handler raises an exception, any uncommitted changes
+    are rolled back to prevent partial/inconsistent database state.
+    """
     async with async_session_maker() as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise

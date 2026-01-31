@@ -1,7 +1,7 @@
 import gpxpy
+import numpy as np
 from datetime import datetime
 from typing import List, Dict, Tuple
-from math import radians, sin, cos, sqrt, atan2
 from ..models.gpx_data import ParsedGPXData
 
 
@@ -49,22 +49,29 @@ class GPXParser:
         )
 
     def _calculate_distance(self, coordinates: List[Tuple[float, float]]) -> float:
-        total = 0.0
-        for i in range(1, len(coordinates)):
-            lon1, lat1 = coordinates[i - 1]
-            lon2, lat2 = coordinates[i]
+        if len(coordinates) < 2:
+            return 0.0
 
-            R = 6371000
-            phi1 = radians(lat1)
-            phi2 = radians(lat2)
-            dphi = radians(lat2 - lat1)
-            dlambda = radians(lon2 - lon1)
+        coords_array = np.array(coordinates)
+        lons = np.radians(coords_array[:, 0])
+        lats = np.radians(coords_array[:, 1])
 
-            a = sin(dphi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(dlambda / 2) ** 2
-            c = 2 * atan2(sqrt(a), sqrt(1 - a))
-            total += R * c
+        dlons = np.diff(lons)
+        dlats = np.diff(lats)
 
-        return total
+        lat1 = lats[:-1]
+        lat2 = lats[1:]
+
+        a = (
+            np.sin(dlats / 2) ** 2
+            + np.cos(lat1) * np.cos(lat2) * np.sin(dlons / 2) ** 2
+        )
+        c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+        R = 6371000
+        distances = R * c
+
+        return float(np.sum(distances))
 
     def _calculate_duration(self, timestamps: List[datetime]) -> int:
         if len(timestamps) < 2:
@@ -76,27 +83,25 @@ class GPXParser:
         return {"avg": avg_speed, "max": avg_speed, "min": avg_speed}
 
     def _calculate_elevation(self, elevations: List[float]) -> Dict[str, float]:
-        gain = 0.0
-        loss = 0.0
+        if len(elevations) < 2:
+            return {"gain": 0.0, "loss": 0.0}
 
-        for i in range(1, len(elevations)):
-            diff = elevations[i] - elevations[i - 1]
-            if diff > 0:
-                gain += diff
-            else:
-                loss += abs(diff)
+        elev_array = np.array(elevations)
+        diffs = np.diff(elev_array)
+
+        gain = float(np.sum(diffs[diffs > 0]))
+        loss = float(np.sum(np.abs(diffs[diffs < 0])))
 
         return {"gain": gain, "loss": loss}
 
     def _calculate_bounds(
         self, coordinates: List[Tuple[float, float]]
     ) -> Dict[str, float]:
-        lons = [coord[0] for coord in coordinates]
-        lats = [coord[1] for coord in coordinates]
+        coords_array = np.array(coordinates)
 
         return {
-            "min_lat": min(lats),
-            "max_lat": max(lats),
-            "min_lon": min(lons),
-            "max_lon": max(lons),
+            "min_lat": float(np.min(coords_array[:, 1])),
+            "max_lat": float(np.max(coords_array[:, 1])),
+            "min_lon": float(np.min(coords_array[:, 0])),
+            "max_lon": float(np.max(coords_array[:, 0])),
         }

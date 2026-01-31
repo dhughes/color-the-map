@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, status, Request, Depends
 from typing import List
+from sqlalchemy.ext.asyncio import AsyncSession
 from .models import (
     TrackResponse,
     UploadResult,
@@ -12,26 +13,31 @@ from .models import (
 )
 from ..services.track_service import TrackService
 from ..config import config
-from ..db.database import Database
 from ..services.storage_service import StorageService
 from ..services.gpx_parser import GPXParser
 from ..auth.dependencies import current_active_user
 from ..auth.models import User
+from ..auth.database import get_async_session
 
 router = APIRouter()
 
-db = Database(config.DB_PATH)
 storage = StorageService(config.GPX_DIR)
 parser = GPXParser()
-track_service = TrackService(db, storage, parser)
+track_service = TrackService(storage, parser)
 
 
-@router.post(
-    "/tracks", response_model=UploadResult, status_code=status.HTTP_201_CREATED
-)
+@router.post("/tracks", response_model=UploadResult)
 async def upload_tracks(
-    files: List[UploadFile] = File(...), user: User = Depends(current_active_user)
+    files: List[UploadFile] = File(...),
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
 ):
+    import logging
+    from sqlalchemy.exc import IntegrityError
+    from fastapi.responses import JSONResponse
+
+    logger = logging.getLogger(__name__)
+
     uploaded = 0
     failed = 0
     track_ids = []
@@ -51,7 +57,9 @@ async def upload_tracks(
                 errors.append(f"{file.filename}: File too large")
                 continue
 
-            result = track_service.upload_track(file.filename, content, str(user.id))
+            result = await track_service.upload_track(
+                file.filename, content, str(user.id), session
+            )
 
             if result.duplicate:
                 track_ids.append(result.track.id)
@@ -59,49 +67,103 @@ async def upload_tracks(
                 uploaded += 1
                 track_ids.append(result.track.id)
 
-        except Exception as e:
-            failed += 1
-            errors.append(f"{file.filename}: {str(e)}")
+            await session.commit()
 
-    return UploadResult(
-        uploaded=uploaded, failed=failed, track_ids=track_ids, errors=errors
-    )
+        except IntegrityError as e:
+            await session.rollback()
+            failed += 1
+            logger.error(
+                f"Database integrity error uploading {file.filename} for user {user.id}: {str(e)}",
+                exc_info=True,
+            )
+            errors.append(f"{file.filename}: Unable to process file")
+        except ValueError as e:
+            await session.rollback()
+            failed += 1
+            logger.warning(f"Validation error uploading {file.filename}: {str(e)}")
+            errors.append(f"{file.filename}: Invalid GPX file")
+        except Exception as e:
+            await session.rollback()
+            failed += 1
+            logger.error(
+                f"Unexpected error uploading {file.filename} for user {user.id}: {str(e)}",
+                exc_info=True,
+            )
+            errors.append(f"{file.filename}: Unable to process file")
+
+    response_data = {
+        "uploaded": uploaded,
+        "failed": failed,
+        "track_ids": track_ids,
+        "errors": errors,
+    }
+
+    if uploaded > 0:
+        return JSONResponse(content=response_data, status_code=status.HTTP_201_CREATED)
+    elif failed > 0:
+        return JSONResponse(
+            content=response_data, status_code=status.HTTP_400_BAD_REQUEST
+        )
+    else:
+        return JSONResponse(content=response_data, status_code=status.HTTP_200_OK)
 
 
 @router.get("/tracks", response_model=List[TrackResponse])
-async def list_tracks(user: User = Depends(current_active_user)):
-    tracks = track_service.list_tracks(str(user.id))
+async def list_tracks(
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    tracks = await track_service.list_tracks(str(user.id), session)
     return [TrackResponse.from_domain(track) for track in tracks]
 
 
 @router.post("/tracks/geometry", response_model=List[TrackGeometry])
 async def get_track_geometries(
-    request: GeometryRequest, user: User = Depends(current_active_user)
+    request: GeometryRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
 ):
-    geometries = track_service.get_multiple_geometries(request.track_ids, str(user.id))
+    geometries = await track_service.get_multiple_geometries(
+        request.track_ids, str(user.id), session
+    )
     return [TrackGeometry.from_domain(geometry) for geometry in geometries]
 
 
 @router.patch("/tracks/{track_id}", response_model=TrackResponse)
 async def update_track(
-    track_id: int, update: TrackUpdate, user: User = Depends(current_active_user)
+    track_id: int,
+    update: TrackUpdate,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
 ):
-    track = track_service.update_track(
-        track_id, update.model_dump(exclude_unset=True), str(user.id)
+    track = await track_service.update_track(
+        track_id, update.model_dump(exclude_unset=True), str(user.id), session
     )
 
     if not track:
         raise HTTPException(status_code=404, detail="Track not found")
+
+    await session.commit()
 
     return TrackResponse.from_domain(track)
 
 
 @router.delete("/tracks", response_model=DeleteResult)
 async def delete_tracks(
-    request: DeleteRequest, user: User = Depends(current_active_user)
+    request: DeleteRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
 ):
-    result = track_service.delete_tracks(request.track_ids, str(user.id))
-    return DeleteResult(**result)
+    result = await track_service.delete_tracks(request.track_ids, str(user.id), session)
+    await session.commit()
+
+    # Delete files only after successful commit
+    for user_id, gpx_hash in result.get("files_to_delete", []):
+        storage.delete_gpx(user_id, gpx_hash)
+
+    # Remove files_to_delete from result before returning
+    result_without_files = {k: v for k, v in result.items() if k != "files_to_delete"}
+    return DeleteResult(**result_without_files)
 
 
 @router.get("/location", response_model=LocationResponse)
@@ -115,25 +177,21 @@ async def get_client_location(request: Request):
     if not geoip_service:
         raise HTTPException(status_code=503, detail="GeoIP service not available")
 
-    # Extract real client IP, checking Cloudflare header first
-    # Priority: CF-Connecting-IP (Cloudflare) > X-Forwarded-For (Caddy) > direct IP
     cf_connecting_ip = request.headers.get("CF-Connecting-IP")
     forwarded_for = request.headers.get("X-Forwarded-For")
 
+    client_ip: str | None
     if cf_connecting_ip:
-        # Cloudflare provides real client IP in CF-Connecting-IP
         client_ip = cf_connecting_ip.strip()
         logger.info(
             f"CF-Connecting-IP header: {cf_connecting_ip}, using client IP: {client_ip}"
         )
     elif forwarded_for:
-        # Take the first IP (client IP, before any proxies)
         client_ip = forwarded_for.split(",")[0].strip()
         logger.info(
             f"X-Forwarded-For header: {forwarded_for}, using client IP: {client_ip}"
         )
     else:
-        # Fallback to direct connection IP
         client_ip = request.client.host if request.client else None
         logger.info(f"No proxy headers, using direct IP: {client_ip}")
 
@@ -152,4 +210,7 @@ async def get_client_location(request: Request):
         f"({location['latitude']}, {location['longitude']})"
     )
 
-    return LocationResponse(**location)
+    return LocationResponse(
+        latitude=float(location["latitude"]),  # type: ignore[arg-type]
+        longitude=float(location["longitude"]),  # type: ignore[arg-type]
+    )

@@ -1,12 +1,16 @@
 from datetime import datetime
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
-from sqlalchemy import String, DateTime, func, Index, Integer, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
+from sqlalchemy import (
+    String,
+    DateTime,
+    func,
+    Index,
+    Integer,
+    ForeignKey,
+)
+from sqlalchemy.orm import Mapped, mapped_column
+from ..database import Base
 import hashlib
-
-
-class Base(DeclarativeBase):
-    pass
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
@@ -26,7 +30,6 @@ class RefreshToken(Base):
         String(36),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
     token_hash: Mapped[str] = mapped_column(
         String(64), unique=True, nullable=False, index=True

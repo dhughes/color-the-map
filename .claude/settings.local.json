@@ -45,7 +45,8 @@
       "Skill(tdd-feature-dev:tdd-feature-development)",
       "WebSearch",
       "mcp__chrome__browser_type",
-      "mcp__chrome__browser_run_code"
+      "mcp__chrome__browser_run_code",
+      "Bash(python -W all -m pytest backend/tests/test_track_service.py)"
     ]
   }
 }

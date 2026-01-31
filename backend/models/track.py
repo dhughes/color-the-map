@@ -35,37 +35,31 @@ class Track:
     updated_at: datetime
 
     @classmethod
-    def from_db_row(cls, row) -> "Track":
-        """Create Track from sqlite3.Row, parsing datetime strings"""
-
-        def parse_datetime(value) -> datetime:
-            if isinstance(value, str):
-                return datetime.fromisoformat(value.replace("Z", "+00:00"))
-            return value
-
+    def from_sqlalchemy(cls, model) -> "Track":
+        """Create Track from SQLAlchemy model"""
         return cls(
-            id=row["id"],
-            user_id=row["user_id"],
-            hash=row["hash"],
-            name=row["name"],
-            filename=row["filename"],
-            activity_type=row["activity_type"],
-            activity_type_inferred=row["activity_type_inferred"],
-            activity_date=parse_datetime(row["activity_date"]),
-            uploaded_at=parse_datetime(row["uploaded_at"]),
-            distance_meters=row["distance_meters"],
-            duration_seconds=row["duration_seconds"],
-            avg_speed_ms=row["avg_speed_ms"],
-            max_speed_ms=row["max_speed_ms"],
-            min_speed_ms=row["min_speed_ms"],
-            elevation_gain_meters=row["elevation_gain_meters"],
-            elevation_loss_meters=row["elevation_loss_meters"],
-            bounds_min_lat=row["bounds_min_lat"],
-            bounds_min_lon=row["bounds_min_lon"],
-            bounds_max_lat=row["bounds_max_lat"],
-            bounds_max_lon=row["bounds_max_lon"],
-            visible=bool(row["visible"]),
-            description=row["description"],
-            created_at=parse_datetime(row["created_at"]),
-            updated_at=parse_datetime(row["updated_at"]),
+            id=model.id,
+            user_id=model.user_id,
+            hash=model.hash,
+            name=model.name,
+            filename=model.filename,
+            activity_type=model.activity_type,
+            activity_type_inferred=model.activity_type_inferred,
+            activity_date=model.activity_date,
+            uploaded_at=model.uploaded_at,
+            distance_meters=model.distance_meters,
+            duration_seconds=model.duration_seconds,
+            avg_speed_ms=model.avg_speed_ms,
+            max_speed_ms=model.max_speed_ms,
+            min_speed_ms=model.min_speed_ms,
+            elevation_gain_meters=model.elevation_gain_meters,
+            elevation_loss_meters=model.elevation_loss_meters,
+            bounds_min_lat=model.bounds_min_lat,
+            bounds_min_lon=model.bounds_min_lon,
+            bounds_max_lat=model.bounds_max_lat,
+            bounds_max_lon=model.bounds_max_lon,
+            visible=model.visible,
+            description=model.description,
+            created_at=model.created_at,
+            updated_at=model.updated_at,
         )

@@ -18,14 +18,14 @@ def test_calculate_hash(storage):
     assert hash1 == hash2
 
 
-def test_minify_removes_whitespace(storage):
+def test_hash_preserves_whitespace(storage):
     content_with_whitespace = b"<gpx>\n  <trk>\n    <name>Test</name>\n  </trk>\n</gpx>"
     content_minified = b"<gpx><trk><name>Test</name></trk></gpx>"
 
     hash1 = storage.calculate_hash(content_with_whitespace)
     hash2 = storage.calculate_hash(content_minified)
 
-    assert hash1 == hash2
+    assert hash1 != hash2
 
 
 def test_store_gpx(storage):

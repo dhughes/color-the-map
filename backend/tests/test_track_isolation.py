@@ -5,6 +5,7 @@ from httpx import ASGITransport, AsyncClient
 from backend.main import app
 from backend.auth.database import async_session_maker
 from backend.auth.models import User, RefreshToken
+from backend.config import config
 from passlib.context import CryptContext
 from sqlalchemy import delete
 import uuid
@@ -13,31 +14,23 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def clean_auth_db(tmp_path):
-    from backend.config import config
-    from backend.db.database import Database
+async def clean_auth_db(test_gpx_dir, monkeypatch):
+    """Clean auth database and override services for isolation tests
 
-    test_db_path = tmp_path / "test.db"
-    test_gpx_dir = tmp_path / "gpx"
-
-    original_db_path = config.DB_PATH
-    original_gpx_dir = config.GPX_DIR
-
-    config.DB_PATH = test_db_path
-    config.GPX_DIR = test_gpx_dir
-
-    new_db = Database(test_db_path)
+    Uses monkeypatch for thread-safe config overrides (conftest handles DB_PATH).
+    Creates new service instances to ensure proper test isolation.
+    """
     from backend.services.storage_service import StorageService
     from backend.services.gpx_parser import GPXParser
     from backend.services.track_service import TrackService
+    import backend.api.routes as routes_module
+
+    monkeypatch.setattr(config, "GPX_DIR", test_gpx_dir)
 
     new_storage = StorageService(test_gpx_dir)
     new_parser = GPXParser()
-    new_track_service = TrackService(new_db, new_storage, new_parser)
+    new_track_service = TrackService(new_storage, new_parser)
 
-    import backend.api.routes as routes_module
-
-    routes_module.db = new_db
     routes_module.storage = new_storage
     routes_module.track_service = new_track_service
 
@@ -47,9 +40,6 @@ async def clean_auth_db(tmp_path):
         await session.commit()
 
     yield
-
-    config.DB_PATH = original_db_path
-    config.GPX_DIR = original_gpx_dir
 
 
 @pytest_asyncio.fixture

@@ -31,7 +31,8 @@ async def login(
     session: AsyncSession = Depends(get_async_session),
 ):
     stmt = select(User).where(
-        func.lower(User.email) == form_data.username.lower(), User.is_active
+        func.lower(User.email) == form_data.username.lower(),
+        User.is_active.is_(True),  # type: ignore[attr-defined]
     )
     result = await session.execute(stmt)
     user = result.scalar_one_or_none()
@@ -51,7 +52,9 @@ async def login(
     return TokenResponse(
         access_token=access_token,
         refresh_token=refresh_token,
-        expires_in=int(jwt_strategy.lifetime_seconds),
+        expires_in=int(jwt_strategy.lifetime_seconds)
+        if jwt_strategy.lifetime_seconds
+        else 0,
     )
 
 
@@ -69,7 +72,7 @@ async def refresh(
             detail="Invalid or expired refresh token",
         )
 
-    stmt = select(User).where(User.id == user_id, User.is_active)
+    stmt = select(User).where(User.id == user_id, User.is_active.is_(True))  # type: ignore[arg-type, attr-defined]
     result = await session.execute(stmt)
     user = result.scalar_one_or_none()
 
@@ -88,7 +91,9 @@ async def refresh(
     return TokenResponse(
         access_token=access_token,
         refresh_token=new_refresh_token,
-        expires_in=int(jwt_strategy.lifetime_seconds),
+        expires_in=int(jwt_strategy.lifetime_seconds)
+        if jwt_strategy.lifetime_seconds
+        else 0,
     )
 
 
