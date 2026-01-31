@@ -5,6 +5,7 @@ import { TrackListItem } from "./TrackListItem";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
 import type { SelectionSource } from "../../hooks/useSelection";
+import { geometryCache } from "../../utils/geometryCache";
 
 interface TrackListProps {
   selectedTrackIds: Set<number>;
@@ -67,6 +68,17 @@ export function TrackList({
 
       const previousTracks = queryClient.getQueryData<Track[]>(["tracks"]);
       const previousGeometries = queryClient.getQueryData(["geometries"]);
+
+      const hashesToDelete =
+        previousTracks
+          ?.filter((track) => trackIdsToDelete.includes(track.id))
+          .map((track) => track.hash) ?? [];
+
+      if (hashesToDelete.length > 0) {
+        geometryCache.deleteGeometries(hashesToDelete).catch((error) => {
+          console.error("Failed to delete cached geometries:", error);
+        });
+      }
 
       queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
         old?.filter((track) => !trackIdsToDelete.includes(track.id)),
