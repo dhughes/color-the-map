@@ -63,7 +63,7 @@ export function TrackList({
 
   const deleteTracksMutation = useMutation({
     mutationFn: (trackIds: number[]) => deleteTracks(trackIds),
-    onMutate: async (trackIdsToDelete) => {
+    onMutate: (trackIdsToDelete) => {
       queryClient.cancelQueries({ queryKey: ["tracks"] });
 
       const previousTracks = queryClient.getQueryData<Track[]>(["tracks"]);
@@ -75,7 +75,9 @@ export function TrackList({
           .map((track) => track.hash) ?? [];
 
       if (hashesToDelete.length > 0) {
-        await geometryCache.deleteGeometries(hashesToDelete);
+        geometryCache.deleteGeometries(hashesToDelete).catch((error) => {
+          console.error("Failed to delete cached geometries:", error);
+        });
       }
 
       queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
