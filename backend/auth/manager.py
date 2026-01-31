@@ -1,6 +1,7 @@
 import secrets
 from datetime import datetime, timezone
 from typing import Optional
+from uuid import UUID
 from fastapi import Depends, Request, Response
 from fastapi_users import BaseUserManager, UUIDIDMixin
 from fastapi_users.db import SQLAlchemyUserDatabase
@@ -11,7 +12,7 @@ from .config import auth_config
 from .database import get_async_session
 
 
-class UserManager(UUIDIDMixin, BaseUserManager[User, str]):  # type: ignore[misc]
+class UserManager(UUIDIDMixin, BaseUserManager[User, UUID]):
     reset_password_token_secret = auth_config.SECRET_KEY
     verification_token_secret = auth_config.SECRET_KEY
 
