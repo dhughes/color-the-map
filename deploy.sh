@@ -26,6 +26,10 @@ echo "📦 Updating Python dependencies..."
 source venv/bin/activate
 pip install -r requirements.txt
 
+# Run database migrations
+echo "🗄️  Running database migrations..."
+alembic upgrade head
+
 echo "🔧 Updating Caddy configuration..."
 sudo ~/infrastructure/deploy.sh caddy
 

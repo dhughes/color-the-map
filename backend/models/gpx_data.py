@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 
 @dataclass
@@ -18,3 +18,4 @@ class ParsedGPXData:
     bounds_min_lon: float
     bounds_max_lon: float
     activity_date: datetime
+    creator: Optional[str]

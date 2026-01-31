@@ -47,6 +47,7 @@ class TrackService:
             hash=gpx_hash,
             name=name,
             filename=filename,
+            creator=gpx_data.creator,
             activity_type=activity_type,
             activity_type_inferred=activity_type,
             activity_date=gpx_data.activity_date,

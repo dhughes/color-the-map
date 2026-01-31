@@ -10,6 +10,7 @@ class Track:
     hash: str
     name: str
     filename: str
+    creator: Optional[str]
     activity_type: Optional[str]
     activity_type_inferred: Optional[str]
     activity_date: datetime
@@ -43,6 +44,7 @@ class Track:
             hash=model.hash,
             name=model.name,
             filename=model.filename,
+            creator=model.creator,
             activity_type=model.activity_type,
             activity_type_inferred=model.activity_type_inferred,
             activity_date=model.activity_date,

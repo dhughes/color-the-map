@@ -21,6 +21,7 @@ class Track(Base):
     hash: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     filename: Mapped[str] = mapped_column(String, nullable=False)
+    creator: Mapped[str | None] = mapped_column(String, nullable=True)
     activity_type: Mapped[str | None] = mapped_column(String, nullable=True)
     activity_type_inferred: Mapped[str | None] = mapped_column(String, nullable=True)
     activity_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)

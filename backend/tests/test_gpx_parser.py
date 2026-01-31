@@ -77,3 +77,37 @@ def test_empty_gpx(parser):
     )
     with pytest.raises(ValueError, match="No track points"):
         parser.parse(gpx_content)
+
+
+def test_parses_creator_from_gpx_export(parser):
+    test_dir = Path(__file__).parent
+    gpx_path = (
+        test_dir / ".." / ".." / "sample-gpx-files" / "Cycling 2025-12-19T211415Z.gpx"
+    )
+    with open(gpx_path, "rb") as f:
+        content = f.read()
+
+    result = parser.parse(content)
+    assert result.creator == "GPX Export"
+
+
+def test_parses_creator_from_apple_health(parser):
+    test_dir = Path(__file__).parent
+    gpx_path = (
+        test_dir / ".." / ".." / "sample-gpx-files" / "route_2024-09-21_9.04am.gpx"
+    )
+    with open(gpx_path, "rb") as f:
+        content = f.read()
+
+    result = parser.parse(content)
+    assert result.creator == "Apple Health Export"
+
+
+def test_creator_is_none_when_missing(parser):
+    test_dir = Path(__file__).parent
+    gpx_path = test_dir / ".." / ".." / "sample-gpx-files" / "test-no-creator.gpx"
+    with open(gpx_path, "rb") as f:
+        content = f.read()
+
+    result = parser.parse(content)
+    assert result.creator is None

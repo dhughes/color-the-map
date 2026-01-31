@@ -13,6 +13,7 @@ class TrackResponse(BaseModel):
     hash: str
     name: str
     filename: str
+    creator: Optional[str]
     activity_type: Optional[str]
     activity_type_inferred: Optional[str]
     activity_date: datetime
