@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { Track, TrackGeometry } from "../types/track";
 import { getTracksInViewport, type ViewportBounds } from "../utils/viewport";
-import { geometryCache } from "../utils/geometryCache";
+import { geometryCache, type CachedGeometry } from "../utils/geometryCache";
 import { getTrackGeometries } from "../api/client";
 
 const DEBOUNCE_MS = 300;
@@ -68,7 +68,13 @@ export function useViewportGeometries(
       }
 
       try {
-        const cached = await geometryCache.getGeometries(visibleTrackIds);
+        const trackIdToHash = new Map<number, string>();
+        visibleTracks.forEach((track) => {
+          trackIdToHash.set(track.id, track.hash);
+        });
+
+        const visibleHashes = Array.from(trackIdToHash.values());
+        const cached = await geometryCache.getGeometries(visibleHashes);
         const cachedIds = new Set(cached.map((g) => g.track_id));
         const missingIds = visibleTrackIds.filter((id) => !cachedIds.has(id));
 
@@ -86,9 +92,14 @@ export function useViewportGeometries(
 
           if (cancelled) return;
 
-          await geometryCache.setGeometries(fetched);
+          const fetchedWithHash: CachedGeometry[] = fetched.map((geometry) => ({
+            ...geometry,
+            hash: trackIdToHash.get(geometry.track_id)!,
+          }));
 
-          const combined = [...cached, ...fetched];
+          await geometryCache.setGeometries(fetchedWithHash);
+
+          const combined = [...cached, ...fetchedWithHash];
           setGeometries(combined);
 
           setIsLoading(false);
@@ -115,7 +126,7 @@ export function useViewportGeometries(
       cancelled = true;
       abortController.abort();
     };
-  }, [visibleTrackIdsKey]);
+  }, [visibleTrackIdsKey, visibleTracks]);
 
   const retryFetch = useCallback(() => {
     if (!viewport) return;

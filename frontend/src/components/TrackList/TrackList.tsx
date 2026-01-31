@@ -5,6 +5,7 @@ import { TrackListItem } from "./TrackListItem";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
 import type { SelectionSource } from "../../hooks/useSelection";
+import { geometryCache } from "../../utils/geometryCache";
 
 interface TrackListProps {
   selectedTrackIds: Set<number>;
@@ -62,11 +63,20 @@ export function TrackList({
 
   const deleteTracksMutation = useMutation({
     mutationFn: (trackIds: number[]) => deleteTracks(trackIds),
-    onMutate: (trackIdsToDelete) => {
+    onMutate: async (trackIdsToDelete) => {
       queryClient.cancelQueries({ queryKey: ["tracks"] });
 
       const previousTracks = queryClient.getQueryData<Track[]>(["tracks"]);
       const previousGeometries = queryClient.getQueryData(["geometries"]);
+
+      const hashesToDelete =
+        previousTracks
+          ?.filter((track) => trackIdsToDelete.includes(track.id))
+          .map((track) => track.hash) ?? [];
+
+      if (hashesToDelete.length > 0) {
+        await geometryCache.deleteGeometries(hashesToDelete);
+      }
 
       queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
         old?.filter((track) => !trackIdsToDelete.includes(track.id)),

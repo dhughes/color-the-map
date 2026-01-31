@@ -1,8 +1,12 @@
 import type { TrackGeometry } from "../types/track";
 
+export interface CachedGeometry extends TrackGeometry {
+  hash: string;
+}
+
 const DB_NAME = "color-the-map-geometries";
 const STORE_NAME = "geometries";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 class GeometryCacheImpl {
   private db: IDBDatabase | null = null;
@@ -35,9 +39,10 @@ class GeometryCacheImpl {
 
         request.onupgradeneeded = (event) => {
           const db = (event.target as IDBOpenDBRequest).result;
-          if (!db.objectStoreNames.contains(STORE_NAME)) {
-            db.createObjectStore(STORE_NAME, { keyPath: "track_id" });
+          if (db.objectStoreNames.contains(STORE_NAME)) {
+            db.deleteObjectStore(STORE_NAME);
           }
+          db.createObjectStore(STORE_NAME, { keyPath: "hash" });
         };
       } catch (error) {
         console.warn("IndexedDB initialization failed:", error);
@@ -49,7 +54,7 @@ class GeometryCacheImpl {
     return this.initPromise;
   }
 
-  async getGeometry(trackId: number): Promise<TrackGeometry | null> {
+  async getGeometry(hash: string): Promise<CachedGeometry | null> {
     await this.init();
 
     if (!this.available || !this.db) {
@@ -60,7 +65,7 @@ class GeometryCacheImpl {
       try {
         const transaction = this.db!.transaction([STORE_NAME], "readonly");
         const store = transaction.objectStore(STORE_NAME);
-        const request = store.get(trackId);
+        const request = store.get(hash);
 
         request.onsuccess = () => resolve(request.result || null);
         request.onerror = () => {
@@ -74,7 +79,7 @@ class GeometryCacheImpl {
     });
   }
 
-  async setGeometry(geometry: TrackGeometry): Promise<void> {
+  async setGeometry(geometry: CachedGeometry): Promise<void> {
     await this.init();
 
     if (!this.available || !this.db) {
@@ -99,10 +104,10 @@ class GeometryCacheImpl {
     });
   }
 
-  async getGeometries(trackIds: number[]): Promise<TrackGeometry[]> {
+  async getGeometries(hashes: string[]): Promise<CachedGeometry[]> {
     await this.init();
 
-    if (!this.available || !this.db || trackIds.length === 0) {
+    if (!this.available || !this.db || hashes.length === 0) {
       return [];
     }
 
@@ -110,11 +115,11 @@ class GeometryCacheImpl {
       try {
         const transaction = this.db!.transaction([STORE_NAME], "readonly");
         const store = transaction.objectStore(STORE_NAME);
-        const results: TrackGeometry[] = [];
-        let pending = trackIds.length;
+        const results: CachedGeometry[] = [];
+        let pending = hashes.length;
 
-        trackIds.forEach((trackId) => {
-          const request = store.get(trackId);
+        hashes.forEach((hash) => {
+          const request = store.get(hash);
           request.onsuccess = () => {
             if (request.result) {
               results.push(request.result);
@@ -139,7 +144,7 @@ class GeometryCacheImpl {
     });
   }
 
-  async setGeometries(geometries: TrackGeometry[]): Promise<void> {
+  async setGeometries(geometries: CachedGeometry[]): Promise<void> {
     await this.init();
 
     if (!this.available || !this.db || geometries.length === 0) {
@@ -162,6 +167,34 @@ class GeometryCacheImpl {
         };
       } catch (error) {
         console.warn("Cache batch write error:", error);
+        resolve();
+      }
+    });
+  }
+
+  async deleteGeometries(hashes: string[]): Promise<void> {
+    await this.init();
+
+    if (!this.available || !this.db || hashes.length === 0) {
+      return;
+    }
+
+    return new Promise((resolve) => {
+      try {
+        const transaction = this.db!.transaction([STORE_NAME], "readwrite");
+        const store = transaction.objectStore(STORE_NAME);
+
+        hashes.forEach((hash) => {
+          store.delete(hash);
+        });
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => {
+          console.warn("Error deleting from cache:", transaction.error);
+          resolve();
+        };
+      } catch (error) {
+        console.warn("Cache delete error:", error);
         resolve();
       }
     });
