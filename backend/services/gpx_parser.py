@@ -9,7 +9,7 @@ class GPXParser:
     def parse(self, content: bytes) -> ParsedGPXData:
         gpx = gpxpy.parse(content.decode("utf-8"))
 
-        creator = gpx.creator if hasattr(gpx, "creator") else None
+        creator = gpx.creator
 
         coordinates = []
         elevations = []

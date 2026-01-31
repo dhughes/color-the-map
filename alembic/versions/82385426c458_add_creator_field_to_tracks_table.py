@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Add creator column to tracks table
+    # Add creator column to tracks table (no length specified, consistent with name/filename/activity_type)
     op.add_column("tracks", sa.Column("creator", sa.String(), nullable=True))
 
 

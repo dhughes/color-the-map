@@ -105,7 +105,7 @@ def test_parses_creator_from_apple_health(parser):
 
 def test_creator_is_none_when_missing(parser):
     test_dir = Path(__file__).parent
-    gpx_path = test_dir / ".." / ".." / "sample-gpx-files" / "test-no-creator.gpx"
+    gpx_path = test_dir / "fixtures" / "test-no-creator.gpx"
     with open(gpx_path, "rb") as f:
         content = f.read()
 
