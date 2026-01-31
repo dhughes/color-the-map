@@ -7,7 +7,6 @@ venv/
 env/
 ENV/
 data/
-*.gpx
 .DS_Store
 .idea
 .env

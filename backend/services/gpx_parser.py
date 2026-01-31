@@ -9,6 +9,8 @@ class GPXParser:
     def parse(self, content: bytes) -> ParsedGPXData:
         gpx = gpxpy.parse(content.decode("utf-8"))
 
+        creator = gpx.creator
+
         coordinates = []
         elevations = []
         timestamps = []
@@ -46,6 +48,7 @@ class GPXParser:
             bounds_min_lon=bounds["min_lon"],
             bounds_max_lon=bounds["max_lon"],
             activity_date=activity_date,
+            creator=creator,
         )
 
     def _calculate_distance(self, coordinates: List[Tuple[float, float]]) -> float:

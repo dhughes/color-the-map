@@ -4,6 +4,7 @@ export interface Track {
   hash: string;
   name: string;
   filename: string;
+  creator: string | null;
   activity_type: string | null;
   activity_type_inferred: string | null;
   activity_date: string;

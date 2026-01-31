@@ -48,7 +48,13 @@
       "mcp__chrome__browser_run_code",
       "Bash(python -W all -m pytest backend/tests/test_track_service.py)",
       "Bash(python -m pytest:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(alembic revision:*)",
+      "Bash(python -m alembic revision:*)",
+      "Bash(alembic init:*)",
+      "Bash(alembic stamp:*)",
+      "Bash(alembic upgrade:*)",
+      "Bash(alembic current:*)"
     ]
   }
 }
