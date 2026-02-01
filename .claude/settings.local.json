@@ -54,7 +54,8 @@
       "Bash(alembic init:*)",
       "Bash(alembic stamp:*)",
       "Bash(alembic upgrade:*)",
-      "Bash(alembic current:*)"
+      "Bash(alembic current:*)",
+      "Skill(ci-monitor:monitor-ci)"
     ]
   }
 }
