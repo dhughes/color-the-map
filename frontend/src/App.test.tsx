@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import App from "./App";
+import App, { AppContent } from "./App";
 import * as apiClient from "./api/client";
+import * as authContext from "./contexts/AuthContext";
 import type { Track } from "./types/track";
 
 vi.mock("./api/client");
@@ -78,6 +80,15 @@ describe("App - Zoom to Track Feature", () => {
       mockTrackWithBounds,
       mockTrackWithNullBounds,
     ]);
+
+    vi.spyOn(authContext, "useAuth").mockReturnValue({
+      user: { id: "1", email: "test@example.com" },
+      accessToken: "mock-token",
+      login: vi.fn(),
+      logout: vi.fn(),
+      isAuthenticated: true,
+      isLoading: false,
+    });
   });
 
   it("renders the app with track list", async () => {
@@ -102,5 +113,81 @@ describe("App - Zoom to Track Feature", () => {
     await waitFor(() => {
       expect(screen.getByText("Track without Bounds")).toBeInTheDocument();
     });
+  });
+});
+
+describe("App - Logout Functionality", () => {
+  let queryClient: QueryClient;
+  let mockLogout: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    mockLogout = vi.fn();
+
+    vi.mocked(apiClient.listTracks).mockResolvedValue([]);
+
+    vi.spyOn(authContext, "useAuth").mockReturnValue({
+      user: { id: "1", email: "test@example.com" },
+      accessToken: "mock-token",
+      login: vi.fn(),
+      logout: mockLogout,
+      isAuthenticated: true,
+      isLoading: false,
+    });
+  });
+
+  it("clears query cache when logout button is clicked", async () => {
+    const user = userEvent.setup();
+    const clearSpy = vi.spyOn(queryClient, "clear");
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Logout")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText("Logout"));
+
+    expect(clearSpy).toHaveBeenCalledOnce();
+    expect(mockLogout).toHaveBeenCalledOnce();
+  });
+
+  it("does not display tracks when not authenticated", () => {
+    queryClient.setQueryData(
+      ["tracks"],
+      [
+        { id: 1, name: "Test Track 1" },
+        { id: 2, name: "Test Track 2" },
+      ],
+    );
+
+    vi.spyOn(authContext, "useAuth").mockReturnValue({
+      user: null,
+      accessToken: null,
+      login: vi.fn(),
+      logout: vi.fn(),
+      isAuthenticated: false,
+      isLoading: false,
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByText("0 tracks")).toBeInTheDocument();
+    expect(screen.queryByText("Test Track 1")).not.toBeInTheDocument();
   });
 });

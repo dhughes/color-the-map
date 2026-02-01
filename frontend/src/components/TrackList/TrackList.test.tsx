@@ -45,6 +45,7 @@ describe("TrackList", () => {
   it("renders track list header", async () => {
     render(
       <TrackList
+        tracks={mockTracks}
         selectedTrackIds={mockSelectedTrackIds}
         anchorTrackId={null}
         onSelect={mockOnSelect}
@@ -62,6 +63,7 @@ describe("TrackList", () => {
   it("displays track count", async () => {
     render(
       <TrackList
+        tracks={mockTracks}
         selectedTrackIds={mockSelectedTrackIds}
         anchorTrackId={null}
         onSelect={mockOnSelect}
@@ -79,6 +81,7 @@ describe("TrackList", () => {
   it("renders track items", async () => {
     render(
       <TrackList
+        tracks={mockTracks}
         selectedTrackIds={mockSelectedTrackIds}
         anchorTrackId={null}
         onSelect={mockOnSelect}
@@ -99,6 +102,7 @@ describe("TrackList", () => {
 
     render(
       <TrackList
+        tracks={mockTracks}
         selectedTrackIds={selectedIds}
         anchorTrackId={null}
         onSelect={mockOnSelect}
@@ -131,6 +135,7 @@ describe("TrackList", () => {
       const { rerender } = render(
         <QueryClientProvider client={queryClient}>
           <TrackList
+            tracks={mockTracks}
             selectedTrackIds={new Set()}
             anchorTrackId={null}
             onSelect={vi.fn()}
@@ -149,6 +154,7 @@ describe("TrackList", () => {
       rerender(
         <QueryClientProvider client={queryClient}>
           <TrackList
+            tracks={mockTracks}
             selectedTrackIds={new Set([1])}
             anchorTrackId={1}
             onSelect={vi.fn()}
@@ -172,6 +178,7 @@ describe("TrackList", () => {
       const { rerender } = render(
         <QueryClientProvider client={queryClient}>
           <TrackList
+            tracks={mockTracks}
             selectedTrackIds={new Set()}
             anchorTrackId={null}
             onSelect={vi.fn()}
@@ -190,6 +197,7 @@ describe("TrackList", () => {
       rerender(
         <QueryClientProvider client={queryClient}>
           <TrackList
+            tracks={mockTracks}
             selectedTrackIds={new Set([1])}
             anchorTrackId={1}
             onSelect={vi.fn()}
@@ -210,6 +218,7 @@ describe("TrackList", () => {
       render(
         <QueryClientProvider client={queryClient}>
           <TrackList
+            tracks={mockTracks}
             selectedTrackIds={new Set([1])}
             anchorTrackId={1}
             onSelect={vi.fn()}
@@ -232,6 +241,7 @@ describe("TrackList", () => {
       render(
         <QueryClientProvider client={queryClient}>
           <TrackList
+            tracks={mockTracks}
             selectedTrackIds={new Set()}
             anchorTrackId={null}
             onSelect={vi.fn()}

@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { listTracks, updateTrack, deleteTracks } from "../../api/client";
+import { updateTrack, deleteTracks } from "../../api/client";
 import { TrackListItem } from "./TrackListItem";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
@@ -8,6 +8,7 @@ import type { SelectionSource } from "../../hooks/useSelection";
 import { geometryCache } from "../../utils/geometryCache";
 
 interface TrackListProps {
+  tracks: Track[];
   selectedTrackIds: Set<number>;
   anchorTrackId: number | null;
   onSelect: (trackId: number, isMultiSelect: boolean) => void;
@@ -18,6 +19,7 @@ interface TrackListProps {
 }
 
 export function TrackList({
+  tracks,
   selectedTrackIds,
   anchorTrackId,
   onSelect,
@@ -32,11 +34,6 @@ export function TrackList({
     trackIds: number[];
     count: number;
   } | null>(null);
-
-  const { data: tracks = [], isLoading } = useQuery({
-    queryKey: ["tracks"],
-    queryFn: listTracks,
-  });
 
   const toggleVisibility = useMutation({
     mutationFn: ({ trackId, visible }: { trackId: number; visible: boolean }) =>
@@ -187,17 +184,6 @@ export function TrackList({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [tracks, anchorTrackId, onSelect, selectedTrackIds]);
-
-  if (isLoading) {
-    return (
-      <div className="track-list">
-        <div className="track-list-header">
-          <h2>Tracks</h2>
-        </div>
-        <div className="track-list-loading">Loading tracks...</div>
-      </div>
-    );
-  }
 
   const selectedCount = selectedTrackIds.size;
 
