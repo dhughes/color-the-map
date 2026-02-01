@@ -18,11 +18,13 @@ import {
   listTracks,
   setAccessToken,
 } from "./api/client";
+import { geometryCache } from "./utils/geometryCache";
 import type { Track } from "./types/track";
 
 const queryClient = new QueryClient();
+const EMPTY_TRACKS: Track[] = [];
 
-function AppContent() {
+export function AppContent() {
   const { isAuthenticated, isLoading, accessToken, logout } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -48,11 +50,16 @@ function AppContent() {
     selectionSource,
   } = useSelection();
 
-  const { data: tracks = [] } = useQuery<Track[]>({
+  const { data: tracksData = [] } = useQuery<Track[]>({
     queryKey: ["tracks"],
     queryFn: listTracks,
     enabled: isAuthenticated,
   });
+
+  const tracks = useMemo(
+    () => (isAuthenticated ? tracksData : EMPTY_TRACKS),
+    [isAuthenticated, tracksData],
+  );
 
   useEffect(() => {
     setAccessToken(accessToken);
@@ -107,6 +114,18 @@ function AppContent() {
       visibleIds.has(geometry.track_id),
     );
   }, [tracks, allGeometries]);
+
+  const handleLogout = async () => {
+    try {
+      queryClient.clear();
+      await geometryCache.clearCache();
+      clearSelection();
+      await logout();
+    } catch (error) {
+      console.error("Logout cleanup failed:", error);
+      await logout();
+    }
+  };
 
   const handleZoomToTrack = (track: Track) => {
     if (
@@ -186,7 +205,7 @@ function AppContent() {
       <div className="app-container">
         {isAuthenticated && (
           <button
-            onClick={logout}
+            onClick={handleLogout}
             style={{
               position: "absolute",
               top: "16px",
@@ -311,6 +330,7 @@ function AppContent() {
           )}
         </div>
         <TrackList
+          tracks={tracks}
           selectedTrackIds={selectedTrackIds}
           anchorTrackId={anchorTrackId}
           onSelect={toggleSelection}

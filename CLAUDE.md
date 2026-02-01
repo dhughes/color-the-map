@@ -8,6 +8,204 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **CRITICAL:** NEVER push to GitHub without explicit user permission. Always ask first, even if it seems like the logical next step.
 
+## Code Reviewer Guidelines
+
+**Attitude & Approach:**
+When asked to review a PR, adopt the mindset of a senior engineer with high ownership of code quality:
+
+- **Be rigorous but pragmatic** - High standards for new code, but understand we're incrementally improving from legacy patterns
+- **Be direct and honest** - Don't sugarcoat issues. Clear, constructive feedback is more valuable than politeness
+- **Focus on what matters** - Performance bugs, type safety, error handling, test quality, and maintainability issues are blocking. Style preferences are not.
+- **Demand quality** - Linting, formatting, and type checking must be perfect. No exceptions.
+- **Test architecture matters** - Tests that test implementation details or have poor type safety are as bad as no tests
+- **Error handling is not optional** - Every async operation needs proper error handling
+- **No technical debt in new code** - Old code can have issues we'll fix incrementally, but new code must meet current standards
+
+**What to Review:**
+
+1. **Type Safety**
+   - All TypeScript should be properly typed (no `any`, no missing properties)
+   - Test data must match actual types, not partial objects
+   - Python must pass mypy strict mode
+
+2. **Performance**
+   - Watch for unnecessary re-renders (new object/array allocations in render path)
+   - Check for N+1 queries or inefficient database access
+   - Look for memory leaks (uncleaned event listeners, etc.)
+
+3. **Error Handling**
+   - Every async function needs try/catch or proper error boundaries
+   - Network calls need error states
+   - User-facing errors need helpful messages
+
+4. **Test Quality**
+   - Tests should test behavior, not implementation
+   - No exporting internal components just for testing
+   - Test data should be properly typed
+   - Module-level mocks should be scoped to tests that need them
+   - Tests should test the public API (e.g., `<App />`, not `<AppContent />`)
+
+5. **Code Quality**
+   - No unnecessary abstractions or premature optimization
+   - Error-prone patterns (missing cleanup, race conditions, etc.)
+   - Security issues (XSS, SQL injection, etc.)
+   - Adherence to project architecture and patterns
+
+**How to Leave Comments:**
+
+**CRITICAL:** Comments MUST be added directly on specific lines in the PR files, not just listed in a general review comment.
+
+Use the GitHub CLI API to add line-specific comments:
+
+```bash
+# Get the latest commit SHA
+gh pr view <pr-number> --json commits --jq '.commits[-1].oid'
+
+# Add a comment on a specific line
+gh api repos/:owner/:repo/pulls/<pr-number>/comments -X POST \
+  -f body="Your detailed comment here with examples" \
+  -f commit_id="<commit-sha>" \
+  -f path="path/to/file.tsx" \
+  -f side="RIGHT" \
+  -F line=<line-number>
+```
+
+**Structure of Comments:**
+
+1. **Start with the issue type**: `**Performance Issue:**`, `**Type Safety Violation:**`, `**Missing Error Handling:**`
+2. **Explain the problem**: What's wrong and why it matters
+3. **Provide the fix**: Show the correct code with a code block
+4. **Be specific**: Reference exact line numbers, variable names, function names
+
+**Example Comment:**
+```
+**Performance Issue:** This creates a new empty array on every render when not authenticated, which will cause unnecessary re-renders of child components.
+
+Create a stable reference outside the component:
+```tsx
+const EMPTY_TRACKS: Track[] = [];
+
+// Then in the component:
+const tracks = useMemo(
+  () => (isAuthenticated ? tracksData : EMPTY_TRACKS),
+  [isAuthenticated, tracksData],
+);
+```
+```
+
+**General Review Comment:**
+
+After adding all line-specific comments, add one general review comment summarizing:
+- What's good about the PR
+- How many issues were found
+- Whether they're blocking or not
+- Overall recommendation (approve/request changes/comment)
+
+```bash
+gh pr review <pr-number> --comment --body "## Overall Assessment
+
+Good work on [feature]. The core approach is solid.
+
+However, there are several code quality issues that need to be addressed:
+1. Performance issues
+2. Missing error handling
+3. Type safety violations
+
+I've added line-specific comments. Please address these before merging."
+```
+
+**Review Workflow:**
+
+1. Read the PR description and understand what it's trying to accomplish
+2. Check out the diff: `gh pr diff <pr-number>`
+3. Read changed files thoroughly
+4. Get the commit SHA for adding comments
+5. Add line-specific comments for each issue (run them in parallel if many)
+6. Add a general summary comment
+7. Report back to the user with a summary
+
+**Never:**
+- Accept type safety violations ("we'll fix it later")
+- Accept missing error handling in async code
+- Accept tests that test implementation details
+- Accept incomplete test data that doesn't match types
+- Accept performance issues like unnecessary allocations
+- List issues in a general comment without adding them to specific lines
+
+## Handling PR Review Feedback
+
+When a PR receives review comments, you need to read all comments (both PR-level and file-level) and respond appropriately.
+
+**CRITICAL: Keep conversations together!** Always reply to file-level comments directly in their thread, not as separate PR-level comments.
+
+### Reading All PR Comments
+
+**Step 1: Get PR-level review comments**
+```bash
+gh pr view <pr-number> --json reviews --jq '.reviews[] | {state: .state, body: .body, author: .author.login}'
+```
+
+**Step 2: Get file-level (line-specific) comments**
+```bash
+gh api repos/:owner/:repo/pulls/<pr-number>/comments --jq '.[] | {path: .path, line: .line, body: .body, id: .id}'
+```
+
+This returns all comments on specific files with their:
+- `path`: File path (e.g., `frontend/src/App.tsx`)
+- `line`: Line number the comment is on
+- `body`: Comment text
+- `id`: Comment ID (needed for replying)
+
+**Step 3: List all comments clearly**
+
+When the user asks you to review feedback, read both PR-level and file-level comments, then list them all out organized by file and line number so the user knows you've read everything.
+
+### Replying to File-Level Comments
+
+**CRITICAL:** Always reply to file-level comments in their thread using the `in_reply_to` parameter. Never post a separate PR comment about file-level issues.
+
+**Correct way to reply to a file comment:**
+```bash
+# 1. Get the comment ID from the file comment you want to reply to
+gh api repos/:owner/:repo/pulls/<pr-number>/comments --jq '.[] | select(.path == "path/to/file.tsx" and .line == 42) | .id'
+
+# 2. Reply directly to that comment thread
+gh api repos/:owner/:repo/pulls/<pr-number>/comments -X POST \
+  -f body="Your reply here" \
+  -F in_reply_to=<comment-id>
+```
+
+**Example:**
+```bash
+# Find the comment ID for a specific file/line
+COMMENT_ID=$(gh api repos/owner/repo/pulls/40/comments --jq '.[] | select(.path == "frontend/src/App.tsx" and .line == 61) | .id')
+
+# Reply to that specific comment thread
+gh api repos/owner/repo/pulls/40/comments -X POST \
+  -f body="Good catch! I've fixed this by creating a stable EMPTY_TRACKS constant." \
+  -F in_reply_to=$COMMENT_ID
+```
+
+### Workflow for Addressing Feedback
+
+1. **Read all comments** - Use both commands above to get PR-level and file-level comments
+2. **Organize by file** - Group file-level comments by file path for clarity
+3. **Address each issue** - Make the necessary code changes
+4. **Reply in thread** - For each file-level comment, reply directly to that comment thread explaining your fix
+5. **Push changes** - Commit and push your fixes
+6. **Summarize** - Optionally add a PR-level comment summarizing all changes made
+
+**Why keep conversations together:**
+- Makes it easy to see the discussion about a specific issue in one place
+- Reviewers can mark conversations as "resolved" when satisfied
+- Future readers can understand the context of why code changed
+- Reduces noise in the main PR thread
+
+**Never:**
+- Reply to file-level comments with a general PR comment
+- Create new file comments when replying to existing ones
+- Lose track of which issues you've addressed
+
 ## Implementation Documentation
 
 **Before implementing features, read these documents:**

@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import App from "./App";
+import App, { AppContent } from "./App";
 import * as apiClient from "./api/client";
+import * as authContext from "./contexts/AuthContext";
 import type { Track } from "./types/track";
 
 vi.mock("./api/client");
@@ -78,6 +80,15 @@ describe("App - Zoom to Track Feature", () => {
       mockTrackWithBounds,
       mockTrackWithNullBounds,
     ]);
+
+    vi.spyOn(authContext, "useAuth").mockReturnValue({
+      user: { id: "1", email: "test@example.com" },
+      accessToken: "mock-token",
+      login: vi.fn(),
+      logout: vi.fn(),
+      isAuthenticated: true,
+      isLoading: false,
+    });
   });
 
   it("renders the app with track list", async () => {
@@ -102,5 +113,111 @@ describe("App - Zoom to Track Feature", () => {
     await waitFor(() => {
       expect(screen.getByText("Track without Bounds")).toBeInTheDocument();
     });
+  });
+});
+
+describe("App - Logout Functionality", () => {
+  let queryClient: QueryClient;
+  let mockLogout: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    mockLogout = vi.fn();
+
+    vi.mocked(apiClient.listTracks).mockResolvedValue([]);
+
+    vi.spyOn(authContext, "useAuth").mockReturnValue({
+      user: { id: "1", email: "test@example.com" },
+      accessToken: "mock-token",
+      login: vi.fn(),
+      logout: mockLogout,
+      isAuthenticated: true,
+      isLoading: false,
+    });
+  });
+
+  it("clears query cache and geometry cache when logout button is clicked", async () => {
+    const { geometryCache } = await import("./utils/geometryCache");
+    const user = userEvent.setup();
+    const clearSpy = vi.spyOn(queryClient, "clear");
+    const clearCacheSpy = vi.spyOn(geometryCache, "clearCache");
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Logout")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText("Logout"));
+
+    expect(clearSpy).toHaveBeenCalledOnce();
+    expect(clearCacheSpy).toHaveBeenCalledOnce();
+    expect(mockLogout).toHaveBeenCalledOnce();
+  });
+
+  it("does not display tracks when not authenticated", () => {
+    const mockTrack1: Track = {
+      id: 1,
+      hash: "hash1",
+      name: "Test Track 1",
+      filename: "track1.gpx",
+      activity_type: "Walking",
+      activity_type_inferred: "Walking",
+      activity_date: "2025-01-01T10:00:00Z",
+      uploaded_at: "2025-01-01T10:05:00Z",
+      distance_meters: 1000,
+      duration_seconds: 600,
+      avg_speed_ms: 1.67,
+      max_speed_ms: 2.0,
+      min_speed_ms: 1.0,
+      elevation_gain_meters: 10,
+      elevation_loss_meters: 5,
+      bounds_min_lat: 35.9,
+      bounds_min_lon: -79.1,
+      bounds_max_lat: 35.91,
+      bounds_max_lon: -79.09,
+      visible: true,
+      description: null,
+      created_at: "2025-01-01T10:05:00Z",
+      updated_at: "2025-01-01T10:05:00Z",
+    };
+
+    const mockTrack2: Track = {
+      ...mockTrack1,
+      id: 2,
+      hash: "hash2",
+      name: "Test Track 2",
+    };
+
+    queryClient.setQueryData(["tracks"], [mockTrack1, mockTrack2]);
+
+    vi.spyOn(authContext, "useAuth").mockReturnValue({
+      user: null,
+      accessToken: null,
+      login: vi.fn(),
+      logout: vi.fn(),
+      isAuthenticated: false,
+      isLoading: false,
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByText("0 tracks")).toBeInTheDocument();
+    expect(screen.queryByText("Test Track 1")).not.toBeInTheDocument();
   });
 });
