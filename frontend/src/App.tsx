@@ -22,6 +22,7 @@ import { geometryCache } from "./utils/geometryCache";
 import type { Track } from "./types/track";
 
 const queryClient = new QueryClient();
+const EMPTY_TRACKS: Track[] = [];
 
 export function AppContent() {
   const { isAuthenticated, isLoading, accessToken, logout } = useAuth();
@@ -56,7 +57,7 @@ export function AppContent() {
   });
 
   const tracks = useMemo(
-    () => (isAuthenticated ? tracksData : []),
+    () => (isAuthenticated ? tracksData : EMPTY_TRACKS),
     [isAuthenticated, tracksData],
   );
 
