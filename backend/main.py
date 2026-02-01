@@ -23,11 +23,6 @@ config.ensure_dirs()
 geoip_service = None
 
 
-# Intentional mypy error for CI testing
-def broken_type_function() -> int:
-    return "this is a string, not an int"  # type error!
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown."""

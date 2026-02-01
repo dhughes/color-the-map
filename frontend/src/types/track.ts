@@ -47,6 +47,3 @@ export interface DeleteResult {
   failed: number;
   errors: string[];
 }
-
-// Intentional TypeScript error for CI testing
-export const brokenTypeExample: number = "this is a string, not a number";
