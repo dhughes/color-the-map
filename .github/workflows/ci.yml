@@ -27,12 +27,18 @@ jobs:
           pip install ruff mypy
 
       - name: Run Ruff linting
+        id: ruff-lint
+        continue-on-error: true
         run: ruff check backend/ --output-format=github
 
       - name: Run Ruff format check
+        id: ruff-format
+        continue-on-error: true
         run: ruff format --check backend/
 
       - name: Run mypy type checking
+        id: mypy
+        continue-on-error: true
         run: mypy backend/ --ignore-missing-imports
 
       - name: Set up test database
@@ -42,7 +48,19 @@ jobs:
         run: alembic upgrade head
 
       - name: Run pytest
+        id: pytest
+        continue-on-error: true
         run: pytest backend/tests/ -v --cov=backend --cov-report=term-missing
+
+      - name: Check for failures
+        if: steps.ruff-lint.outcome == 'failure' || steps.ruff-format.outcome == 'failure' || steps.mypy.outcome == 'failure' || steps.pytest.outcome == 'failure'
+        run: |
+          echo "One or more checks failed:"
+          echo "  Ruff lint: ${{ steps.ruff-lint.outcome }}"
+          echo "  Ruff format: ${{ steps.ruff-format.outcome }}"
+          echo "  mypy: ${{ steps.mypy.outcome }}"
+          echo "  pytest: ${{ steps.pytest.outcome }}"
+          exit 1
 
   frontend:
     name: Frontend Checks
@@ -63,17 +81,35 @@ jobs:
         run: npm ci
 
       - name: Run ESLint
+        id: eslint
+        continue-on-error: true
         working-directory: frontend
         run: npm run lint
 
       - name: Run Prettier check
+        id: prettier
+        continue-on-error: true
         working-directory: frontend
         run: npx prettier --check "src/**/*.{ts,tsx,json,css}"
 
       - name: Run TypeScript build
+        id: tsc
+        continue-on-error: true
         working-directory: frontend
         run: npm run build
 
       - name: Run tests
+        id: vitest
+        continue-on-error: true
         working-directory: frontend
         run: npm test -- --run
+
+      - name: Check for failures
+        if: steps.eslint.outcome == 'failure' || steps.prettier.outcome == 'failure' || steps.tsc.outcome == 'failure' || steps.vitest.outcome == 'failure'
+        run: |
+          echo "One or more checks failed:"
+          echo "  ESLint: ${{ steps.eslint.outcome }}"
+          echo "  Prettier: ${{ steps.prettier.outcome }}"
+          echo "  TypeScript: ${{ steps.tsc.outcome }}"
+          echo "  Vitest: ${{ steps.vitest.outcome }}"
+          exit 1
