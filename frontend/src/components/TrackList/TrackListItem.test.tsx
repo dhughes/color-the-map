@@ -10,7 +10,6 @@ describe("TrackListItem", () => {
     name: "Test Track",
     filename: "test.gpx",
     activity_type: "Cycling",
-    activity_type_inferred: "Cycling",
     activity_date: "2025-01-01T10:00:00Z",
     uploaded_at: "2025-01-01T10:05:00Z",
     distance_meters: 5000,
