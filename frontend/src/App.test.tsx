@@ -8,6 +8,11 @@ import * as authContext from "./contexts/AuthContext";
 import type { Track } from "./types/track";
 
 vi.mock("./api/client");
+vi.mock("./utils/geometryCache", () => ({
+  geometryCache: {
+    clearCache: vi.fn(() => Promise.resolve()),
+  },
+}));
 vi.mock("./hooks/useViewportGeometries", () => ({
   useViewportGeometries: vi.fn(() => ({
     geometries: [],
@@ -143,7 +148,8 @@ describe("App - Logout Functionality", () => {
     });
   });
 
-  it("clears query cache when logout button is clicked", async () => {
+  it("clears query cache and geometry cache when logout button is clicked", async () => {
+    const { geometryCache } = await import("./utils/geometryCache");
     const user = userEvent.setup();
     const clearSpy = vi.spyOn(queryClient, "clear");
 
@@ -160,6 +166,7 @@ describe("App - Logout Functionality", () => {
     await user.click(screen.getByText("Logout"));
 
     expect(clearSpy).toHaveBeenCalledOnce();
+    expect(geometryCache.clearCache).toHaveBeenCalledOnce();
     expect(mockLogout).toHaveBeenCalledOnce();
   });
 

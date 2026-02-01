@@ -18,6 +18,7 @@ import {
   listTracks,
   setAccessToken,
 } from "./api/client";
+import { geometryCache } from "./utils/geometryCache";
 import type { Track } from "./types/track";
 
 const queryClient = new QueryClient();
@@ -115,6 +116,7 @@ export function AppContent() {
 
   const handleLogout = async () => {
     queryClient.clear();
+    await geometryCache.clearCache();
     clearSelection();
     await logout();
   };
