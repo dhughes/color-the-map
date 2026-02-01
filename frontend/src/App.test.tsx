@@ -167,13 +167,40 @@ describe("App - Logout Functionality", () => {
   });
 
   it("does not display tracks when not authenticated", () => {
-    queryClient.setQueryData(
-      ["tracks"],
-      [
-        { id: 1, name: "Test Track 1" },
-        { id: 2, name: "Test Track 2" },
-      ],
-    );
+    const mockTrack1: Track = {
+      id: 1,
+      hash: "hash1",
+      name: "Test Track 1",
+      filename: "track1.gpx",
+      activity_type: "Walking",
+      activity_type_inferred: "Walking",
+      activity_date: "2025-01-01T10:00:00Z",
+      uploaded_at: "2025-01-01T10:05:00Z",
+      distance_meters: 1000,
+      duration_seconds: 600,
+      avg_speed_ms: 1.67,
+      max_speed_ms: 2.0,
+      min_speed_ms: 1.0,
+      elevation_gain_meters: 10,
+      elevation_loss_meters: 5,
+      bounds_min_lat: 35.9,
+      bounds_min_lon: -79.1,
+      bounds_max_lat: 35.91,
+      bounds_max_lon: -79.09,
+      visible: true,
+      description: null,
+      created_at: "2025-01-01T10:05:00Z",
+      updated_at: "2025-01-01T10:05:00Z",
+    };
+
+    const mockTrack2: Track = {
+      ...mockTrack1,
+      id: 2,
+      hash: "hash2",
+      name: "Test Track 2",
+    };
+
+    queryClient.setQueryData(["tracks"], [mockTrack1, mockTrack2]);
 
     vi.spyOn(authContext, "useAuth").mockReturnValue({
       user: null,
