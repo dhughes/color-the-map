@@ -116,10 +116,15 @@ export function AppContent() {
   }, [tracks, allGeometries]);
 
   const handleLogout = async () => {
-    queryClient.clear();
-    await geometryCache.clearCache();
-    clearSelection();
-    await logout();
+    try {
+      queryClient.clear();
+      await geometryCache.clearCache();
+      clearSelection();
+      await logout();
+    } catch (error) {
+      console.error("Logout cleanup failed:", error);
+      await logout();
+    }
   };
 
   const handleZoomToTrack = (track: Track) => {
