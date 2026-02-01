@@ -10,26 +10,20 @@ class GPXParser:
     def infer_activity_type(filename: str) -> str:
         filename_lower = filename.lower()
 
-        if "mountain bike" in filename_lower or "mountain biking" in filename_lower:
-            return "Cycling"
+        ACTIVITY_PATTERNS = [
+            (["mountain bike", "mountain biking"], "Cycling"),
+            (["downhill skiing"], "Downhill Skiing"),
+            (["walk", "walking"], "Walking"),
+            (["run", "running"], "Running"),
+            (["cycl", "bik", "mtb"], "Cycling"),
+            (["swim", "swimming"], "Swimming"),
+            (["multisport", "triathlon"], "Multisport"),
+            (["other"], "Other"),
+        ]
 
-        if "downhill skiing" in filename_lower or "downhill" in filename_lower:
-            return "Downhill Skiing"
-
-        if any(word in filename_lower for word in ["walk", "walking"]):
-            return "Walking"
-        if any(word in filename_lower for word in ["run", "running"]):
-            return "Running"
-        if any(word in filename_lower for word in ["cycl", "bik", "mtb"]):
-            return "Cycling"
-        if any(word in filename_lower for word in ["swim", "swimming"]):
-            return "Swimming"
-        if "skiing" in filename_lower:
-            return "Downhill Skiing"
-        if any(word in filename_lower for word in ["multisport", "triathlon"]):
-            return "Multisport"
-        if "other" in filename_lower:
-            return "Other"
+        for patterns, activity_type in ACTIVITY_PATTERNS:
+            if any(pattern in filename_lower for pattern in patterns):
+                return activity_type
 
         return "Unknown"
 

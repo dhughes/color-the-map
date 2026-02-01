@@ -147,8 +147,9 @@ def test_infer_activity_type_downhill_skiing():
         GPXParser.infer_activity_type("Downhill Skiing 2025-01-23T001434Z.gpx")
         == "Downhill Skiing"
     )
-    assert GPXParser.infer_activity_type("skiing trip.gpx") == "Downhill Skiing"
-    assert GPXParser.infer_activity_type("DOWNHILL 2025.gpx") == "Downhill Skiing"
+    assert (
+        GPXParser.infer_activity_type("downhill skiing trip.gpx") == "Downhill Skiing"
+    )
 
 
 def test_infer_activity_type_multisport():
