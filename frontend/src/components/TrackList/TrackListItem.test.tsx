@@ -6,11 +6,12 @@ import type { Track } from "../../types/track";
 describe("TrackListItem", () => {
   const mockTrack: Track = {
     id: 1,
+    user_id: "test-user-123",
     hash: "abc123",
     name: "Test Track",
     filename: "test.gpx",
+    creator: null,
     activity_type: "Cycling",
-    activity_type_inferred: "Cycling",
     activity_date: "2025-01-01T10:00:00Z",
     uploaded_at: "2025-01-01T10:05:00Z",
     distance_meters: 5000,
@@ -203,5 +204,22 @@ describe("TrackListItem", () => {
     fireEvent.click(button);
 
     expect(mockOnSelect).not.toHaveBeenCalled();
+  });
+
+  it("displays 'Unknown' when activity_type is null", () => {
+    const trackWithoutType = { ...mockTrack, activity_type: null };
+
+    render(
+      <TrackListItem
+        track={trackWithoutType}
+        isSelected={false}
+        onSelect={mockOnSelect}
+        onToggleVisibility={mockOnToggleVisibility}
+        onDoubleClick={mockOnDoubleClick}
+        onDelete={mockOnDelete}
+      />,
+    );
+
+    expect(screen.getByText("Unknown")).toBeInTheDocument();
   });
 });

@@ -12,7 +12,6 @@ class Track:
     filename: str
     creator: Optional[str]
     activity_type: Optional[str]
-    activity_type_inferred: Optional[str]
     activity_date: datetime
     uploaded_at: datetime
 
@@ -46,7 +45,6 @@ class Track:
             filename=model.filename,
             creator=model.creator,
             activity_type=model.activity_type,
-            activity_type_inferred=model.activity_type_inferred,
             activity_date=model.activity_date,
             uploaded_at=model.uploaded_at,
             distance_meters=model.distance_meters,

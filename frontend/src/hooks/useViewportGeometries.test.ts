@@ -23,7 +23,6 @@ const createTrack = (
   name: `Track ${id}`,
   filename: `track${id}.gpx`,
   activity_type: null,
-  activity_type_inferred: null,
   activity_date: "2024-01-01T00:00:00Z",
   uploaded_at: "2024-01-01T00:00:00Z",
   distance_meters: null,

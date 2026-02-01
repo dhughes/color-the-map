@@ -257,3 +257,43 @@ async def test_delete_continues_on_failure(track_service, sample_gpx, async_db_s
         )
         is None
     )
+
+
+@pytest.mark.asyncio
+async def test_upload_infers_activity_type_from_filename(
+    track_service, sample_gpx, async_db_session
+):
+    result = await track_service.upload_track(
+        "Walking 2031.gpx", sample_gpx, "test-user-id", async_db_session
+    )
+    await async_db_session.commit()
+
+    assert result.track.activity_type == "Walking"
+
+
+@pytest.mark.asyncio
+async def test_upload_cycling_filename(track_service, async_db_session):
+    test_dir = Path(__file__).parent
+    gpx_path = (
+        test_dir / ".." / ".." / "sample-gpx-files" / "Cycling 2025-12-19T211415Z.gpx"
+    )
+    with open(gpx_path, "rb") as f:
+        content = f.read()
+
+    result = await track_service.upload_track(
+        "Cycling 2025-12-19T211415Z.gpx", content, "test-user-id", async_db_session
+    )
+    await async_db_session.commit()
+
+    assert result.track.activity_type == "Cycling"
+    assert result.track.filename == "Cycling 2025-12-19T211415Z.gpx"
+
+
+@pytest.mark.asyncio
+async def test_upload_unknown_filename(track_service, sample_gpx, async_db_session):
+    result = await track_service.upload_track(
+        "route_2025-03-01_5.31pm.gpx", sample_gpx, "test-user-id", async_db_session
+    )
+    await async_db_session.commit()
+
+    assert result.track.activity_type == "Unknown"

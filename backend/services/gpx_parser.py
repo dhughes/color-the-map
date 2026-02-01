@@ -6,6 +6,27 @@ from ..models.gpx_data import ParsedGPXData
 
 
 class GPXParser:
+    @staticmethod
+    def infer_activity_type(filename: str) -> str:
+        filename_lower = filename.lower()
+
+        ACTIVITY_PATTERNS = [
+            (["mountain bike", "mountain biking"], "Cycling"),
+            (["downhill skiing"], "Downhill Skiing"),
+            (["walk", "walking"], "Walking"),
+            (["run", "running"], "Running"),
+            (["cycl", "bik", "mtb"], "Cycling"),
+            (["swim", "swimming"], "Swimming"),
+            (["multisport", "triathlon"], "Multisport"),
+            (["other"], "Other"),
+        ]
+
+        for patterns, activity_type in ACTIVITY_PATTERNS:
+            if any(pattern in filename_lower for pattern in patterns):
+                return activity_type
+
+        return "Unknown"
+
     def parse(self, content: bytes) -> ParsedGPXData:
         gpx = gpxpy.parse(content.decode("utf-8"))
 

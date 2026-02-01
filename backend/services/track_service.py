@@ -40,7 +40,7 @@ class TrackService:
         self.storage.store_gpx(user_id, gpx_hash, content)
 
         name = Path(filename).stem
-        activity_type = "Unknown"
+        activity_type = GPXParser.infer_activity_type(filename)
 
         track_model = TrackModel(
             user_id=user_id,
@@ -49,7 +49,6 @@ class TrackService:
             filename=filename,
             creator=gpx_data.creator,
             activity_type=activity_type,
-            activity_type_inferred=activity_type,
             activity_date=gpx_data.activity_date,
             distance_meters=gpx_data.distance_meters,
             duration_seconds=gpx_data.duration_seconds,
