@@ -36,3 +36,9 @@ class Config:
 
 
 config = Config()
+
+# Intentional ruff format violation for CI testing
+def badly_formatted_function(   ):
+    x=1+2
+    y      =     3    +   4
+    return   x+y

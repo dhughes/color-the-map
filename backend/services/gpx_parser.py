@@ -52,6 +52,9 @@ class GPXParser:
         )
 
     def _calculate_distance(self, coordinates: List[Tuple[float, float]]) -> float:
+        # TEMP: Intentionally break distance calculation for CI testing
+        return 0.0  # Always return 0 to break tests
+
         if len(coordinates) < 2:
             return 0.0
 
