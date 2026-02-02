@@ -30,8 +30,10 @@ async def setup_services(test_gpx_dir, monkeypatch):
 
 
 @pytest_asyncio.fixture
-async def user1(async_db_session):
-    """Create test user 1 in isolated test database."""
+async def user1():
+    """Create test user 1 in main test database."""
+    from backend.auth.database import get_session_maker
+
     user = User(
         id=str(uuid.uuid4()),
         email="user1@example.com",
@@ -41,16 +43,20 @@ async def user1(async_db_session):
         is_superuser=False,
     )
 
-    async_db_session.add(user)
-    await async_db_session.commit()
-    await async_db_session.refresh(user)
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
 
     return user
 
 
 @pytest_asyncio.fixture
-async def user2(async_db_session):
-    """Create test user 2 in isolated test database."""
+async def user2():
+    """Create test user 2 in main test database."""
+    from backend.auth.database import get_session_maker
+
     user = User(
         id=str(uuid.uuid4()),
         email="user2@example.com",
@@ -60,9 +66,11 @@ async def user2(async_db_session):
         is_superuser=False,
     )
 
-    async_db_session.add(user)
-    await async_db_session.commit()
-    await async_db_session.refresh(user)
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
 
     return user
 

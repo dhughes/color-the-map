@@ -10,8 +10,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @pytest_asyncio.fixture
-async def test_user(async_db_session):
-    """Create test user in isolated test database."""
+async def test_user():
+    """Create test user in main test database."""
+    from backend.auth.database import get_session_maker
+
     user = User(
         id=str(uuid.uuid4()),
         email="test@example.com",
@@ -21,9 +23,11 @@ async def test_user(async_db_session):
         is_superuser=False,
     )
 
-    async_db_session.add(user)
-    await async_db_session.commit()
-    await async_db_session.refresh(user)
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
 
     return user
 

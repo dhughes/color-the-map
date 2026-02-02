@@ -45,6 +45,29 @@ def setup_test_database():
         _test_database_path.unlink()
 
 
+@pytest_asyncio.fixture(autouse=True)
+async def clean_test_data():
+    """Clean test database between tests to prevent conflicts.
+
+    Runs before each test to ensure a clean state.
+    Users and tracks created by one test don't affect the next.
+    """
+    from backend.auth.database import get_session_maker
+    from backend.auth.models import User, RefreshToken
+    from backend.models.track_model import Track
+    from sqlalchemy import delete
+
+    yield  # Let test run first
+
+    # Cleanup after test completes
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        await session.execute(delete(RefreshToken))
+        await session.execute(delete(Track))
+        await session.execute(delete(User))
+        await session.commit()
+
+
 @pytest.fixture(scope="session")
 def test_db_path(tmp_path_factory):
     """Create a temporary test database path for the entire test session"""
