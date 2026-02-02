@@ -43,7 +43,10 @@ class TrackService:
         activity_type = GPXParser.infer_activity_type(filename)
 
         # Store coordinates at 50% resolution (every other point)
-        reduced_coordinates = gpx_data.coordinates[::2]
+        # Convert tuples to lists for JSON storage (JSON doesn't preserve tuple type)
+        reduced_coordinates: List[List[float]] = [
+            list(coord) for coord in gpx_data.coordinates[::2]
+        ]
 
         track_model = TrackModel(
             user_id=user_id,
@@ -110,7 +113,7 @@ class TrackService:
         if not track or not track.coordinates:
             return None
 
-        # Convert lists back to tuples (JSON deserialization converts tuples to lists)
+        # Convert lists to tuples (domain model uses tuples, DB uses lists from JSON)
         coordinates: List[Tuple[float, float]] = [
             cast(Tuple[float, float], tuple(coord)) for coord in track.coordinates
         ]
@@ -133,7 +136,7 @@ class TrackService:
         geometries = []
         for track_model in track_models:
             if track_model.coordinates:
-                # Convert lists back to tuples (JSON deserialization converts tuples to lists)
+                # Convert lists to tuples (domain model uses tuples, DB uses lists from JSON)
                 coordinates: List[Tuple[float, float]] = [
                     cast(Tuple[float, float], tuple(coord))
                     for coord in track_model.coordinates
