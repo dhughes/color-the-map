@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router as api_router
 from .auth.routes import router as auth_router
-from .auth.database import get_engine
+from .auth.database import engine
 from .database import Base
 from .config import config
 from .services.geoip_service import GeoIPService
@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
     # Startup
     # Create SQLAlchemy tables (all models)
     # Note: In production, use Alembic migrations instead
-    async with get_engine().begin() as conn:
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
     if config.MAXMIND_ACCOUNT_ID and config.MAXMIND_LICENSE_KEY:

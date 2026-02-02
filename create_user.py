@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 
 sys.path.insert(0, ".")
 
-from backend.auth.database import get_session_maker
+from backend.auth.database import async_session_maker
 from backend.auth.models import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -23,8 +23,7 @@ async def create_user(email: str, password: str):
         is_superuser=False,
     )
 
-    session_maker = get_session_maker()
-    async with session_maker() as session:
+    async with async_session_maker() as session:
         session.add(user)
         await session.commit()
         print(f"✓ Created user: {email}")

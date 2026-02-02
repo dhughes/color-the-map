@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 from pathlib import Path
 from fastapi.testclient import TestClient
 from backend.main import app
@@ -34,39 +35,24 @@ def setup_api_test_environment(test_gpx_dir):
 client = TestClient(app)
 
 
-@pytest.fixture
-def auth_token():
-    """Create test user in main test database and return auth token.
-
-    Uses synchronous approach compatible with TestClient.
-    The user is created in the shared test database (data/test.db).
-    """
-    from backend.auth.database import get_session_maker
-    import asyncio
-
-    # Use unique email per test to avoid conflicts
-    test_email = f"testapi-{uuid.uuid4()}@example.com"
-
+@pytest_asyncio.fixture
+async def auth_token(test_db_session):
+    """Create test user in isolated test database and return auth token."""
     user = User(
         id=str(uuid.uuid4()),
-        email=test_email,
+        email="testapi@example.com",
         hashed_password=pwd_context.hash("testpass"),
         is_active=True,
         is_verified=True,
         is_superuser=False,
     )
 
-    async def create_user():
-        session_maker = get_session_maker()
-        async with session_maker() as session:
-            session.add(user)
-            await session.commit()
-
-    asyncio.run(create_user())
+    test_db_session.add(user)
+    await test_db_session.commit()
 
     response = client.post(
         "/api/v1/auth/login",
-        data={"username": test_email, "password": "testpass"},
+        data={"username": "testapi@example.com", "password": "testpass"},
     )
     return response.json()["access_token"]
 

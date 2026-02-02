@@ -1,67 +1,55 @@
 import sys
 from pathlib import Path
-import os
 import pytest
 import pytest_asyncio
-import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-# CRITICAL: Set DATABASE_URL *BEFORE* importing any application code
-# This ensures tests use a separate database file
-_test_database_path = Path(__file__).parent.parent.parent / "data" / "test.db"
-os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{_test_database_path}"
-
-# Now safe to import app code - it will use test database
-# ruff: noqa: E402 - imports must come after DATABASE_URL is set
 from backend.database import Base
-from backend.auth.database import get_engine
+from backend.main import app
+from backend.auth.database import get_async_session
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_test_database():
-    """Create test database schema once for entire test session."""
-    # Delete existing test database to start fresh
-    if _test_database_path.exists():
-        _test_database_path.unlink()
+@pytest_asyncio.fixture
+async def test_db_session():
+    """Create a fresh in-memory database for each test.
 
-    # Create schema in test database using SQLAlchemy
-    # (In production, Alembic migrations handle this)
-    async def create_tables():
-        async with get_engine().begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-    asyncio.run(create_tables())
-
-    yield
-
-    # Cleanup after all tests
-    if _test_database_path.exists():
-        _test_database_path.unlink()
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def clean_test_data():
-    """Clean test database between tests to prevent conflicts.
-
-    Runs before each test to ensure a clean state.
-    Users and tracks created by one test don't affect the next.
+    Uses FastAPI's dependency_overrides to inject test database into app.
+    Each test gets its own isolated in-memory database - no cleanup needed.
     """
-    from backend.auth.database import get_session_maker
-    from backend.auth.models import User, RefreshToken
-    from backend.models.track_model import Track
-    from sqlalchemy import delete
+    # Create in-memory database (fast, isolated, automatically cleaned up)
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+    )
 
-    yield  # Let test run first
+    # Create all tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-    # Cleanup after test completes
-    session_maker = get_session_maker()
-    async with session_maker() as session:
-        await session.execute(delete(RefreshToken))
-        await session.execute(delete(Track))
-        await session.execute(delete(User))
-        await session.commit()
+    # Create session maker for this test database
+    test_session_maker = async_sessionmaker(engine, expire_on_commit=False)
+
+    # Override app's database dependency to use test database
+    async def override_get_session():
+        async with test_session_maker() as session:
+            try:
+                yield session
+            except Exception:
+                await session.rollback()
+                raise
+
+    app.dependency_overrides[get_async_session] = override_get_session
+
+    # Provide session for direct use in fixtures
+    async with test_session_maker() as session:
+        yield session
+
+    # Cleanup
+    app.dependency_overrides.clear()
+    await engine.dispose()
 
 
 @pytest.fixture(scope="function")
