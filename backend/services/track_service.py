@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple, cast
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from .gpx_parser import GPXParser
@@ -111,7 +111,9 @@ class TrackService:
             return None
 
         # Convert lists back to tuples (JSON deserialization converts tuples to lists)
-        coordinates = [tuple(coord) for coord in track.coordinates]
+        coordinates: List[Tuple[float, float]] = [
+            cast(Tuple[float, float], tuple(coord)) for coord in track.coordinates
+        ]
         return TrackGeometry(track_id=track_id, coordinates=coordinates)
 
     async def get_multiple_geometries(
@@ -132,7 +134,10 @@ class TrackService:
         for track_model in track_models:
             if track_model.coordinates:
                 # Convert lists back to tuples (JSON deserialization converts tuples to lists)
-                coordinates = [tuple(coord) for coord in track_model.coordinates]
+                coordinates: List[Tuple[float, float]] = [
+                    cast(Tuple[float, float], tuple(coord))
+                    for coord in track_model.coordinates
+                ]
                 geometries.append(
                     TrackGeometry(track_id=track_model.id, coordinates=coordinates)
                 )
