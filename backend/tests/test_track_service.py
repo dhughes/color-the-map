@@ -297,3 +297,42 @@ async def test_upload_unknown_filename(track_service, sample_gpx, test_db_sessio
     await test_db_session.commit()
 
     assert result.track.activity_type == "Unknown"
+
+
+@pytest.mark.asyncio
+async def test_coordinates_stored_at_50_percent_resolution(
+    track_service, test_db_session
+):
+    """Test that coordinates are stored at 50% resolution (every other point)."""
+    from ..services.gpx_parser import GPXParser
+
+    test_dir = Path(__file__).parent
+    gpx_path = (
+        test_dir / ".." / ".." / "sample-gpx-files" / "Cycling 2025-12-19T211415Z.gpx"
+    )
+
+    with open(gpx_path, "rb") as f:
+        content = f.read()
+
+    # Parse the GPX to get the original number of coordinates
+    parser = GPXParser()
+    gpx_data = parser.parse(content)
+    original_count = len(gpx_data.coordinates)
+
+    # Upload the track
+    result = await track_service.upload_track(
+        "test.gpx", content, "test-user-id", test_db_session
+    )
+    await test_db_session.commit()
+
+    # Get the geometry from the database
+    geometry = await track_service.get_track_geometry(
+        result.track.id, "test-user-id", test_db_session
+    )
+
+    assert geometry is not None
+    # Stored coordinates should be approximately half (every other point)
+    # Allow some tolerance for odd numbers
+    expected_count = (original_count + 1) // 2
+    assert len(geometry.coordinates) == expected_count
+    assert len(geometry.coordinates) < original_count

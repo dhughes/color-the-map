@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple, cast
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from .gpx_parser import GPXParser
@@ -42,6 +42,12 @@ class TrackService:
         name = Path(filename).stem
         activity_type = GPXParser.infer_activity_type(filename)
 
+        # Store coordinates at 50% resolution (every other point)
+        # Convert tuples to lists for JSON storage (JSON doesn't preserve tuple type)
+        reduced_coordinates: List[List[float]] = [
+            list(coord) for coord in gpx_data.coordinates[::2]
+        ]
+
         track_model = TrackModel(
             user_id=user_id,
             hash=gpx_hash,
@@ -61,6 +67,7 @@ class TrackService:
             bounds_max_lat=gpx_data.bounds_max_lat,
             bounds_min_lon=gpx_data.bounds_min_lon,
             bounds_max_lon=gpx_data.bounds_max_lon,
+            coordinates=reduced_coordinates,
         )
 
         session.add(track_model)
@@ -96,17 +103,21 @@ class TrackService:
     async def get_track_geometry(
         self, track_id: int, user_id: str, session: AsyncSession
     ) -> Optional[TrackGeometry]:
-        track = await self.get_track_metadata(track_id, user_id, session)
-        if not track:
+        result = await session.execute(
+            select(TrackModel).where(
+                TrackModel.id == track_id, TrackModel.user_id == user_id
+            )
+        )
+        track = result.scalar_one_or_none()
+
+        if not track or not track.coordinates:
             return None
 
-        gpx_content = self.storage.load_gpx(user_id, track.hash)
-        if not gpx_content:
-            return None
-
-        gpx_data = self.parser.parse(gpx_content)
-
-        return TrackGeometry(track_id=track_id, coordinates=gpx_data.coordinates)
+        # Convert lists to tuples (domain model uses tuples, DB uses lists from JSON)
+        coordinates: List[Tuple[float, float]] = [
+            cast(Tuple[float, float], tuple(coord)) for coord in track.coordinates
+        ]
+        return TrackGeometry(track_id=track_id, coordinates=coordinates)
 
     async def get_multiple_geometries(
         self, track_ids: List[int], user_id: str, session: AsyncSession
@@ -124,14 +135,15 @@ class TrackService:
 
         geometries = []
         for track_model in track_models:
-            gpx_content = self.storage.load_gpx(user_id, track_model.hash)
-            if not gpx_content:
-                continue
-
-            gpx_data = self.parser.parse(gpx_content)
-            geometries.append(
-                TrackGeometry(track_id=track_model.id, coordinates=gpx_data.coordinates)
-            )
+            if track_model.coordinates:
+                # Convert lists to tuples (domain model uses tuples, DB uses lists from JSON)
+                coordinates: List[Tuple[float, float]] = [
+                    cast(Tuple[float, float], tuple(coord))
+                    for coord in track_model.coordinates
+                ]
+                geometries.append(
+                    TrackGeometry(track_id=track_model.id, coordinates=coordinates)
+                )
 
         return geometries
 

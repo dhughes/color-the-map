@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from sqlalchemy import (
     String,
     DateTime,
@@ -9,6 +9,7 @@ from sqlalchemy import (
     Float,
     Boolean,
     Text,
+    JSON,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 from ..database import Base
@@ -42,6 +43,8 @@ class Track(Base):
 
     visible: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # JSON deserialization returns lists, not tuples
+    coordinates: Mapped[List[List[float]] | None] = mapped_column(JSON, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
