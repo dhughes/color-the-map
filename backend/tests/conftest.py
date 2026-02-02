@@ -1,15 +1,48 @@
 import sys
 from pathlib import Path
+import os
 import pytest
 import pytest_asyncio
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+import asyncio
+
+# CRITICAL: Set DATABASE_URL *BEFORE* importing any application code
+# This ensures tests use a separate database file
+_test_database_path = Path(__file__).parent.parent.parent / "data" / "test.db"
+os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{_test_database_path}"
+
+# Now safe to import app code - it will use test database
+# ruff: noqa: E402 - imports must come after DATABASE_URL is set
 from backend.database import Base
 from backend.config import config
+from backend.auth.database import get_engine
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_database():
+    """Create test database schema once for entire test session."""
+    # Delete existing test database to start fresh
+    if _test_database_path.exists():
+        _test_database_path.unlink()
+
+    # Create schema in test database using SQLAlchemy
+    # (In production, Alembic migrations handle this)
+    async def create_tables():
+        async with get_engine().begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+    asyncio.run(create_tables())
+
+    yield
+
+    # Cleanup after all tests
+    if _test_database_path.exists():
+        _test_database_path.unlink()
 
 
 @pytest.fixture(scope="session")

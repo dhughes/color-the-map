@@ -2,47 +2,33 @@ import pytest
 from pathlib import Path
 from fastapi.testclient import TestClient
 from backend.main import app
-from backend.auth.database import async_session_maker
-from backend.auth.models import User, RefreshToken
+from backend.auth.models import User
 from passlib.context import CryptContext
-from sqlalchemy import delete
 import uuid
-import asyncio
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_api_test_environment(test_gpx_dir):
-    """Setup API test-specific overrides
+    """Setup API test-specific overrides.
 
-    Note: conftest.py handles config overrides via monkeypatch.
-    Creates new service instances for test isolation.
+    Database isolation is handled globally via conftest.py DATABASE_URL.
+    This fixture only handles service dependencies.
     """
     from backend.services.storage_service import StorageService
     from backend.services.gpx_parser import GPXParser
     from backend.services.track_service import TrackService
     import backend.api.routes as routes_module
 
-    # Use GPX dir from conftest
     new_storage = StorageService(test_gpx_dir)
     new_parser = GPXParser()
     new_track_service = TrackService(new_storage, new_parser)
 
-    # Override module-level service instances for API tests
     routes_module.storage = new_storage
     routes_module.track_service = new_track_service
 
     yield
-
-    # Clean up auth database after test
-    async def cleanup_auth():
-        async with async_session_maker() as session:
-            await session.execute(delete(RefreshToken))
-            await session.execute(delete(User))
-            await session.commit()
-
-    asyncio.run(cleanup_auth())
 
 
 client = TestClient(app)
@@ -50,9 +36,20 @@ client = TestClient(app)
 
 @pytest.fixture
 def auth_token():
+    """Create test user in main test database and return auth token.
+
+    Uses synchronous approach compatible with TestClient.
+    The user is created in the shared test database (data/test.db).
+    """
+    from backend.auth.database import get_session_maker
+    import asyncio
+
+    # Use unique email per test to avoid conflicts
+    test_email = f"testapi-{uuid.uuid4()}@example.com"
+
     user = User(
         id=str(uuid.uuid4()),
-        email="testapi@example.com",
+        email=test_email,
         hashed_password=pwd_context.hash("testpass"),
         is_active=True,
         is_verified=True,
@@ -60,7 +57,8 @@ def auth_token():
     )
 
     async def create_user():
-        async with async_session_maker() as session:
+        session_maker = get_session_maker()
+        async with session_maker() as session:
             session.add(user)
             await session.commit()
 
@@ -68,7 +66,7 @@ def auth_token():
 
     response = client.post(
         "/api/v1/auth/login",
-        data={"username": "testapi@example.com", "password": "testpass"},
+        data={"username": test_email, "password": "testpass"},
     )
     return response.json()["access_token"]
 

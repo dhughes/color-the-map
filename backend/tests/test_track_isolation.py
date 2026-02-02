@@ -3,47 +3,35 @@ import pytest_asyncio
 from pathlib import Path
 from httpx import ASGITransport, AsyncClient
 from backend.main import app
-from backend.auth.database import async_session_maker
-from backend.auth.models import User, RefreshToken
+from backend.auth.models import User
 from backend.config import config
 from passlib.context import CryptContext
-from sqlalchemy import delete
 import uuid
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def clean_auth_db(test_gpx_dir, monkeypatch):
-    """Clean auth database and override services for isolation tests
-
-    Uses monkeypatch for thread-safe config overrides (conftest handles DB_PATH).
-    Creates new service instances to ensure proper test isolation.
-    """
+async def setup_services(test_gpx_dir, monkeypatch):
+    """Override service dependencies for isolation tests."""
     from backend.services.storage_service import StorageService
     from backend.services.gpx_parser import GPXParser
     from backend.services.track_service import TrackService
     import backend.api.routes as routes_module
 
     monkeypatch.setattr(config, "GPX_DIR", test_gpx_dir)
-
     new_storage = StorageService(test_gpx_dir)
     new_parser = GPXParser()
     new_track_service = TrackService(new_storage, new_parser)
-
     routes_module.storage = new_storage
     routes_module.track_service = new_track_service
-
-    async with async_session_maker() as session:
-        await session.execute(delete(RefreshToken))
-        await session.execute(delete(User))
-        await session.commit()
 
     yield
 
 
 @pytest_asyncio.fixture
-async def user1():
+async def user1(async_db_session):
+    """Create test user 1 in isolated test database."""
     user = User(
         id=str(uuid.uuid4()),
         email="user1@example.com",
@@ -53,16 +41,16 @@ async def user1():
         is_superuser=False,
     )
 
-    async with async_session_maker() as session:
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
+    async_db_session.add(user)
+    await async_db_session.commit()
+    await async_db_session.refresh(user)
 
     return user
 
 
 @pytest_asyncio.fixture
-async def user2():
+async def user2(async_db_session):
+    """Create test user 2 in isolated test database."""
     user = User(
         id=str(uuid.uuid4()),
         email="user2@example.com",
@@ -72,10 +60,9 @@ async def user2():
         is_superuser=False,
     )
 
-    async with async_session_maker() as session:
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
+    async_db_session.add(user)
+    await async_db_session.commit()
+    await async_db_session.refresh(user)
 
     return user
 
