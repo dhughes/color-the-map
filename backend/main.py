@@ -30,6 +30,7 @@ async def lifespan(app: FastAPI):
 
     # Startup
     # Create SQLAlchemy tables (all models)
+    # Note: In production, use Alembic migrations instead
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

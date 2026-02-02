@@ -2,26 +2,16 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from backend.main import app
-from backend.auth.database import async_session_maker
-from backend.auth.models import User, RefreshToken
+from backend.auth.models import User
 from passlib.context import CryptContext
-from sqlalchemy import delete
 import uuid
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-@pytest_asyncio.fixture(autouse=True)
-async def clean_auth_db():
-    async with async_session_maker() as session:
-        await session.execute(delete(RefreshToken))
-        await session.execute(delete(User))
-        await session.commit()
-    yield
-
-
 @pytest_asyncio.fixture
-async def test_user():
+async def test_user(test_db_session):
+    """Create test user in isolated test database."""
     user = User(
         id=str(uuid.uuid4()),
         email="test@example.com",
@@ -31,10 +21,9 @@ async def test_user():
         is_superuser=False,
     )
 
-    async with async_session_maker() as session:
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
+    test_db_session.add(user)
+    await test_db_session.commit()
+    await test_db_session.refresh(user)
 
     return user
 
