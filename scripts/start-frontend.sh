@@ -1,7 +1,7 @@
 #!/bin/bash
 # Start the frontend dev server.
-# Usage: ./scripts/start-frontend.sh <backend_port> <frontend_port>
-# Both ports are required so frontend knows where to proxy and which port to use.
+# Usage: ./scripts/start-frontend.sh [backend_port] [frontend_port]
+# Defaults to 8005 for backend and 5173 for frontend if not provided.
 
 set -e
 
@@ -10,14 +10,8 @@ WORKTREE_ROOT="$(dirname "$SCRIPT_DIR")"
 
 cd "$WORKTREE_ROOT/frontend"
 
-BACKEND_PORT=$1
-FRONTEND_PORT=$2
-
-if [ -z "$BACKEND_PORT" ] || [ -z "$FRONTEND_PORT" ]; then
-    echo "Usage: ./scripts/start-frontend.sh <backend_port> <frontend_port>"
-    echo "Example: ./scripts/start-frontend.sh 8006 5175"
-    exit 1
-fi
+BACKEND_PORT=${1:-8005}
+FRONTEND_PORT=${2:-5173}
 
 echo "Starting frontend on port $FRONTEND_PORT (proxying API to backend on $BACKEND_PORT)"
 

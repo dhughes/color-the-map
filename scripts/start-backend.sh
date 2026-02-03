@@ -1,7 +1,8 @@
 #!/bin/bash
 # Start the backend dev server.
-# Usage: ./scripts/start-backend.sh <backend_port> <frontend_port>
-# If ports not provided, finds available ones automatically.
+# Usage: ./scripts/start-backend.sh [backend_port] [frontend_port]
+#        ./scripts/start-backend.sh --auto  (finds available ports)
+# Defaults to 8005 for backend and 5173 for frontend if not provided.
 
 set -e
 
@@ -10,8 +11,13 @@ WORKTREE_ROOT="$(dirname "$SCRIPT_DIR")"
 
 cd "$WORKTREE_ROOT"
 
-BACKEND_PORT=${1:-$("$SCRIPT_DIR/find-available-port.sh" 8005)}
-FRONTEND_PORT=${2:-$("$SCRIPT_DIR/find-available-port.sh" 5173)}
+if [ "$1" = "--auto" ]; then
+    BACKEND_PORT=$("$SCRIPT_DIR/find-available-port.sh" 8006)
+    FRONTEND_PORT=$("$SCRIPT_DIR/find-available-port.sh" 5174)
+else
+    BACKEND_PORT=${1:-8005}
+    FRONTEND_PORT=${2:-5173}
+fi
 
 echo "Starting backend on port $BACKEND_PORT (CORS allows frontend on $FRONTEND_PORT)"
 echo "Start frontend with: ./scripts/start-frontend.sh $BACKEND_PORT $FRONTEND_PORT"

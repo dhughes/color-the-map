@@ -1,9 +1,9 @@
 #!/bin/bash
 # Find the first available TCP port starting from a given port number.
 # Usage: ./find-available-port.sh [starting_port]
-# Default starting port is 8005
+# Default starting port is 8006 (reserves 8005 for manual use).
 
-start_port=${1:-8005}
+start_port=${1:-8006}
 port=$start_port
 
 while true; do
