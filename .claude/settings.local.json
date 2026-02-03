@@ -63,7 +63,9 @@
       "Bash(npm run lint:*)",
       "Bash(./scripts/find-available-port.sh:*)",
       "Bash(./scripts/start-backend.sh:*)",
-      "Bash(./scripts/start-frontend.sh:*)"
+      "Bash(./scripts/start-frontend.sh:*)",
+      "Bash(./scripts/check-for-worktree.sh:*)",
+      "Bash(./scripts/check-venv-exists.sh:*)"
     ]
   }
 }
