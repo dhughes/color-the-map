@@ -3,8 +3,6 @@ name: Version Validation
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    paths:
-      - 'frontend/package.json'
 
 jobs:
   check-version-bump:

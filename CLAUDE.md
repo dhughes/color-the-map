@@ -276,6 +276,52 @@ mypy backend/ --ignore-missing-imports # Backend type checker
 cd frontend && npm run lint            # Frontend linter
 ```
 
+### Worktree Development (Parallel Development)
+
+Each git worktree needs its own `venv` and `node_modules` - they cannot be shared because they contain absolute paths and platform-specific binaries.
+
+**Worktree Setup (run once per new worktree):**
+```bash
+./scripts/setup-worktree.sh
+```
+
+This script copies `venv` and `node_modules` from the main repo (fast), or installs fresh if main repo doesn't have them. It's idempotent - safe to run multiple times.
+
+**For Claude Code:** Before running any Python or npm commands, check if `venv` and `frontend/node_modules` exist. If not, run `./scripts/setup-worktree.sh` first.
+
+**Detecting if you're in a worktree:** Check if `.git` is a file (worktree) or directory (main repo):
+```bash
+if [ -f .git ]; then echo "worktree"; else echo "main repo"; fi
+```
+
+**Port Configuration (for running multiple worktrees simultaneously):**
+- Backend reads `PORT` env var (default: 8005)
+- Backend reads `FRONTEND_PORT` env var for CORS (default: 5173)
+- Frontend reads `VITE_API_PORT` env var for proxy target (default: 8005)
+
+**Finding Available Ports:**
+```bash
+# Find first available port starting from a given number
+./scripts/find-available-port.sh 8006  # Returns first available port >= 8006
+./scripts/find-available-port.sh 5174  # For frontend
+```
+
+**Starting Dev Servers in a Worktree:**
+```bash
+# Start backend (finds available ports automatically, prints them to console)
+./scripts/start-backend.sh --auto
+
+# Start frontend (use ports from backend output)
+./scripts/start-frontend.sh 8006 5175
+```
+
+**For Claude Code:** When starting dev servers:
+1. Check if `venv` and `frontend/node_modules` exist - if not, run `./scripts/setup-worktree.sh`
+2. Check if in a worktree (`[ -f .git ]`) - if yes, use `./scripts/start-backend.sh --auto` to avoid port conflicts
+3. If in main repo, use `./scripts/start-backend.sh` (defaults to 8005/5173)
+4. Start frontend with `./scripts/start-frontend.sh <backend_port> <frontend_port>` using ports from backend output
+5. Tell the user which ports are being used so they know where to access the app
+
 ### Deployment
 ```bash
 # Deploy to production (from local machine)
