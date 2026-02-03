@@ -268,7 +268,7 @@ describe("App - Version Display", () => {
     expect(versionElement.textContent).toBe(`v${version}`);
   });
 
-  it("version element has correct positioning styles", async () => {
+  it("version element has correct CSS class", async () => {
     render(
       <QueryClientProvider client={queryClient}>
         <AppContent />
@@ -276,12 +276,6 @@ describe("App - Version Display", () => {
     );
 
     const versionElement = screen.getByText(`v${version}`);
-    const styles = window.getComputedStyle(versionElement);
-
-    expect(styles.position).toBe("absolute");
-    expect(styles.bottom).toBe("10px");
-    expect(styles.left).toBe("10px");
-    expect(styles.pointerEvents).toBe("none");
-    expect(styles.userSelect).toBe("none");
+    expect(versionElement).toHaveClass("version-display");
   });
 });

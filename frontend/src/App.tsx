@@ -24,16 +24,6 @@ import { version } from "../package.json";
 
 const queryClient = new QueryClient();
 const EMPTY_TRACKS: Track[] = [];
-const VERSION_DISPLAY_STYLES = {
-  position: "absolute" as const,
-  bottom: "10px",
-  left: "10px",
-  fontSize: "12px",
-  color: "#000",
-  fontFamily: "system-ui, sans-serif",
-  pointerEvents: "none" as const,
-  userSelect: "none" as const,
-};
 
 export function AppContent() {
   const { isAuthenticated, isLoading, accessToken, logout } = useAuth();
@@ -266,7 +256,7 @@ export function AppContent() {
             onClearSelection={clearSelection}
             onViewportChange={onViewportChange}
           />
-          <div style={VERSION_DISPLAY_STYLES}>v{version}</div>
+          <div className="version-display">v{version}</div>
           {isLoadingGeometries && (
             <div
               style={{
