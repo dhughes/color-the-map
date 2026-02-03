@@ -6,6 +6,7 @@ import App, { AppContent } from "./App";
 import * as apiClient from "./api/client";
 import * as authContext from "./contexts/AuthContext";
 import type { Track } from "./types/track";
+import { version } from "../package.json";
 
 vi.mock("./api/client");
 vi.mock("./hooks/useViewportGeometries", () => ({
@@ -217,5 +218,70 @@ describe("App - Logout Functionality", () => {
 
     expect(screen.getByText("0 tracks")).toBeInTheDocument();
     expect(screen.queryByText("Test Track 1")).not.toBeInTheDocument();
+  });
+});
+
+describe("App - Version Display", () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    vi.mocked(apiClient.listTracks).mockResolvedValue([]);
+
+    vi.spyOn(authContext, "useAuth").mockReturnValue({
+      user: { id: "1", email: "test@example.com" },
+      accessToken: "mock-token",
+      login: vi.fn(),
+      logout: vi.fn(),
+      isAuthenticated: true,
+      isLoading: false,
+    });
+  });
+
+  it("displays version number from package.json", async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
+
+    const versionElement = screen.getByText(`v${version}`);
+    expect(versionElement).toBeInTheDocument();
+  });
+
+  it("version matches the package.json version format", async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
+
+    const versionElement = screen.getByText(/^v\d+\.\d+\.\d+$/);
+    expect(versionElement).toBeInTheDocument();
+    expect(versionElement.textContent).toBe(`v${version}`);
+  });
+
+  it("version element has correct positioning styles", async () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
+
+    const versionElement = screen.getByText(`v${version}`);
+    const styles = window.getComputedStyle(versionElement);
+
+    expect(styles.position).toBe("absolute");
+    expect(styles.bottom).toBe("10px");
+    expect(styles.left).toBe("10px");
+    expect(styles.pointerEvents).toBe("none");
+    expect(styles.userSelect).toBe("none");
   });
 });
