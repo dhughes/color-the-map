@@ -8,6 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **CRITICAL:** NEVER push to GitHub without explicit user permission. Always ask first, even if it seems like the logical next step.
 
+**CRITICAL:** Every PR must include a version bump in `frontend/package.json`. CI will fail if the version is not incremented. Follow semantic versioning:
+- MAJOR.x.x for breaking changes
+- x.MINOR.x for new features
+- x.x.PATCH for bug fixes
+
 ## Code Reviewer Guidelines
 
 **Attitude & Approach:**
