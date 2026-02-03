@@ -687,3 +687,15 @@ body {
     transform: rotate(360deg);
   }
 }
+
+/* Version Display */
+.version-display {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  font-size: 12px;
+  color: #000;
+  font-family: system-ui, sans-serif;
+  pointer-events: none;
+  user-select: none;
+}

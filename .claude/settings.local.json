@@ -56,7 +56,8 @@
       "Bash(alembic upgrade:*)",
       "Bash(alembic current:*)",
       "Skill(ci-monitor:monitor-ci)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(npm run type-check:*)"
     ]
   }
 }

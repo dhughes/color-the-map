@@ -20,6 +20,7 @@ import {
 } from "./api/client";
 import { geometryCache } from "./utils/geometryCache";
 import type { Track } from "./types/track";
+import { version } from "../package.json";
 
 const queryClient = new QueryClient();
 const EMPTY_TRACKS: Track[] = [];
@@ -255,6 +256,7 @@ export function AppContent() {
             onClearSelection={clearSelection}
             onViewportChange={onViewportChange}
           />
+          <div className="version-display">v{version}</div>
           {isLoadingGeometries && (
             <div
               style={{
