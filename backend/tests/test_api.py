@@ -174,8 +174,6 @@ def test_delete_single_track(sample_gpx_file, auth_token):
     assert response.status_code == 200
     data = response.json()
     assert data["deleted"] == 1
-    assert data["failed"] == 0
-    assert len(data["errors"]) == 0
 
     get_response = client.get(
         "/api/v1/tracks", headers={"Authorization": f"Bearer {auth_token}"}
@@ -216,7 +214,6 @@ def test_delete_multiple_tracks(auth_token):
     assert response.status_code == 200
     data = response.json()
     assert data["deleted"] == 2
-    assert data["failed"] == 0
 
 
 def test_delete_nonexistent_track(auth_token):
@@ -230,11 +227,9 @@ def test_delete_nonexistent_track(auth_token):
     assert response.status_code == 200
     data = response.json()
     assert data["deleted"] == 0
-    assert data["failed"] == 1
-    assert len(data["errors"]) == 1
 
 
-def test_delete_partial_failure(sample_gpx_file, auth_token):
+def test_delete_with_mixed_ids(sample_gpx_file, auth_token):
     upload_response = client.post(
         "/api/v1/tracks",
         files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
@@ -252,5 +247,3 @@ def test_delete_partial_failure(sample_gpx_file, auth_token):
     assert response.status_code == 200
     data = response.json()
     assert data["deleted"] == 1
-    assert data["failed"] == 2
-    assert len(data["errors"]) == 2

@@ -44,9 +44,14 @@ else
     fi
 fi
 
+# Setup database
+echo "Setting up database..."
+source venv/bin/activate
+mkdir -p data
+alembic upgrade head
+
 # Create test user
 echo "Creating test user..."
-source venv/bin/activate
 python create_user.py doug@doughughes.net changeme
 
 echo "Worktree setup complete!"

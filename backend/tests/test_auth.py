@@ -74,7 +74,7 @@ async def test_login_invalid_credentials(test_user):
 
 
 @pytest.mark.asyncio
-async def test_login_nonexistent_user():
+async def test_login_nonexistent_user(test_db_session):
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
@@ -130,7 +130,7 @@ async def test_refresh_token_rotation(test_user):
 
 
 @pytest.mark.asyncio
-async def test_refresh_invalid_token():
+async def test_refresh_invalid_token(test_db_session):
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
@@ -169,7 +169,7 @@ async def test_logout_revokes_token(test_user):
 
 
 @pytest.mark.asyncio
-async def test_protected_endpoint_requires_auth():
+async def test_protected_endpoint_requires_auth(test_db_session):
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:

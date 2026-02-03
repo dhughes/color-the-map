@@ -159,13 +159,11 @@ async def test_delete_single_track(
     )
     await test_db_session.commit()
 
-    # Delete files after successful commit (mimicking route handler behavior)
-    for user_id, gpx_hash in delete_result.get("files_to_delete", []):
-        track_service.storage.delete_gpx(user_id, gpx_hash)
+    for hash_to_delete in delete_result.hashes_to_delete:
+        track_service.storage.delete_gpx("test-user-id", hash_to_delete)
 
-    assert delete_result["deleted"] == 1
-    assert delete_result["failed"] == 0
-    assert len(delete_result["errors"]) == 0
+    assert delete_result.deleted == 1
+    assert gpx_hash in delete_result.hashes_to_delete
 
     assert (
         await track_service.get_track_metadata(
@@ -204,9 +202,8 @@ async def test_delete_multiple_tracks(track_service, test_db_session):
     )
     await test_db_session.commit()
 
-    assert delete_result["deleted"] == 2
-    assert delete_result["failed"] == 0
-    assert len(delete_result["errors"]) == 0
+    assert delete_result.deleted == 2
+    assert len(delete_result.hashes_to_delete) == 2
 
     assert (
         await track_service.get_track_metadata(
@@ -228,14 +225,12 @@ async def test_delete_nonexistent_track(track_service, test_db_session):
         [9999], "test-user-id", test_db_session
     )
 
-    assert delete_result["deleted"] == 0
-    assert delete_result["failed"] == 1
-    assert len(delete_result["errors"]) == 1
-    assert "9999" in delete_result["errors"][0]
+    assert delete_result.deleted == 0
+    assert len(delete_result.hashes_to_delete) == 0
 
 
 @pytest.mark.asyncio
-async def test_delete_continues_on_failure(track_service, sample_gpx, test_db_session):
+async def test_delete_with_mixed_ids(track_service, sample_gpx, test_db_session):
     result1 = await track_service.upload_track(
         "track1.gpx", sample_gpx, "test-user-id", test_db_session
     )
@@ -247,9 +242,8 @@ async def test_delete_continues_on_failure(track_service, sample_gpx, test_db_se
     )
     await test_db_session.commit()
 
-    assert delete_result["deleted"] == 1
-    assert delete_result["failed"] == 2
-    assert len(delete_result["errors"]) == 2
+    assert delete_result.deleted == 1
+    assert len(delete_result.hashes_to_delete) == 1
 
     assert (
         await track_service.get_track_metadata(

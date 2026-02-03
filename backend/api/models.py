@@ -86,5 +86,3 @@ class DeleteRequest(BaseModel):
 
 class DeleteResult(BaseModel):
     deleted: int
-    failed: int
-    errors: List[str]
