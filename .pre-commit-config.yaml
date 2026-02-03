@@ -22,6 +22,13 @@ repos:
         files: frontend/.*\.(ts|tsx)$
         pass_filenames: false
 
+      - id: frontend-typecheck
+        name: TypeScript (frontend)
+        entry: bash -c 'cd frontend && npm run typecheck'
+        language: system
+        files: frontend/.*\.(ts|tsx)$
+        pass_filenames: false
+
       - id: frontend-prettier
         name: Prettier (frontend)
         entry: bash -c 'cd frontend && npx prettier --write "${@#frontend/}"' --
