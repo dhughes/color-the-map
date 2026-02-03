@@ -303,26 +303,18 @@ This script copies `venv` and `node_modules` from the main repo (fast), or insta
 
 **Starting Dev Servers in a Worktree:**
 ```bash
-# 1. Find available ports
-BACKEND_PORT=$(./scripts/find-available-port.sh 8005)
-FRONTEND_PORT=$(./scripts/find-available-port.sh 5173)
-echo "Using backend port: $BACKEND_PORT, frontend port: $FRONTEND_PORT"
+# Start backend (finds available port automatically, prints it to console)
+./scripts/start-backend.sh
 
-# 2. Start backend with custom port
-source venv/bin/activate
-PORT=$BACKEND_PORT FRONTEND_PORT=$FRONTEND_PORT uvicorn backend.main:app --reload --port $BACKEND_PORT
-
-# 3. Start frontend with proxy to correct backend (in another terminal)
-cd frontend
-VITE_API_PORT=$BACKEND_PORT npm run dev -- --port $FRONTEND_PORT
+# Start frontend (requires BACKEND_PORT from backend output)
+BACKEND_PORT=8006 ./scripts/start-frontend.sh
 ```
 
 **For Claude Code:** When working in a worktree:
-1. Check if `venv` exists before running Python commands - if not, create it and install dependencies
-2. Check if `frontend/node_modules` exists before running npm commands - if not, run `npm install`
-3. Use `./scripts/find-available-port.sh` to find available ports before starting dev servers
-4. Pass the ports via environment variables when starting servers
-5. Tell the user which ports are being used so they know where to access the app
+1. Check if `venv` and `frontend/node_modules` exist - if not, run `./scripts/setup-worktree.sh`
+2. Start backend with `./scripts/start-backend.sh` - note the port it prints
+3. Start frontend with `BACKEND_PORT=<port> ./scripts/start-frontend.sh`
+4. Tell the user which ports are being used so they know where to access the app
 
 ### Deployment
 ```bash
