@@ -276,6 +276,54 @@ mypy backend/ --ignore-missing-imports # Backend type checker
 cd frontend && npm run lint            # Frontend linter
 ```
 
+### Worktree Development (Parallel Development)
+
+Each git worktree needs its own `venv` and `node_modules` - they cannot be shared because they contain absolute paths and platform-specific binaries.
+
+**Worktree Setup (run once per new worktree):**
+```bash
+./scripts/setup-worktree.sh
+```
+
+This script copies `venv` and `node_modules` from the main repo (fast), or installs fresh if main repo doesn't have them. It's idempotent - safe to run multiple times.
+
+**For Claude Code:** Before running any Python or npm commands, check if `venv` and `frontend/node_modules` exist. If not, run `./scripts/setup-worktree.sh` first.
+
+**Port Configuration (for running multiple worktrees simultaneously):**
+- Backend reads `PORT` env var (default: 8005)
+- Backend reads `FRONTEND_PORT` env var for CORS (default: 5173)
+- Frontend reads `VITE_API_PORT` env var for proxy target (default: 8005)
+
+**Finding Available Ports:**
+```bash
+# Find first available port starting from a given number
+./scripts/find-available-port.sh 8005  # Returns first available port >= 8005
+./scripts/find-available-port.sh 5173  # For frontend
+```
+
+**Starting Dev Servers in a Worktree:**
+```bash
+# 1. Find available ports
+BACKEND_PORT=$(./scripts/find-available-port.sh 8005)
+FRONTEND_PORT=$(./scripts/find-available-port.sh 5173)
+echo "Using backend port: $BACKEND_PORT, frontend port: $FRONTEND_PORT"
+
+# 2. Start backend with custom port
+source venv/bin/activate
+PORT=$BACKEND_PORT FRONTEND_PORT=$FRONTEND_PORT uvicorn backend.main:app --reload --port $BACKEND_PORT
+
+# 3. Start frontend with proxy to correct backend (in another terminal)
+cd frontend
+VITE_API_PORT=$BACKEND_PORT npm run dev -- --port $FRONTEND_PORT
+```
+
+**For Claude Code:** When working in a worktree:
+1. Check if `venv` exists before running Python commands - if not, create it and install dependencies
+2. Check if `frontend/node_modules` exists before running npm commands - if not, run `npm install`
+3. Use `./scripts/find-available-port.sh` to find available ports before starting dev servers
+4. Pass the ports via environment variables when starting servers
+5. Tell the user which ports are being used so they know where to access the app
+
 ### Deployment
 ```bash
 # Deploy to production (from local machine)

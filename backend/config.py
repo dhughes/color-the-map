@@ -13,7 +13,7 @@ class Config:
     STATIC_DIR = BASE_DIR / "backend" / "static"
 
     HOST = "0.0.0.0"
-    PORT = 8005
+    PORT = int(os.getenv("PORT", "8005"))
 
     MAX_FILE_SIZE = 10 * 1024 * 1024
     ALLOWED_EXTENSIONS = {".gpx"}
