@@ -303,17 +303,17 @@ This script copies `venv` and `node_modules` from the main repo (fast), or insta
 
 **Starting Dev Servers in a Worktree:**
 ```bash
-# Start backend (finds available port automatically, prints it to console)
+# Start backend (finds available ports automatically, prints them to console)
 ./scripts/start-backend.sh
 
-# Start frontend (requires BACKEND_PORT from backend output)
-BACKEND_PORT=8006 ./scripts/start-frontend.sh
+# Start frontend (use ports from backend output)
+./scripts/start-frontend.sh 8006 5175
 ```
 
 **For Claude Code:** When working in a worktree:
 1. Check if `venv` and `frontend/node_modules` exist - if not, run `./scripts/setup-worktree.sh`
-2. Start backend with `./scripts/start-backend.sh` - note the port it prints
-3. Start frontend with `BACKEND_PORT=<port> ./scripts/start-frontend.sh`
+2. Start backend with `./scripts/start-backend.sh` - note the ports it prints
+3. Start frontend with `./scripts/start-frontend.sh <backend_port> <frontend_port>`
 4. Tell the user which ports are being used so they know where to access the app
 
 ### Deployment

@@ -62,8 +62,8 @@
       "Bash(ruff:*)",
       "Bash(npm run lint:*)",
       "Bash(./scripts/find-available-port.sh:*)",
-      "Bash(PORT=8006 FRONTEND_PORT=5175 uvicorn:*)",
-      "Bash(VITE_API_PORT=8006 npm run dev:*)"
+      "Bash(./scripts/start-backend.sh:*)",
+      "Bash(./scripts/start-frontend.sh:*)"
     ]
   }
 }

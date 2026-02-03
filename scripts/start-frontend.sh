@@ -1,7 +1,7 @@
 #!/bin/bash
-# Start the frontend dev server on an available port.
-# Finds an available port starting from 5173 and starts Vite.
-# Requires BACKEND_PORT to be set so the proxy knows where to forward API requests.
+# Start the frontend dev server.
+# Usage: ./scripts/start-frontend.sh <backend_port> <frontend_port>
+# Both ports are required so frontend knows where to proxy and which port to use.
 
 set -e
 
@@ -10,13 +10,14 @@ WORKTREE_ROOT="$(dirname "$SCRIPT_DIR")"
 
 cd "$WORKTREE_ROOT/frontend"
 
-if [ -z "$BACKEND_PORT" ]; then
-    echo "Error: BACKEND_PORT must be set so frontend knows where to proxy API requests."
-    echo "Usage: BACKEND_PORT=8006 ./scripts/start-frontend.sh"
+BACKEND_PORT=$1
+FRONTEND_PORT=$2
+
+if [ -z "$BACKEND_PORT" ] || [ -z "$FRONTEND_PORT" ]; then
+    echo "Usage: ./scripts/start-frontend.sh <backend_port> <frontend_port>"
+    echo "Example: ./scripts/start-frontend.sh 8006 5175"
     exit 1
 fi
-
-FRONTEND_PORT=$("$SCRIPT_DIR/find-available-port.sh" 5173)
 
 echo "Starting frontend on port $FRONTEND_PORT (proxying API to backend on $BACKEND_PORT)"
 
