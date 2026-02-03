@@ -51,7 +51,7 @@ class RefreshTokenManager:
         )
 
         self.session.add(refresh_token)
-        await self.session.commit()
+        await self.session.flush()
 
         return token
 
@@ -74,16 +74,16 @@ class RefreshTokenManager:
         token_hash = RefreshToken.hash_token(token)
         stmt = delete(RefreshToken).where(RefreshToken.token_hash == token_hash)
         await self.session.execute(stmt)
-        await self.session.commit()
+        await self.session.flush()
 
     async def revoke_all_user_tokens(self, user_id: str):
         stmt = delete(RefreshToken).where(RefreshToken.user_id == user_id)
         await self.session.execute(stmt)
-        await self.session.commit()
+        await self.session.flush()
 
     async def cleanup_expired_tokens(self):
         stmt = delete(RefreshToken).where(
             RefreshToken.expires_at <= datetime.now(timezone.utc)
         )
         await self.session.execute(stmt)
-        await self.session.commit()
+        await self.session.flush()

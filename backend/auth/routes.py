@@ -48,6 +48,7 @@ async def login(
 
     refresh_manager = RefreshTokenManager(session)
     refresh_token = await refresh_manager.create_refresh_token(str(user.id))
+    await session.commit()
 
     return TokenResponse(
         access_token=access_token,
@@ -87,6 +88,7 @@ async def refresh(
     jwt_strategy = get_jwt_strategy()
     access_token = await jwt_strategy.write_token(user)
     new_refresh_token = await refresh_manager.create_refresh_token(str(user.id))
+    await session.commit()
 
     return TokenResponse(
         access_token=access_token,
@@ -105,6 +107,7 @@ async def logout(
 ):
     refresh_manager = RefreshTokenManager(session)
     await refresh_manager.revoke_token(request.refresh_token)
+    await session.commit()
     return {"message": "Logged out successfully"}
 
 
