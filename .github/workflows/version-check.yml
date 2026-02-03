@@ -1,0 +1,72 @@
+name: Version Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'frontend/package.json'
+
+jobs:
+  check-version-bump:
+    runs-on: ubuntu-latest
+    name: Validate Version Bump
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from PR branch
+        id: pr-version
+        run: |
+          VERSION=$(node -p "require('./frontend/package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "PR version: $VERSION"
+
+      - name: Checkout main branch
+        run: git checkout origin/main -- frontend/package.json
+
+      - name: Get version from main branch
+        id: main-version
+        run: |
+          VERSION=$(node -p "require('./frontend/package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Main version: $VERSION"
+
+      - name: Validate version was bumped
+        run: |
+          PR_VERSION="${{ steps.pr-version.outputs.version }}"
+          MAIN_VERSION="${{ steps.main-version.outputs.version }}"
+
+          echo "Comparing versions:"
+          echo "  Main:  $MAIN_VERSION"
+          echo "  PR:    $PR_VERSION"
+
+          if [ "$PR_VERSION" = "$MAIN_VERSION" ]; then
+            echo "❌ ERROR: Version not bumped in package.json"
+            echo ""
+            echo "Please increment the version in frontend/package.json"
+            echo "Follow semantic versioning:"
+            echo "  - MAJOR.x.x for breaking changes"
+            echo "  - x.MINOR.x for new features"
+            echo "  - x.x.PATCH for bug fixes"
+            exit 1
+          fi
+
+          # Parse versions (assumes semver X.Y.Z format)
+          IFS='.' read -r MAIN_MAJOR MAIN_MINOR MAIN_PATCH <<< "$MAIN_VERSION"
+          IFS='.' read -r PR_MAJOR PR_MINOR PR_PATCH <<< "$PR_VERSION"
+
+          # Check if version increased
+          if [ "$PR_MAJOR" -lt "$MAIN_MAJOR" ] || \
+             ([ "$PR_MAJOR" -eq "$MAIN_MAJOR" ] && [ "$PR_MINOR" -lt "$MAIN_MINOR" ]) || \
+             ([ "$PR_MAJOR" -eq "$MAIN_MAJOR" ] && [ "$PR_MINOR" -eq "$MAIN_MINOR" ] && [ "$PR_PATCH" -le "$MAIN_PATCH" ]); then
+            echo "❌ ERROR: Version downgrade detected"
+            echo ""
+            echo "Version must be higher than $MAIN_VERSION"
+            echo "Current: $PR_VERSION"
+            exit 1
+          fi
+
+          echo "✅ Version bumped correctly: $MAIN_VERSION → $PR_VERSION"
