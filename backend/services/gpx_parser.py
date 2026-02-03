@@ -50,7 +50,7 @@ class GPXParser:
 
         distance = self._calculate_distance(coordinates)
         duration = self._calculate_duration(timestamps)
-        speed_stats = self._calculate_speed(distance, duration)
+        speed_stats = self._calculate_speed(coordinates, timestamps)
         elevation_stats = self._calculate_elevation(elevations)
         bounds = self._calculate_bounds(coordinates)
         activity_date = timestamps[0] if timestamps else datetime.utcnow()
@@ -73,8 +73,53 @@ class GPXParser:
         )
 
     def _calculate_distance(self, coordinates: List[Tuple[float, float]]) -> float:
+        return float(np.sum(self._calculate_segment_distances(coordinates)))
+
+    def _calculate_duration(self, timestamps: List[datetime]) -> int:
+        if len(timestamps) < 2:
+            return 0
+        return int((timestamps[-1] - timestamps[0]).total_seconds())
+
+    def _calculate_speed(
+        self, coordinates: List[Tuple[float, float]], timestamps: List[datetime]
+    ) -> Dict[str, float]:
+        if len(coordinates) < 2 or len(timestamps) < 2:
+            return {"avg": 0.0, "max": 0.0, "min": 0.0}
+
+        segment_distances = self._calculate_segment_distances(coordinates)
+        segment_durations = np.array(
+            [
+                (timestamps[i + 1] - timestamps[i]).total_seconds()
+                for i in range(len(timestamps) - 1)
+            ]
+        )
+
+        valid_mask = segment_durations > 0
+        if not np.any(valid_mask):
+            return {"avg": 0.0, "max": 0.0, "min": 0.0}
+
+        segment_speeds = np.zeros_like(segment_distances)
+        segment_speeds[valid_mask] = (
+            segment_distances[valid_mask] / segment_durations[valid_mask]
+        )
+
+        total_distance = float(np.sum(segment_distances))
+        total_duration = float(np.sum(segment_durations))
+        avg_speed = total_distance / total_duration if total_duration > 0 else 0.0
+
+        valid_speeds = segment_speeds[valid_mask]
+
+        return {
+            "avg": avg_speed,
+            "max": float(np.max(valid_speeds)),
+            "min": float(np.min(valid_speeds)),
+        }
+
+    def _calculate_segment_distances(
+        self, coordinates: List[Tuple[float, float]]
+    ) -> np.ndarray:
         if len(coordinates) < 2:
-            return 0.0
+            return np.array([])
 
         coords_array = np.array(coordinates)
         lons = np.radians(coords_array[:, 0])
@@ -93,18 +138,7 @@ class GPXParser:
         c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
         R = 6371000
-        distances = R * c
-
-        return float(np.sum(distances))
-
-    def _calculate_duration(self, timestamps: List[datetime]) -> int:
-        if len(timestamps) < 2:
-            return 0
-        return int((timestamps[-1] - timestamps[0]).total_seconds())
-
-    def _calculate_speed(self, distance: float, duration: int) -> Dict[str, float]:
-        avg_speed = distance / duration if duration > 0 else 0
-        return {"avg": avg_speed, "max": avg_speed, "min": avg_speed}
+        return R * c
 
     def _calculate_elevation(self, elevations: List[float]) -> Dict[str, float]:
         if len(elevations) < 2:

@@ -299,9 +299,12 @@ This script copies `venv` and `node_modules` from the main repo (fast), or insta
 
 **For Claude Code:** Before running any Python or npm commands, check if `venv` and `frontend/node_modules` exist. If not, run `./scripts/setup-worktree.sh` first.
 
-**Detecting if you're in a worktree:** Check if `.git` is a file (worktree) or directory (main repo):
+**Helper Scripts for Environment Checks:**
+Use these scripts instead of inline shell conditionals (they're pre-approved for execution):
 ```bash
-if [ -f .git ]; then echo "worktree"; else echo "main repo"; fi
+./scripts/check-for-worktree.sh      # Returns "worktree" or "main-repo"
+./scripts/check-venv-exists.sh       # Returns "exists" or "missing"
+./scripts/check-node-modules-exists.sh  # Returns "exists" or "missing"
 ```
 
 **Port Configuration (for running multiple worktrees simultaneously):**
@@ -326,9 +329,9 @@ if [ -f .git ]; then echo "worktree"; else echo "main repo"; fi
 ```
 
 **For Claude Code:** When starting dev servers:
-1. Check if `venv` and `frontend/node_modules` exist - if not, run `./scripts/setup-worktree.sh`
-2. Check if in a worktree (`[ -f .git ]`) - if yes, use `./scripts/start-backend.sh --auto` to avoid port conflicts
-3. If in main repo, use `./scripts/start-backend.sh` (defaults to 8005/5173)
+1. Run `./scripts/check-venv-exists.sh` and `./scripts/check-node-modules-exists.sh` - if either returns "missing", run `./scripts/setup-worktree.sh`
+2. Run `./scripts/check-for-worktree.sh` - if "worktree", use `./scripts/start-backend.sh --auto` to avoid port conflicts
+3. If "main-repo", use `./scripts/start-backend.sh` (defaults to 8005/5173)
 4. Start frontend with `./scripts/start-frontend.sh <backend_port> <frontend_port>` using ports from backend output
 5. Tell the user which ports are being used so they know where to access the app
 

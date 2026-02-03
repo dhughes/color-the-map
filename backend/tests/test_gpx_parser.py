@@ -184,3 +184,65 @@ def test_infer_activity_type_position_independent():
     assert GPXParser.infer_activity_type("2025-walking-trail.gpx") == "Walking"
     assert GPXParser.infer_activity_type("123-456-run-test.gpx") == "Running"
     assert GPXParser.infer_activity_type("my-bike-ride-2025.gpx") == "Cycling"
+
+
+def test_speed_statistics_vary(parser, sample_gpx_content):
+    result = parser.parse(sample_gpx_content)
+
+    assert result.avg_speed_ms >= 0
+    assert result.max_speed_ms >= result.avg_speed_ms
+    assert result.min_speed_ms <= result.avg_speed_ms
+    assert result.min_speed_ms >= 0
+
+
+def test_speed_stats_not_all_identical(parser, sample_gpx_content):
+    result = parser.parse(sample_gpx_content)
+
+    speeds = [result.avg_speed_ms, result.max_speed_ms, result.min_speed_ms]
+    assert len(set(speeds)) > 1, "min, max, and avg speeds should not all be identical"
+
+
+def test_speed_calculation_with_no_timestamps(parser):
+    gpx_content = b"""<?xml version="1.0"?>
+    <gpx version="1.1">
+        <trk><trkseg>
+            <trkpt lat="35.0" lon="-79.0"></trkpt>
+            <trkpt lat="35.001" lon="-79.001"></trkpt>
+        </trkseg></trk>
+    </gpx>"""
+    result = parser.parse(gpx_content)
+
+    assert result.avg_speed_ms == 0.0
+    assert result.max_speed_ms == 0.0
+    assert result.min_speed_ms == 0.0
+
+
+def test_speed_calculation_with_single_point(parser):
+    gpx_content = b"""<?xml version="1.0"?>
+    <gpx version="1.1">
+        <trk><trkseg>
+            <trkpt lat="35.0" lon="-79.0">
+                <time>2025-01-01T10:00:00Z</time>
+            </trkpt>
+        </trkseg></trk>
+    </gpx>"""
+    result = parser.parse(gpx_content)
+
+    assert result.avg_speed_ms == 0.0
+    assert result.max_speed_ms == 0.0
+    assert result.min_speed_ms == 0.0
+
+
+def test_speed_calculation_with_varying_speeds(parser):
+    gpx_content = b"""<?xml version="1.0"?>
+    <gpx version="1.1">
+        <trk><trkseg>
+            <trkpt lat="35.0" lon="-79.0"><time>2025-01-01T10:00:00Z</time></trkpt>
+            <trkpt lat="35.001" lon="-79.0"><time>2025-01-01T10:00:10Z</time></trkpt>
+            <trkpt lat="35.002" lon="-79.0"><time>2025-01-01T10:00:30Z</time></trkpt>
+        </trkseg></trk>
+    </gpx>"""
+    result = parser.parse(gpx_content)
+
+    assert result.max_speed_ms > result.min_speed_ms
+    assert result.min_speed_ms <= result.avg_speed_ms <= result.max_speed_ms
