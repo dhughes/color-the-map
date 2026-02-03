@@ -261,8 +261,6 @@ describe("API Client", () => {
     it("deletes tracks with DELETE request", async () => {
       const mockResult = {
         deleted: 2,
-        failed: 0,
-        errors: [],
       };
 
       (globalThis.fetch as any).mockResolvedValueOnce({

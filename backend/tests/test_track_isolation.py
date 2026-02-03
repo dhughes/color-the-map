@@ -183,7 +183,6 @@ async def test_user_cannot_delete_other_users_track(user1, user2, sample_gpx_fil
         assert delete_response.status_code == 200
         result = delete_response.json()
         assert result["deleted"] == 0
-        assert result["failed"] == 1
 
         tracks = await client.get(
             "/api/v1/tracks", headers={"Authorization": f"Bearer {token1}"}

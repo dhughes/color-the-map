@@ -43,6 +43,4 @@ export interface UploadResult {
 
 export interface DeleteResult {
   deleted: number;
-  failed: number;
-  errors: string[];
 }

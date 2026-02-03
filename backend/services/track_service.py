@@ -1,7 +1,9 @@
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List, Dict, Any, Tuple, cast
+from typing import Any, Dict, Optional, List, Tuple, cast
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
+from sqlalchemy.engine import CursorResult
 from .gpx_parser import GPXParser
 from .storage_service import StorageService
 from ..models.track_model import Track as TrackModel
@@ -10,6 +12,12 @@ from ..models.upload_result import UploadResult
 from ..models.track_geometry import TrackGeometry
 
 ALLOWED_UPDATE_FIELDS = {"visible", "name", "activity_type", "description"}
+
+
+@dataclass
+class DeleteResult:
+    deleted: int
+    hashes_to_delete: List[str]
 
 
 class TrackService:
@@ -178,40 +186,22 @@ class TrackService:
 
     async def delete_tracks(
         self, track_ids: List[int], user_id: str, session: AsyncSession
-    ) -> Dict[str, Any]:
-        deleted = 0
-        failed = 0
-        errors = []
-        files_to_delete = []
+    ) -> DeleteResult:
+        if not track_ids:
+            return DeleteResult(deleted=0, hashes_to_delete=[])
 
-        for track_id in track_ids:
-            try:
-                result = await session.execute(
-                    select(TrackModel).where(
-                        TrackModel.id == track_id, TrackModel.user_id == user_id
-                    )
-                )
-                track_model = result.scalar_one_or_none()
+        result = await session.execute(
+            select(TrackModel.hash).where(
+                TrackModel.id.in_(track_ids), TrackModel.user_id == user_id
+            )
+        )
+        hashes_to_delete = list(result.scalars().all())
 
-                if not track_model:
-                    failed += 1
-                    errors.append(f"Track {track_id}: Not found")
-                    continue
+        delete_stmt = delete(TrackModel).where(
+            TrackModel.id.in_(track_ids), TrackModel.user_id == user_id
+        )
+        cursor_result = cast(CursorResult[Any], await session.execute(delete_stmt))
 
-                gpx_hash = track_model.hash
-                await session.delete(track_model)
-                await session.flush()
-
-                files_to_delete.append((user_id, gpx_hash))
-                deleted += 1
-
-            except Exception as e:
-                failed += 1
-                errors.append(f"Track {track_id}: {str(e)}")
-
-        return {
-            "deleted": deleted,
-            "failed": failed,
-            "errors": errors,
-            "files_to_delete": files_to_delete,
-        }
+        return DeleteResult(
+            deleted=cursor_result.rowcount, hashes_to_delete=hashes_to_delete
+        )
