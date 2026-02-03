@@ -13,13 +13,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Attitude & Approach:**
 When asked to review a PR, adopt the mindset of a senior engineer with high ownership of code quality:
 
-- **Be rigorous but pragmatic** - High standards for new code, but understand we're incrementally improving from legacy patterns
-- **Be direct and honest** - Don't sugarcoat issues. Clear, constructive feedback is more valuable than politeness
+- **Be rigorous but pragmatic** - High standards for new code, but understand we're incrementally improving from legacy patterns. Be thorough, not nitpicky. Don't be a pedantic jerk that blocks progress, but don't let poor work slip by either.
+- **Be direct and honest** - Don't sugarcoat issues. Clear, constructive feedback is more valuable than politeness.
 - **Focus on what matters** - Performance bugs, type safety, error handling, test quality, and maintainability issues are blocking. Style preferences are not.
 - **Demand quality** - Linting, formatting, and type checking must be perfect. No exceptions.
-- **Test architecture matters** - Tests that test implementation details or have poor type safety are as bad as no tests
-- **Error handling is not optional** - Every async operation needs proper error handling
-- **No technical debt in new code** - Old code can have issues we'll fix incrementally, but new code must meet current standards
+- **Test architecture matters** - Tests that test implementation details or have poor type safety are as bad as no tests.
+- **Error handling is not optional** - Every async operation needs proper error handling.
+- **No technical debt in new code** - Old code can have issues we'll fix incrementally, but new code must meet current standards.
+- **Suggest improvements** - When you see opportunities for better patterns, suggest them as non-blocking improvements.
 
 **What to Review:**
 
@@ -45,11 +46,30 @@ When asked to review a PR, adopt the mindset of a senior engineer with high owne
    - Module-level mocks should be scoped to tests that need them
    - Tests should test the public API (e.g., `<App />`, not `<AppContent />`)
 
-5. **Code Quality**
+5. **Test Database Isolation (CRITICAL!)**
+   - Tests MUST use the in-memory SQLite pattern via `app.dependency_overrides`
+   - Tests MUST use the `test_db_session` fixture from conftest.py
+   - Tests MUST NEVER import the production database configuration directly
+   - Tests MUST NEVER touch `data/tracks.db` - this has happened before and wiped prod data
+
+6. **Database & ORM**
+   - SQLAlchemy 2.0+ with async support (aiosqlite) - verify proper async patterns
+   - Schema changes MUST go through Alembic migrations
+   - Verify proper use of the ORM (no raw SQL unless justified)
+   - Check for proper session management and cleanup
+
+7. **Frontend Styling**
+   - Use the CSS variable system defined in `index.css` (`--color-primary`, `--color-bg`, etc.)
+   - NO inline styles except for truly dynamic values (e.g., percentage widths for progress bars)
+   - NO component-specific CSS files when existing CSS variables would suffice
+   - Styles should be consistent with the existing design system
+
+8. **Code Quality**
    - No unnecessary abstractions or premature optimization
    - Error-prone patterns (missing cleanup, race conditions, etc.)
-   - Security issues (XSS, SQL injection, etc.)
+   - Security issues (XSS, SQL injection, path traversal, etc.)
    - Adherence to project architecture and patterns
+   - All URLs and paths MUST be relative (never absolute) - see "CRITICAL: Relative Paths Only" section
 
 **How to Leave Comments:**
 
@@ -130,6 +150,10 @@ I've added line-specific comments. Please address these before merging."
 - Accept tests that test implementation details
 - Accept incomplete test data that doesn't match types
 - Accept performance issues like unnecessary allocations
+- Accept tests that could touch the production database
+- Accept inline styles (except for dynamic values)
+- Accept absolute paths/URLs
+- Accept schema changes without Alembic migrations
 - List issues in a general comment without adding them to specific lines
 
 ## Handling PR Review Feedback
@@ -206,25 +230,11 @@ gh api repos/owner/repo/pulls/40/comments -X POST \
 - Create new file comments when replying to existing ones
 - Lose track of which issues you've addressed
 
-## Implementation Documentation
-
-**Before implementing features, read these documents:**
-
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Complete technical architecture, technology stack decisions, data models, API design, and key design patterns
-- **[docs/ROADMAP.md](docs/ROADMAP.md)** - Sequential feature implementation plan with dependencies and success criteria
-- **[docs/feature-prompts/](docs/feature-prompts/)** - Detailed implementation prompts for each feature, designed for use with the `feature-dev` skill
-
-**Implementation Approach:**
-1. Read ARCHITECTURE.md to understand overall system design
-2. Check ROADMAP.md to see current progress and next feature
-3. Use the corresponding feature prompt file with `feature-dev` skill
-4. Each feature builds on previous features - implement in order
-
 ## Project Overview
 
 Color The Map is a GPS track visualization tool for mapping workout routes. The goal is to self-propel (ride, run, walk, or hike) every trail, road, and alley in town and visualize progress on an interactive map.
 
-**Current Status:** Basic Flask skeleton with "Hello World" page. Core functionality (map visualization, GPX upload/processing, track rendering) not yet implemented.
+**Current Status:** FastAPI backend with React frontend. Core functionality implemented: map visualization, GPX upload/processing, track rendering, user authentication.
 
 ## MVP Feature Scope
 
@@ -387,43 +397,47 @@ cd ~/apps/color-the-map
 ```
 color-the-map/
 ├── backend/
-│   ├── app/
-│   │   ├── __init__.py         # FastAPI app factory
-│   │   ├── main.py             # Entry point, serve static + API
-│   │   ├── models/             # SQLAlchemy models
-│   │   ├── schemas/            # Pydantic schemas (API contracts)
-│   │   ├── services/           # Business logic (GPX processing, etc.)
-│   │   ├── routers/            # API route handlers
-│   │   └── db.py               # Database setup
-│   ├── tests/
-│   │   ├── unit/
-│   │   ├── integration/
-│   │   └── fixtures/           # Sample GPX files
-│   ├── requirements.txt
-│   └── pyproject.toml          # Tool configurations
+│   ├── __init__.py
+│   ├── main.py                 # FastAPI app entry point
+│   ├── config.py               # Configuration
+│   ├── database.py             # SQLAlchemy Base
+│   ├── api/                    # API routes and Pydantic models
+│   ├── auth/                   # Authentication (fastapi-users)
+│   ├── models/                 # SQLAlchemy models
+│   ├── services/               # Business logic (GPX processing, etc.)
+│   └── tests/                  # pytest tests with fixtures
 ├── frontend/
 │   ├── src/
-│   │   ├── components/         # React components
+│   │   ├── components/         # React components + CSS
+│   │   ├── contexts/           # React contexts (AuthContext)
+│   │   ├── hooks/              # Custom React hooks
 │   │   ├── services/           # API client
 │   │   ├── types/              # TypeScript type definitions
+│   │   ├── utils/              # Utility functions
+│   │   ├── index.css           # Global styles and CSS variables
 │   │   ├── App.tsx
 │   │   └── main.tsx
-│   ├── tests/
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── vite.config.ts
 │   └── vitest.config.ts
+├── alembic/                    # Database migrations
+│   └── versions/
 ├── data/                       # gitignored
 │   ├── gpx/                    # Uploaded GPX files
-│   └── color-the-map.db        # SQLite database
+│   └── tracks.db               # SQLite database
+├── sample-gpx-files/           # Test GPX files
+├── scripts/                    # Development scripts
 ├── .pre-commit-config.yaml
 ├── deploy.sh                   # Server-side deployment
 └── deploy-to-prod.sh           # Local deployment trigger
 ```
 
 **Current Implementation Status**
-- Basic Flask "Hello World" skeleton exists
-- Will be completely replaced with FastAPI + React architecture
+- FastAPI backend with async SQLAlchemy (aiosqlite)
+- React + TypeScript frontend with MapLibre GL JS
+- User authentication via fastapi-users
+- GPX upload, parsing, and track visualization working
 - Deployment infrastructure (systemd, Caddy) is in place and working
 
 **API Design**
