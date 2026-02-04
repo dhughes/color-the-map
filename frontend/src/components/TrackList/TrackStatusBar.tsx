@@ -18,7 +18,7 @@ export function TrackStatusBar({
     <div
       className={`track-status-bar ${hasSelection ? "track-status-bar-selected" : ""}`}
     >
-      {hasSelection && <span className="track-status-bar-accent" />}
+      <span className="track-status-bar-accent" />
       <span className="track-status-bar-text">{statusText}</span>
     </div>
   );

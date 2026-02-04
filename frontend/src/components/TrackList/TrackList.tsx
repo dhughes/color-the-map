@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { updateTrack, deleteTracks } from "../../api/client";
+import { DrawerPanelHeader } from "../DrawerPanelHeader";
 import { TrackListItem } from "./TrackListItem";
 import { TrackDetailsPanel } from "./TrackDetailsPanel";
 import { BulkOperationsPanel } from "./BulkOperationsPanel";
@@ -245,9 +246,7 @@ export function TrackList({
 
   return (
     <div className="track-list">
-      <div className="track-list-header">
-        <h2>Tracks</h2>
-      </div>
+      <DrawerPanelHeader title="Tracks" />
 
       <div className="track-list-items" ref={listRef}>
         {tracks.map((track) => (

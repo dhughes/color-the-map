@@ -384,21 +384,34 @@ body {
   overflow: hidden;
 }
 
-.track-list-header {
-  padding: 24px 20px 16px;
-  border-bottom: 2px solid #d0d0ce;
+/* Drawer Panel Header (reusable for all drawer panels) */
+.drawer-panel-header {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 2px solid #d0d0ce;
+  background: var(--color-bg);
   flex-shrink: 0;
 }
 
-.track-list-header h2 {
-  margin: 0;
-  font-size: 1.125rem;
+.drawer-panel-header-accent {
+  background: var(--color-overlay);
+}
+
+.drawer-panel-header-bar {
+  width: 3px;
+  height: 14px;
+  background: var(--color-primary);
+  border-radius: 2px;
+}
+
+.drawer-panel-header-title {
+  font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--color-text);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
 .track-status-bar {

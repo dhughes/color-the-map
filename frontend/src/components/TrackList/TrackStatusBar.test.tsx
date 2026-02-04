@@ -22,14 +22,14 @@ describe("TrackStatusBar", () => {
       expect(screen.getByText("0 Tracks")).toBeInTheDocument();
     });
 
-    it("does not render accent bar when nothing selected", () => {
+    it("renders accent bar when nothing selected", () => {
       const { container } = render(
         <TrackStatusBar totalTracks={6} selectedCount={0} />,
       );
 
       expect(
         container.querySelector(".track-status-bar-accent"),
-      ).not.toBeInTheDocument();
+      ).toBeInTheDocument();
     });
 
     it("does not have selected class when nothing selected", () => {
