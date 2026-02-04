@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from .models import (
     TrackResponse,
-    UploadResult,
+    BatchUploadResponse,
     GeometryRequest,
     TrackGeometry,
     TrackUpdate,
@@ -26,7 +26,7 @@ parser = GPXParser()
 track_service = TrackService(storage, parser)
 
 
-@router.post("/tracks", response_model=UploadResult)
+@router.post("/tracks", response_model=BatchUploadResponse)
 async def upload_tracks(
     files: List[UploadFile] = File(...),
     user: User = Depends(current_active_user),
