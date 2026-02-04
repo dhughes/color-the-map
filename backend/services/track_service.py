@@ -8,8 +8,8 @@ from .gpx_parser import GPXParser
 from .storage_service import StorageService
 from ..models.track_model import Track as TrackModel
 from ..models.track import Track
-from ..models.upload_result import UploadResult
-from ..models.track_geometry import TrackGeometry
+from ..models.track_upload_result import TrackUploadResult
+from ..models.track_geometry_data import TrackGeometryData
 
 ALLOWED_UPDATE_FIELDS = {"visible", "name", "activity_type", "description"}
 
@@ -27,7 +27,7 @@ class TrackService:
 
     async def upload_track(
         self, filename: str, content: bytes, user_id: str, session: AsyncSession
-    ) -> UploadResult:
+    ) -> TrackUploadResult:
         gpx_hash = self.storage.calculate_hash(content)
 
         result = await session.execute(
@@ -38,7 +38,9 @@ class TrackService:
         existing = result.scalar_one_or_none()
 
         if existing:
-            return UploadResult(duplicate=True, track=Track.from_sqlalchemy(existing))
+            return TrackUploadResult(
+                duplicate=True, track=Track.from_sqlalchemy(existing)
+            )
 
         try:
             gpx_data = self.parser.parse(content)
@@ -81,7 +83,9 @@ class TrackService:
         session.add(track_model)
         await session.flush()
 
-        return UploadResult(duplicate=False, track=Track.from_sqlalchemy(track_model))
+        return TrackUploadResult(
+            duplicate=False, track=Track.from_sqlalchemy(track_model)
+        )
 
     async def get_track_metadata(
         self, track_id: int, user_id: str, session: AsyncSession
@@ -110,7 +114,7 @@ class TrackService:
 
     async def get_track_geometry(
         self, track_id: int, user_id: str, session: AsyncSession
-    ) -> Optional[TrackGeometry]:
+    ) -> Optional[TrackGeometryData]:
         result = await session.execute(
             select(TrackModel).where(
                 TrackModel.id == track_id, TrackModel.user_id == user_id
@@ -125,11 +129,11 @@ class TrackService:
         coordinates: List[Tuple[float, float]] = [
             cast(Tuple[float, float], tuple(coord)) for coord in track.coordinates
         ]
-        return TrackGeometry(track_id=track_id, coordinates=coordinates)
+        return TrackGeometryData(track_id=track_id, coordinates=coordinates)
 
     async def get_multiple_geometries(
         self, track_ids: List[int], user_id: str, session: AsyncSession
-    ) -> List[TrackGeometry]:
+    ) -> List[TrackGeometryData]:
         if not track_ids:
             return []
 
@@ -150,7 +154,7 @@ class TrackService:
                     for coord in track_model.coordinates
                 ]
                 geometries.append(
-                    TrackGeometry(track_id=track_model.id, coordinates=coordinates)
+                    TrackGeometryData(track_id=track_model.id, coordinates=coordinates)
                 )
 
         return geometries

@@ -3,6 +3,6 @@ from .track import Track
 
 
 @dataclass
-class UploadResult:
+class TrackUploadResult:
     duplicate: bool
     track: Track

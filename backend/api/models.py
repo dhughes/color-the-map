@@ -4,7 +4,7 @@ from typing import Optional, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..models.track import Track
-    from ..models.track_geometry import TrackGeometry as DomainTrackGeometry
+    from ..models.track_geometry_data import TrackGeometryData
 
 
 class TrackResponse(BaseModel):
@@ -45,7 +45,7 @@ class TrackResponse(BaseModel):
         return cls.model_validate(track, from_attributes=True)
 
 
-class UploadResult(BaseModel):
+class BatchUploadResponse(BaseModel):
     uploaded: int
     failed: int
     track_ids: List[int]
@@ -60,12 +60,12 @@ class TrackGeometry(BaseModel):
     track_id: int
     coordinates: List[List[float]]
 
-    model_config = {"from_attributes": True}
-
     @classmethod
-    def from_domain(cls, geometry: "DomainTrackGeometry") -> "TrackGeometry":
-        """Convert domain TrackGeometry to API TrackGeometry"""
-        return cls.model_validate(geometry, from_attributes=True)
+    def from_domain(cls, geometry: "TrackGeometryData") -> "TrackGeometry":
+        return cls(
+            track_id=geometry.track_id,
+            coordinates=[list(coord) for coord in geometry.coordinates],
+        )
 
 
 class TrackUpdate(BaseModel):
