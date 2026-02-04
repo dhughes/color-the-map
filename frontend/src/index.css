@@ -7,6 +7,7 @@
   --color-text: #1a1a1a;
   --color-text-muted: #6b6b6b;
   --color-border: #e8e8e6;
+  --color-border-strong: #d0d0ce;
   --color-success: #2d7a3e;
   --color-error: #c73c3c;
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -390,7 +391,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  border-bottom: 2px solid #d0d0ce;
+  border-bottom: 2px solid var(--color-border-strong);
   background: var(--color-bg);
   flex-shrink: 0;
 }
@@ -419,7 +420,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  border-top: 2px solid #d0d0ce;
+  border-top: 2px solid var(--color-border-strong);
   background: var(--color-bg);
   flex-shrink: 0;
 }
