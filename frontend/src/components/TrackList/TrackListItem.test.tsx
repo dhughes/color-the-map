@@ -34,7 +34,6 @@ describe("TrackListItem", () => {
   const mockOnToggleVisibility = vi.fn();
   const mockOnSelect = vi.fn();
   const mockOnDoubleClick = vi.fn();
-  const mockOnDelete = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -48,7 +47,6 @@ describe("TrackListItem", () => {
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
         onDoubleClick={mockOnDoubleClick}
-        onDelete={mockOnDelete}
       />,
     );
 
@@ -63,7 +61,6 @@ describe("TrackListItem", () => {
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
         onDoubleClick={mockOnDoubleClick}
-        onDelete={mockOnDelete}
       />,
     );
 
@@ -78,7 +75,6 @@ describe("TrackListItem", () => {
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
         onDoubleClick={mockOnDoubleClick}
-        onDelete={mockOnDelete}
       />,
     );
 
@@ -93,7 +89,6 @@ describe("TrackListItem", () => {
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
         onDoubleClick={mockOnDoubleClick}
-        onDelete={mockOnDelete}
       />,
     );
 
@@ -111,7 +106,6 @@ describe("TrackListItem", () => {
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
         onDoubleClick={mockOnDoubleClick}
-        onDelete={mockOnDelete}
       />,
     );
 
@@ -126,7 +120,6 @@ describe("TrackListItem", () => {
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
         onDoubleClick={mockOnDoubleClick}
-        onDelete={mockOnDelete}
       />,
     );
 
@@ -144,7 +137,6 @@ describe("TrackListItem", () => {
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
         onDoubleClick={mockOnDoubleClick}
-        onDelete={mockOnDelete}
       />,
     );
 
@@ -152,58 +144,6 @@ describe("TrackListItem", () => {
     fireEvent.click(trackItem!);
 
     expect(mockOnSelect).toHaveBeenCalledTimes(1);
-  });
-
-  it("renders delete button", () => {
-    render(
-      <TrackListItem
-        track={mockTrack}
-        isSelected={false}
-        onSelect={mockOnSelect}
-        onToggleVisibility={mockOnToggleVisibility}
-        onDoubleClick={mockOnDoubleClick}
-        onDelete={mockOnDelete}
-      />,
-    );
-
-    const button = screen.getByRole("button", { name: /delete track/i });
-    expect(button).toBeInTheDocument();
-  });
-
-  it("calls onDelete when delete button clicked", () => {
-    render(
-      <TrackListItem
-        track={mockTrack}
-        isSelected={false}
-        onSelect={mockOnSelect}
-        onToggleVisibility={mockOnToggleVisibility}
-        onDoubleClick={mockOnDoubleClick}
-        onDelete={mockOnDelete}
-      />,
-    );
-
-    const button = screen.getByRole("button", { name: /delete track/i });
-    fireEvent.click(button);
-
-    expect(mockOnDelete).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not call onSelect when delete button clicked", () => {
-    render(
-      <TrackListItem
-        track={mockTrack}
-        isSelected={false}
-        onSelect={mockOnSelect}
-        onToggleVisibility={mockOnToggleVisibility}
-        onDoubleClick={mockOnDoubleClick}
-        onDelete={mockOnDelete}
-      />,
-    );
-
-    const button = screen.getByRole("button", { name: /delete track/i });
-    fireEvent.click(button);
-
-    expect(mockOnSelect).not.toHaveBeenCalled();
   });
 
   it("displays 'Unknown' when activity_type is null", () => {
@@ -216,7 +156,6 @@ describe("TrackListItem", () => {
         onSelect={mockOnSelect}
         onToggleVisibility={mockOnToggleVisibility}
         onDoubleClick={mockOnDoubleClick}
-        onDelete={mockOnDelete}
       />,
     );
 

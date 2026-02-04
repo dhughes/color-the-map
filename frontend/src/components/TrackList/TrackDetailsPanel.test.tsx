@@ -50,13 +50,19 @@ const createWrapper = () => {
 };
 
 describe("TrackDetailsPanel", () => {
+  const mockOnDelete = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("renders track name in editable input", () => {
     render(
-      <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
       { wrapper: createWrapper() },
     );
 
@@ -66,7 +72,11 @@ describe("TrackDetailsPanel", () => {
 
   it("renders activity type in editable input", () => {
     render(
-      <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
       { wrapper: createWrapper() },
     );
 
@@ -76,7 +86,11 @@ describe("TrackDetailsPanel", () => {
 
   it("renders track metadata", () => {
     render(
-      <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
       { wrapper: createWrapper() },
     );
 
@@ -89,7 +103,11 @@ describe("TrackDetailsPanel", () => {
 
   it("renders header with accent", () => {
     render(
-      <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
       { wrapper: createWrapper() },
     );
 
@@ -98,7 +116,11 @@ describe("TrackDetailsPanel", () => {
 
   it("allows editing the name", () => {
     render(
-      <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
       { wrapper: createWrapper() },
     );
 
@@ -111,7 +133,11 @@ describe("TrackDetailsPanel", () => {
     const { updateTrack } = await import("../../api/client");
 
     render(
-      <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
       { wrapper: createWrapper() },
     );
 
@@ -128,7 +154,11 @@ describe("TrackDetailsPanel", () => {
     const { updateTrack } = await import("../../api/client");
 
     render(
-      <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
       { wrapper: createWrapper() },
     );
 
@@ -144,7 +174,11 @@ describe("TrackDetailsPanel", () => {
     const { updateTrack } = await import("../../api/client");
 
     render(
-      <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
       { wrapper: createWrapper() },
     );
 
@@ -162,6 +196,7 @@ describe("TrackDetailsPanel", () => {
       <TrackDetailsPanel
         track={mockTrack}
         allActivityTypes={["Running", "Walking", "Cycling"]}
+        onDelete={mockOnDelete}
       />,
       { wrapper: createWrapper() },
     );
@@ -184,9 +219,16 @@ describe("TrackDetailsPanel", () => {
       activity_type: null,
     };
 
-    render(<TrackDetailsPanel track={trackWithNulls} allActivityTypes={[]} />, {
-      wrapper: createWrapper(),
-    });
+    render(
+      <TrackDetailsPanel
+        track={trackWithNulls}
+        allActivityTypes={[]}
+        onDelete={mockOnDelete}
+      />,
+      {
+        wrapper: createWrapper(),
+      },
+    );
 
     expect(screen.getByLabelText("Name")).toBeInTheDocument();
     expect(screen.queryByText("km")).not.toBeInTheDocument();
@@ -196,7 +238,11 @@ describe("TrackDetailsPanel", () => {
     const { updateTrack } = await import("../../api/client");
 
     render(
-      <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
       { wrapper: createWrapper() },
     );
 
@@ -212,7 +258,11 @@ describe("TrackDetailsPanel", () => {
 
   it("blurs name input on Enter key press", () => {
     render(
-      <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
       { wrapper: createWrapper() },
     );
 
@@ -227,7 +277,11 @@ describe("TrackDetailsPanel", () => {
 
   it("blurs activity type input on Enter key press", () => {
     render(
-      <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
       { wrapper: createWrapper() },
     );
 
@@ -238,5 +292,35 @@ describe("TrackDetailsPanel", () => {
     fireEvent.keyDown(activityInput, { key: "Enter" });
 
     expect(document.activeElement).not.toBe(activityInput);
+  });
+
+  it("renders delete button", () => {
+    render(
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
+      { wrapper: createWrapper() },
+    );
+
+    const deleteButton = screen.getByRole("button", { name: /delete track/i });
+    expect(deleteButton).toBeInTheDocument();
+  });
+
+  it("calls onDelete when delete button clicked", () => {
+    render(
+      <TrackDetailsPanel
+        track={mockTrack}
+        allActivityTypes={["Running"]}
+        onDelete={mockOnDelete}
+      />,
+      { wrapper: createWrapper() },
+    );
+
+    const deleteButton = screen.getByRole("button", { name: /delete track/i });
+    fireEvent.click(deleteButton);
+
+    expect(mockOnDelete).toHaveBeenCalledTimes(1);
   });
 });

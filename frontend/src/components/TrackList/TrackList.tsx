@@ -259,7 +259,6 @@ export function TrackList({
               });
             }}
             onDoubleClick={() => onZoomToTrack(track)}
-            onDelete={() => handleDeleteTrack(track.id)}
           />
         ))}
       </div>
@@ -269,6 +268,7 @@ export function TrackList({
           key={selectedTrack.id}
           track={selectedTrack}
           allActivityTypes={allActivityTypes}
+          onDelete={() => handleDeleteTrack(selectedTrack.id)}
         />
       )}
 
