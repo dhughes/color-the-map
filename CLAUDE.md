@@ -340,6 +340,8 @@ Use these scripts instead of inline shell conditionals (they're pre-approved for
 4. Start frontend with `./scripts/start-frontend.sh <backend_port> <frontend_port>` using ports from backend output
 5. Tell the user which ports are being used so they know where to access the app
 
+**IMPORTANT:** When running dev servers, use the Bash tool's `run_in_background: true` parameter instead of shell backgrounding (`&`). Shell backgrounding doesn't reliably propagate environment variables, which can cause the Vite proxy to connect to the wrong backend port.
+
 ### Deployment
 ```bash
 # Deploy to production (from local machine)
