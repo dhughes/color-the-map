@@ -216,20 +216,10 @@ export function TrackList({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [tracks, anchorTrackId, onSelect, selectedTrackIds]);
 
-  const selectedTrack = useMemo(() => {
-    if (selectedTrackIds.size === 1) {
-      const selectedId = Array.from(selectedTrackIds)[0];
-      return tracks.find((t) => t.id === selectedId) || null;
-    }
-    return null;
-  }, [selectedTrackIds, tracks]);
-
-  const selectedTracks = useMemo(() => {
-    if (selectedTrackIds.size >= 2) {
-      return tracks.filter((t) => selectedTrackIds.has(t.id));
-    }
-    return [];
-  }, [selectedTrackIds, tracks]);
+  const selectedTracks = useMemo(
+    () => tracks.filter((t) => selectedTrackIds.has(t.id)),
+    [selectedTrackIds, tracks],
+  );
 
   const allActivityTypes = useMemo(() => {
     const types = new Set(
@@ -241,8 +231,8 @@ export function TrackList({
   }, [tracks]);
 
   const handleDelete = () => {
-    if (selectedTrack) {
-      handleDeleteTrack(selectedTrack.id);
+    if (selectedTracks.length === 1) {
+      handleDeleteTrack(selectedTracks[0].id);
     } else if (selectedTracks.length >= 2) {
       handleBulkDelete();
     }
@@ -283,7 +273,6 @@ export function TrackList({
 
       <SelectionPanel
         totalTracks={tracks.length}
-        selectedTrack={selectedTrack}
         selectedTracks={selectedTracks}
         allActivityTypes={allActivityTypes}
         onDelete={handleDelete}

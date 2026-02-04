@@ -41,7 +41,6 @@ describe("SelectionPanel", () => {
       render(
         <SelectionPanel
           totalTracks={6}
-          selectedTrack={null}
           selectedTracks={[]}
           allActivityTypes={[]}
           onDelete={vi.fn()}
@@ -56,7 +55,6 @@ describe("SelectionPanel", () => {
       render(
         <SelectionPanel
           totalTracks={1}
-          selectedTrack={null}
           selectedTracks={[]}
           allActivityTypes={[]}
           onDelete={vi.fn()}
@@ -72,8 +70,7 @@ describe("SelectionPanel", () => {
       render(
         <SelectionPanel
           totalTracks={6}
-          selectedTrack={track}
-          selectedTracks={[]}
+          selectedTracks={[track]}
           allActivityTypes={[]}
           onDelete={vi.fn()}
         />,
@@ -92,7 +89,6 @@ describe("SelectionPanel", () => {
       render(
         <SelectionPanel
           totalTracks={6}
-          selectedTrack={null}
           selectedTracks={tracks}
           allActivityTypes={[]}
           onDelete={vi.fn()}
@@ -109,7 +105,6 @@ describe("SelectionPanel", () => {
       const { container } = render(
         <SelectionPanel
           totalTracks={6}
-          selectedTrack={null}
           selectedTracks={[]}
           allActivityTypes={[]}
           onDelete={vi.fn()}
@@ -128,8 +123,7 @@ describe("SelectionPanel", () => {
       render(
         <SelectionPanel
           totalTracks={6}
-          selectedTrack={track}
-          selectedTracks={[]}
+          selectedTracks={[track]}
           allActivityTypes={["Cycling", "Running"]}
           onDelete={vi.fn()}
         />,
@@ -147,7 +141,6 @@ describe("SelectionPanel", () => {
       render(
         <SelectionPanel
           totalTracks={6}
-          selectedTrack={null}
           selectedTracks={tracks}
           allActivityTypes={["Cycling"]}
           onDelete={vi.fn()}
@@ -168,8 +161,7 @@ describe("SelectionPanel", () => {
       render(
         <SelectionPanel
           totalTracks={6}
-          selectedTrack={track}
-          selectedTracks={[]}
+          selectedTracks={[track]}
           allActivityTypes={[]}
           onDelete={onDelete}
         />,
@@ -188,7 +180,6 @@ describe("SelectionPanel", () => {
       render(
         <SelectionPanel
           totalTracks={6}
-          selectedTrack={null}
           selectedTracks={tracks}
           allActivityTypes={[]}
           onDelete={onDelete}
