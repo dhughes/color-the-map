@@ -99,84 +99,86 @@ export function BulkOperationsPanel({
   return (
     <div className="track-details-panel">
       <div className="track-details-content">
-        <div className="track-details-stat track-details-stat-full">
-          <span className="track-details-stat-label">Date Range</span>
-          <span className="track-details-stat-value">{dateRange}</span>
+        <div className="track-details-scrollable">
+          <div className="track-details-stat track-details-stat-full">
+            <span className="track-details-stat-label">Date Range</span>
+            <span className="track-details-stat-value">{dateRange}</span>
+          </div>
+
+          <div className="track-details-field">
+            <label htmlFor="bulk-activity-type">Activity Type</label>
+            <input
+              id="bulk-activity-type"
+              type="text"
+              list={datalistId}
+              value={activityType}
+              onChange={(e) => setActivityType(e.target.value)}
+              onBlur={handleActivityTypeSave}
+              onKeyDown={handleKeyDown}
+              placeholder="Change activity type..."
+              className="track-details-input"
+            />
+            <datalist id={datalistId}>
+              {allActivityTypes.map((type) => (
+                <option key={type} value={type} />
+              ))}
+            </datalist>
+          </div>
+
+          <div className="track-details-divider" />
+
+          <div className="track-details-stats">
+            {formatDistance(totalDistance) && (
+              <div className="track-details-stat">
+                <span className="track-details-stat-label">Total Distance</span>
+                <span className="track-details-stat-value">
+                  {formatDistance(totalDistance)}
+                </span>
+              </div>
+            )}
+
+            {formatDuration(totalDuration) && (
+              <div className="track-details-stat">
+                <span className="track-details-stat-label">Total Duration</span>
+                <span className="track-details-stat-value">
+                  {formatDuration(totalDuration)}
+                </span>
+              </div>
+            )}
+
+            {formatElevation(totalElevationGain) && (
+              <div className="track-details-stat">
+                <span className="track-details-stat-label">
+                  <span className="track-details-stat-icon">↑</span> Total Gain
+                </span>
+                <span className="track-details-stat-value">
+                  {formatElevation(totalElevationGain)}
+                </span>
+              </div>
+            )}
+
+            {formatElevation(totalElevationLoss) && (
+              <div className="track-details-stat">
+                <span className="track-details-stat-label">
+                  <span className="track-details-stat-icon">↓</span> Total Loss
+                </span>
+                <span className="track-details-stat-value">
+                  {formatElevation(totalElevationLoss)}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="track-details-field">
-          <label htmlFor="bulk-activity-type">Activity Type</label>
-          <input
-            id="bulk-activity-type"
-            type="text"
-            list={datalistId}
-            value={activityType}
-            onChange={(e) => setActivityType(e.target.value)}
-            onBlur={handleActivityTypeSave}
-            onKeyDown={handleKeyDown}
-            placeholder="Change activity type..."
-            className="track-details-input"
-          />
-          <datalist id={datalistId}>
-            {allActivityTypes.map((type) => (
-              <option key={type} value={type} />
-            ))}
-          </datalist>
+        <div className="track-details-footer">
+          <button
+            className="track-details-delete-button"
+            onClick={onDelete}
+            type="button"
+          >
+            Delete {tracks.length} Tracks
+          </button>
         </div>
-
-        <div className="track-details-divider" />
-
-        <div className="track-details-stats">
-          {formatDistance(totalDistance) && (
-            <div className="track-details-stat">
-              <span className="track-details-stat-label">Total Distance</span>
-              <span className="track-details-stat-value">
-                {formatDistance(totalDistance)}
-              </span>
-            </div>
-          )}
-
-          {formatDuration(totalDuration) && (
-            <div className="track-details-stat">
-              <span className="track-details-stat-label">Total Duration</span>
-              <span className="track-details-stat-value">
-                {formatDuration(totalDuration)}
-              </span>
-            </div>
-          )}
-
-          {formatElevation(totalElevationGain) && (
-            <div className="track-details-stat">
-              <span className="track-details-stat-label">
-                <span className="track-details-stat-icon">↑</span> Total Gain
-              </span>
-              <span className="track-details-stat-value">
-                {formatElevation(totalElevationGain)}
-              </span>
-            </div>
-          )}
-
-          {formatElevation(totalElevationLoss) && (
-            <div className="track-details-stat">
-              <span className="track-details-stat-label">
-                <span className="track-details-stat-icon">↓</span> Total Loss
-              </span>
-              <span className="track-details-stat-value">
-                {formatElevation(totalElevationLoss)}
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="track-details-divider" />
-
-        <button
-          className="track-details-delete-button"
-          onClick={onDelete}
-          type="button"
-        >
-          Delete {tracks.length} Tracks
-        </button>
       </div>
     </div>
   );
