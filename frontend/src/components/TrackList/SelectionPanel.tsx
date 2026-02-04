@@ -27,6 +27,7 @@ export function SelectionPanel({
 
   const content = selectedTrack ? (
     <TrackDetailsPanel
+      key={selectedTrack.id}
       track={selectedTrack}
       allActivityTypes={allActivityTypes}
       onDelete={onDelete}
