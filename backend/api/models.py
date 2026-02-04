@@ -86,3 +86,12 @@ class DeleteRequest(BaseModel):
 
 class DeleteResult(BaseModel):
     deleted: int
+
+
+class BulkUpdateRequest(BaseModel):
+    track_ids: List[int]
+    updates: TrackUpdate
+
+
+class BulkUpdateResult(BaseModel):
+    updated: int

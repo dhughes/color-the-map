@@ -44,3 +44,7 @@ export interface UploadResult {
 export interface DeleteResult {
   deleted: number;
 }
+
+export interface BulkUpdateResult {
+  updated: number;
+}

@@ -3,6 +3,7 @@ import type {
   TrackGeometry,
   UploadResult,
   DeleteResult,
+  BulkUpdateResult,
 } from "../types/track";
 
 const API_BASE = "";
@@ -159,6 +160,31 @@ export async function deleteTracks(trackIds: number[]): Promise<DeleteResult> {
       .json()
       .catch(() => ({ detail: response.statusText }));
     throw new Error(error.detail || "Failed to delete tracks");
+  }
+
+  return response.json();
+}
+
+export async function bulkUpdateTracks(
+  trackIds: number[],
+  updates: {
+    visible?: boolean;
+    name?: string;
+    activity_type?: string;
+    description?: string;
+  },
+): Promise<BulkUpdateResult> {
+  const response = await fetchWithAuth(`${API_BASE}api/v1/tracks/bulk`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ track_ids: trackIds, updates }),
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ detail: response.statusText }));
+    throw new Error(error.detail || "Failed to update tracks");
   }
 
   return response.json();

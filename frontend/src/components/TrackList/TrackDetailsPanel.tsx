@@ -57,13 +57,9 @@ export function TrackDetailsPanel({
     }
   };
 
-  const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    saveHandler: () => void,
-  ) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.currentTarget.blur();
-      saveHandler();
     }
   };
 
@@ -77,6 +73,13 @@ export function TrackDetailsPanel({
       </div>
 
       <div className="track-details-content">
+        <div className="track-details-stat track-details-stat-full">
+          <span className="track-details-stat-label">Date</span>
+          <span className="track-details-stat-value">
+            {formatDateLong(track.activity_date)}
+          </span>
+        </div>
+
         <div className="track-details-field">
           <label htmlFor="track-name">Name</label>
           <input
@@ -85,7 +88,7 @@ export function TrackDetailsPanel({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={handleNameSave}
-            onKeyDown={(e) => handleKeyDown(e, handleNameSave)}
+            onKeyDown={handleKeyDown}
             className="track-details-input"
           />
         </div>
@@ -99,7 +102,7 @@ export function TrackDetailsPanel({
             value={activityType}
             onChange={(e) => setActivityType(e.target.value)}
             onBlur={handleActivityTypeSave}
-            onKeyDown={(e) => handleKeyDown(e, handleActivityTypeSave)}
+            onKeyDown={handleKeyDown}
             placeholder="Unknown"
             className="track-details-input"
           />
@@ -113,12 +116,14 @@ export function TrackDetailsPanel({
         <div className="track-details-divider" />
 
         <div className="track-details-stats">
-          <div className="track-details-stat">
-            <span className="track-details-stat-label">Date</span>
-            <span className="track-details-stat-value">
-              {formatDateLong(track.activity_date)}
-            </span>
-          </div>
+          {formatDistance(track.distance_meters) && (
+            <div className="track-details-stat">
+              <span className="track-details-stat-label">Distance</span>
+              <span className="track-details-stat-value">
+                {formatDistance(track.distance_meters)}
+              </span>
+            </div>
+          )}
 
           {formatDuration(track.duration_seconds) && (
             <div className="track-details-stat">
@@ -165,15 +170,6 @@ export function TrackDetailsPanel({
               </span>
               <span className="track-details-stat-value">
                 {formatElevation(track.elevation_loss_meters)}
-              </span>
-            </div>
-          )}
-
-          {formatDistance(track.distance_meters) && (
-            <div className="track-details-stat">
-              <span className="track-details-stat-label">Distance</span>
-              <span className="track-details-stat-value">
-                {formatDistance(track.distance_meters)}
               </span>
             </div>
           )}

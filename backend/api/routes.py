@@ -10,6 +10,8 @@ from .models import (
     LocationResponse,
     DeleteRequest,
     DeleteResult,
+    BulkUpdateRequest,
+    BulkUpdateResult,
 )
 from ..services.track_service import TrackService
 from ..config import config
@@ -127,6 +129,23 @@ async def get_track_geometries(
         request.track_ids, str(user.id), session
     )
     return [TrackGeometry.from_domain(geometry) for geometry in geometries]
+
+
+@router.patch("/tracks/bulk", response_model=BulkUpdateResult)
+async def bulk_update_tracks(
+    request: BulkUpdateRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    updated = await track_service.update_tracks(
+        request.track_ids,
+        request.updates.model_dump(exclude_unset=True),
+        str(user.id),
+        session,
+    )
+    await session.commit()
+
+    return BulkUpdateResult(updated=updated)
 
 
 @router.patch("/tracks/{track_id}", response_model=TrackResponse)
