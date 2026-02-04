@@ -98,11 +98,6 @@ export function BulkOperationsPanel({
 
   return (
     <div className="track-details-panel">
-      <div className="track-details-header">
-        <span className="track-details-header-accent" />
-        <h3>{tracks.length} Tracks Selected</h3>
-      </div>
-
       <div className="track-details-content">
         <div className="track-details-stat track-details-stat-full">
           <span className="track-details-stat-label">Date Range</span>

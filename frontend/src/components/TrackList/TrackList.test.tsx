@@ -75,7 +75,7 @@ describe("TrackList", () => {
       { wrapper: createWrapper() },
     );
 
-    expect(await screen.findByText("2 tracks")).toBeInTheDocument();
+    expect(await screen.findByText("2 Tracks")).toBeInTheDocument();
   });
 
   it("renders track items", async () => {
@@ -114,12 +114,62 @@ describe("TrackList", () => {
       { wrapper: createWrapper() },
     );
 
-    expect(await screen.findByText("2 selected")).toBeInTheDocument();
+    expect(await screen.findByText("2 Tracks Selected")).toBeInTheDocument();
   });
 
   describe("auto-scroll behavior", () => {
     let mockScrollIntoView: ReturnType<typeof vi.fn>;
     let queryClient: QueryClient;
+
+    const mockItemNotVisible = () => {
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+        function (this: Element) {
+          if (this.classList.contains("track-list-items")) {
+            return {
+              top: 0,
+              bottom: 300,
+              left: 0,
+              right: 350,
+              width: 350,
+              height: 300,
+            } as DOMRect;
+          }
+          return {
+            top: 400,
+            bottom: 450,
+            left: 0,
+            right: 350,
+            width: 350,
+            height: 50,
+          } as DOMRect;
+        },
+      );
+    };
+
+    const mockItemVisible = () => {
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+        function (this: Element) {
+          if (this.classList.contains("track-list-items")) {
+            return {
+              top: 0,
+              bottom: 300,
+              left: 0,
+              right: 350,
+              width: 350,
+              height: 300,
+            } as DOMRect;
+          }
+          return {
+            top: 100,
+            bottom: 150,
+            left: 0,
+            right: 350,
+            width: 350,
+            height: 50,
+          } as DOMRect;
+        },
+      );
+    };
 
     beforeEach(() => {
       mockScrollIntoView = vi.fn();
@@ -131,7 +181,9 @@ describe("TrackList", () => {
       queryClient.setQueryData(["tracks"], mockTracks);
     });
 
-    it("scrolls to track when selected from map", async () => {
+    it("scrolls to track when selected from map and not visible", async () => {
+      mockItemNotVisible();
+
       const { rerender } = render(
         <QueryClientProvider client={queryClient}>
           <TrackList
@@ -174,7 +226,9 @@ describe("TrackList", () => {
       });
     });
 
-    it("does not scroll when selected from sidebar", async () => {
+    it("does not scroll when selected from map but already visible", async () => {
+      mockItemVisible();
+
       const { rerender } = render(
         <QueryClientProvider client={queryClient}>
           <TrackList
@@ -204,6 +258,133 @@ describe("TrackList", () => {
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
             lastSelectedTrackId={1}
+            selectionSource="map"
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockScrollIntoView).not.toHaveBeenCalled();
+      });
+    });
+
+    it("scrolls when single track selected from sidebar and not visible", async () => {
+      mockItemNotVisible();
+
+      const { rerender } = render(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            tracks={mockTracks}
+            selectedTrackIds={new Set()}
+            anchorTrackId={null}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={null}
+            selectionSource={null}
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Track 1")).toBeInTheDocument();
+      });
+
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            tracks={mockTracks}
+            selectedTrackIds={new Set([1])}
+            anchorTrackId={1}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={1}
+            selectionSource="sidebar"
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockScrollIntoView).toHaveBeenCalledWith({
+          block: "center",
+          behavior: "smooth",
+        });
+      });
+    });
+
+    it("does not scroll when single track selected from sidebar but already visible", async () => {
+      mockItemVisible();
+
+      const { rerender } = render(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            tracks={mockTracks}
+            selectedTrackIds={new Set()}
+            anchorTrackId={null}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={null}
+            selectionSource={null}
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Track 1")).toBeInTheDocument();
+      });
+
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            tracks={mockTracks}
+            selectedTrackIds={new Set([1])}
+            anchorTrackId={1}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={1}
+            selectionSource="sidebar"
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(mockScrollIntoView).not.toHaveBeenCalled();
+      });
+    });
+
+    it("does not scroll when multiple tracks selected from sidebar", async () => {
+      const { rerender } = render(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            tracks={mockTracks}
+            selectedTrackIds={new Set()}
+            anchorTrackId={null}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={null}
+            selectionSource={null}
+          />
+        </QueryClientProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Track 1")).toBeInTheDocument();
+      });
+
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <TrackList
+            tracks={mockTracks}
+            selectedTrackIds={new Set([1, 2])}
+            anchorTrackId={1}
+            onSelect={vi.fn()}
+            onSelectRange={vi.fn()}
+            onZoomToTrack={vi.fn()}
+            lastSelectedTrackId={2}
             selectionSource="sidebar"
           />
         </QueryClientProvider>,

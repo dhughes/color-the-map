@@ -1,9 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { updateTrack, deleteTracks } from "../../api/client";
+import { DrawerPanelHeader } from "../DrawerPanelHeader";
 import { TrackListItem } from "./TrackListItem";
 import { TrackDetailsPanel } from "./TrackDetailsPanel";
 import { BulkOperationsPanel } from "./BulkOperationsPanel";
+import { TrackStatusBar } from "./TrackStatusBar";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
 import type { SelectionSource } from "../../hooks/useSelection";
@@ -131,18 +133,39 @@ export function TrackList({
   };
 
   useEffect(() => {
-    if (selectionSource !== "map" || !lastSelectedTrackId || !listRef.current) {
+    if (!lastSelectedTrackId || !listRef.current) {
       return;
     }
 
-    const item = listRef.current.querySelector(
-      `[data-track-id="${lastSelectedTrackId}"]`,
-    );
+    const shouldScroll =
+      selectionSource === "map" ||
+      (selectionSource === "sidebar" && selectedTrackIds.size === 1);
 
-    if (item) {
-      item.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (!shouldScroll) {
+      return;
     }
-  }, [lastSelectedTrackId, selectionSource]);
+
+    const frameId = requestAnimationFrame(() => {
+      if (!listRef.current) return;
+
+      const item = listRef.current.querySelector(
+        `[data-track-id="${lastSelectedTrackId}"]`,
+      );
+
+      if (item) {
+        const listRect = listRef.current.getBoundingClientRect();
+        const itemRect = item.getBoundingClientRect();
+        const isVisible =
+          itemRect.top >= listRect.top && itemRect.bottom <= listRect.bottom;
+
+        if (!isVisible) {
+          item.scrollIntoView({ block: "center", behavior: "smooth" });
+        }
+      }
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [lastSelectedTrackId, selectionSource, selectedTrackIds.size]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -223,16 +246,7 @@ export function TrackList({
 
   return (
     <div className="track-list">
-      <div className="track-list-header">
-        <h2>Tracks</h2>
-        <span
-          className={`track-info-badge ${selectedCount > 0 ? "selected" : ""}`}
-        >
-          {selectedCount > 0
-            ? `${selectedCount} selected`
-            : `${tracks.length} tracks`}
-        </span>
-      </div>
+      <DrawerPanelHeader title="Tracks" />
 
       <div className="track-list-items" ref={listRef}>
         {tracks.map((track) => (
@@ -262,6 +276,11 @@ export function TrackList({
           />
         ))}
       </div>
+
+      <TrackStatusBar
+        totalTracks={tracks.length}
+        selectedCount={selectedCount}
+      />
 
       {selectedTrack && (
         <TrackDetailsPanel
