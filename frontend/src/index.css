@@ -386,7 +386,7 @@ body {
 
 .track-list-header {
   padding: 24px 20px 16px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 2px solid #d0d0ce;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -401,19 +401,34 @@ body {
   color: var(--color-text);
 }
 
-.track-info-badge {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 6px;
-  color: var(--color-text-muted);
-  background: #f0f0f0;
-  transition: all 0.2s ease;
+.track-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 2px solid #d0d0ce;
+  background: var(--color-bg);
+  flex-shrink: 0;
 }
 
-.track-info-badge.selected {
-  color: var(--color-primary);
-  background: rgba(255, 0, 255, 0.08);
+.track-status-bar-selected {
+  background: var(--color-overlay);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.track-status-bar-accent {
+  width: 3px;
+  height: 14px;
+  background: var(--color-primary);
+  border-radius: 2px;
+}
+
+.track-status-bar-text {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
 .track-list-loading {
@@ -657,7 +672,6 @@ body {
 
 /* Track Details Panel */
 .track-details-panel {
-  border-top: 1px solid var(--color-border);
   background: var(--color-bg);
   flex-shrink: 0;
   animation: panelSlideUp 0.2s ease-out;
@@ -672,31 +686,6 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.track-details-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-overlay);
-}
-
-.track-details-header-accent {
-  width: 3px;
-  height: 14px;
-  background: var(--color-primary);
-  border-radius: 2px;
-}
-
-.track-details-header h3 {
-  margin: 0;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
 }
 
 .track-details-content {

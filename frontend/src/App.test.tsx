@@ -216,7 +216,7 @@ describe("App - Logout Functionality", () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.getByText("0 tracks")).toBeInTheDocument();
+    expect(screen.getByText("0 Tracks")).toBeInTheDocument();
     expect(screen.queryByText("Test Track 1")).not.toBeInTheDocument();
   });
 });

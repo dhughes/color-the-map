@@ -78,19 +78,6 @@ describe("BulkOperationsPanel", () => {
     vi.clearAllMocks();
   });
 
-  it("renders count of selected tracks in header", () => {
-    render(
-      <BulkOperationsPanel
-        tracks={mockTracks}
-        allActivityTypes={["Running", "Walking"]}
-        onDelete={mockOnDelete}
-      />,
-      { wrapper: createWrapper() },
-    );
-
-    expect(screen.getByText("2 Tracks Selected")).toBeInTheDocument();
-  });
-
   it("renders combined statistics", () => {
     render(
       <BulkOperationsPanel
@@ -276,7 +263,6 @@ describe("BulkOperationsPanel", () => {
       { wrapper: createWrapper() },
     );
 
-    expect(screen.getByText("2 Tracks Selected")).toBeInTheDocument();
     expect(screen.queryByText("km")).not.toBeInTheDocument();
     expect(screen.queryByText("Total Duration")).not.toBeInTheDocument();
   });

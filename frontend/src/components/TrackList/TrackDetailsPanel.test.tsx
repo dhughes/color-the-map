@@ -101,19 +101,6 @@ describe("TrackDetailsPanel", () => {
     expect(screen.getByText("45 m")).toBeInTheDocument();
   });
 
-  it("renders header with accent", () => {
-    render(
-      <TrackDetailsPanel
-        track={mockTrack}
-        allActivityTypes={["Running"]}
-        onDelete={mockOnDelete}
-      />,
-      { wrapper: createWrapper() },
-    );
-
-    expect(screen.getByText("Track Details")).toBeInTheDocument();
-  });
-
   it("allows editing the name", () => {
     render(
       <TrackDetailsPanel

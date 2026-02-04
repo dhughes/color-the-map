@@ -69,11 +69,6 @@ export function TrackDetailsPanel({
 
   return (
     <div className="track-details-panel">
-      <div className="track-details-header">
-        <span className="track-details-header-accent" />
-        <h3>Track Details</h3>
-      </div>
-
       <div className="track-details-content">
         <div className="track-details-stat track-details-stat-full">
           <span className="track-details-stat-label">Date</span>
