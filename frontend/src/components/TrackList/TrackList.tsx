@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { updateTrack, deleteTracks } from "../../api/client";
 import { TrackListItem } from "./TrackListItem";
 import { TrackDetailsPanel } from "./TrackDetailsPanel";
+import { BulkOperationsPanel } from "./BulkOperationsPanel";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
 import type { SelectionSource } from "../../hooks/useSelection";
@@ -110,6 +111,14 @@ export function TrackList({
     setConfirmDelete({ trackIds: [trackId], count: 1 });
   };
 
+  const handleBulkDelete = () => {
+    const count = selectedTrackIds.size;
+    setConfirmDelete({
+      trackIds: Array.from(selectedTrackIds),
+      count,
+    });
+  };
+
   const handleConfirmDelete = () => {
     if (confirmDelete) {
       deleteTracksMutation.mutate(confirmDelete.trackIds);
@@ -196,6 +205,13 @@ export function TrackList({
     return null;
   }, [selectedTrackIds, tracks]);
 
+  const selectedTracks = useMemo(() => {
+    if (selectedTrackIds.size >= 2) {
+      return tracks.filter((t) => selectedTrackIds.has(t.id));
+    }
+    return [];
+  }, [selectedTrackIds, tracks]);
+
   const allActivityTypes = useMemo(() => {
     const types = new Set(
       tracks
@@ -253,6 +269,14 @@ export function TrackList({
           key={selectedTrack.id}
           track={selectedTrack}
           allActivityTypes={allActivityTypes}
+        />
+      )}
+
+      {selectedTracks.length >= 2 && (
+        <BulkOperationsPanel
+          tracks={selectedTracks}
+          allActivityTypes={allActivityTypes}
+          onDelete={handleBulkDelete}
         />
       )}
 

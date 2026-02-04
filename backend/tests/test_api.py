@@ -247,3 +247,97 @@ def test_delete_with_mixed_ids(sample_gpx_file, auth_token):
     assert response.status_code == 200
     data = response.json()
     assert data["deleted"] == 1
+
+
+def test_bulk_update_tracks(auth_token):
+    test_dir = Path(__file__).parent
+    gpx1_path = (
+        test_dir / ".." / ".." / "sample-gpx-files" / "Cycling 2025-12-19T211415Z.gpx"
+    )
+    gpx2_path = test_dir / ".." / ".." / "sample-gpx-files" / "Walking 2031.gpx"
+
+    with open(gpx1_path, "rb") as f:
+        content1 = f.read()
+    with open(gpx2_path, "rb") as f:
+        content2 = f.read()
+
+    upload_response = client.post(
+        "/api/v1/tracks",
+        files=[
+            ("files", ("test1.gpx", content1, "application/gpx+xml")),
+            ("files", ("test2.gpx", content2, "application/gpx+xml")),
+        ],
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    track_ids = upload_response.json()["track_ids"]
+
+    response = client.patch(
+        "/api/v1/tracks/bulk",
+        json={"track_ids": track_ids, "updates": {"activity_type": "Running"}},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["updated"] == 2
+
+    list_response = client.get(
+        "/api/v1/tracks", headers={"Authorization": f"Bearer {auth_token}"}
+    )
+    tracks = list_response.json()
+    for track in tracks:
+        if track["id"] in track_ids:
+            assert track["activity_type"] == "Running"
+
+
+def test_bulk_update_tracks_empty_list(auth_token):
+    response = client.patch(
+        "/api/v1/tracks/bulk",
+        json={"track_ids": [], "updates": {"activity_type": "Running"}},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["updated"] == 0
+
+
+def test_bulk_update_tracks_nonexistent(auth_token):
+    response = client.patch(
+        "/api/v1/tracks/bulk",
+        json={"track_ids": [9999, 8888], "updates": {"activity_type": "Running"}},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["updated"] == 0
+
+
+def test_bulk_update_tracks_mixed_ids(sample_gpx_file, auth_token):
+    upload_response = client.post(
+        "/api/v1/tracks",
+        files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    existing_id = upload_response.json()["track_ids"][0]
+
+    response = client.patch(
+        "/api/v1/tracks/bulk",
+        json={
+            "track_ids": [9999, existing_id, 8888],
+            "updates": {"activity_type": "Hiking"},
+        },
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["updated"] == 1
+
+    list_response = client.get(
+        "/api/v1/tracks", headers={"Authorization": f"Bearer {auth_token}"}
+    )
+    tracks = list_response.json()
+    updated_track = next(t for t in tracks if t["id"] == existing_id)
+    assert updated_track["activity_type"] == "Hiking"

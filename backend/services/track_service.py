@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional, List, Tuple, cast
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, update
 from sqlalchemy.engine import CursorResult
 from .gpx_parser import GPXParser
 from .storage_service import StorageService
@@ -209,3 +209,29 @@ class TrackService:
         return DeleteResult(
             deleted=cursor_result.rowcount, hashes_to_delete=hashes_to_delete
         )
+
+    async def update_tracks(
+        self,
+        track_ids: List[int],
+        updates: Dict[str, Any],
+        user_id: str,
+        session: AsyncSession,
+    ) -> int:
+        if not track_ids:
+            return 0
+
+        allowed_updates = {
+            key: value for key, value in updates.items() if key in ALLOWED_UPDATE_FIELDS
+        }
+
+        if not allowed_updates:
+            return 0
+
+        update_stmt = (
+            update(TrackModel)
+            .where(TrackModel.id.in_(track_ids), TrackModel.user_id == user_id)
+            .values(**allowed_updates)
+        )
+        cursor_result = cast(CursorResult[Any], await session.execute(update_stmt))
+
+        return cursor_result.rowcount
