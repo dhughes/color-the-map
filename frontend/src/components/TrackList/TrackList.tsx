@@ -1,11 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { updateTrack, deleteTracks } from "../../api/client";
-import { DrawerPanelHeader } from "../DrawerPanelHeader";
+import { SidebarPanel } from "../SidebarPanel";
 import { TrackListItem } from "./TrackListItem";
-import { TrackDetailsPanel } from "./TrackDetailsPanel";
-import { BulkOperationsPanel } from "./BulkOperationsPanel";
-import { TrackStatusBar } from "./TrackStatusBar";
+import { SelectionPanel } from "./SelectionPanel";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
 import type { SelectionSource } from "../../hooks/useSelection";
@@ -218,22 +216,10 @@ export function TrackList({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [tracks, anchorTrackId, onSelect, selectedTrackIds]);
 
-  const selectedCount = selectedTrackIds.size;
-
-  const selectedTrack = useMemo(() => {
-    if (selectedTrackIds.size === 1) {
-      const selectedId = Array.from(selectedTrackIds)[0];
-      return tracks.find((t) => t.id === selectedId) || null;
-    }
-    return null;
-  }, [selectedTrackIds, tracks]);
-
-  const selectedTracks = useMemo(() => {
-    if (selectedTrackIds.size >= 2) {
-      return tracks.filter((t) => selectedTrackIds.has(t.id));
-    }
-    return [];
-  }, [selectedTrackIds, tracks]);
+  const selectedTracks = useMemo(
+    () => tracks.filter((t) => selectedTrackIds.has(t.id)),
+    [selectedTrackIds, tracks],
+  );
 
   const allActivityTypes = useMemo(() => {
     const types = new Set(
@@ -244,60 +230,53 @@ export function TrackList({
     return Array.from(types).sort();
   }, [tracks]);
 
+  const handleDelete = () => {
+    if (selectedTracks.length === 1) {
+      handleDeleteTrack(selectedTracks[0].id);
+    } else if (selectedTracks.length >= 2) {
+      handleBulkDelete();
+    }
+  };
+
   return (
     <div className="track-list">
-      <DrawerPanelHeader title="Tracks" />
+      <SidebarPanel title="Tracks">
+        <div className="track-list-items" ref={listRef}>
+          {tracks.map((track) => (
+            <TrackListItem
+              key={track.id}
+              track={track}
+              isSelected={selectedTrackIds.has(track.id)}
+              onSelect={(event) => {
+                const isMultiSelect = event.metaKey || event.ctrlKey;
+                const isRangeSelect = event.shiftKey;
 
-      <div className="track-list-items" ref={listRef}>
-        {tracks.map((track) => (
-          <TrackListItem
-            key={track.id}
-            track={track}
-            isSelected={selectedTrackIds.has(track.id)}
-            onSelect={(event) => {
-              const isMultiSelect = event.metaKey || event.ctrlKey;
-              const isRangeSelect = event.shiftKey;
+                if (isRangeSelect && anchorTrackId !== null) {
+                  const trackIds = tracks.map((t) => t.id);
+                  onSelectRange(trackIds, anchorTrackId, track.id);
+                } else {
+                  onSelect(track.id, isMultiSelect);
+                }
+              }}
+              onToggleVisibility={(event) => {
+                event.stopPropagation();
+                toggleVisibility.mutate({
+                  trackId: track.id,
+                  visible: !track.visible,
+                });
+              }}
+              onDoubleClick={() => onZoomToTrack(track)}
+            />
+          ))}
+        </div>
+      </SidebarPanel>
 
-              if (isRangeSelect && anchorTrackId !== null) {
-                const trackIds = tracks.map((t) => t.id);
-                onSelectRange(trackIds, anchorTrackId, track.id);
-              } else {
-                onSelect(track.id, isMultiSelect);
-              }
-            }}
-            onToggleVisibility={(event) => {
-              event.stopPropagation();
-              toggleVisibility.mutate({
-                trackId: track.id,
-                visible: !track.visible,
-              });
-            }}
-            onDoubleClick={() => onZoomToTrack(track)}
-          />
-        ))}
-      </div>
-
-      <TrackStatusBar
+      <SelectionPanel
         totalTracks={tracks.length}
-        selectedCount={selectedCount}
+        selectedTracks={selectedTracks}
+        allActivityTypes={allActivityTypes}
+        onDelete={handleDelete}
       />
-
-      {selectedTrack && (
-        <TrackDetailsPanel
-          key={selectedTrack.id}
-          track={selectedTrack}
-          allActivityTypes={allActivityTypes}
-          onDelete={() => handleDeleteTrack(selectedTrack.id)}
-        />
-      )}
-
-      {selectedTracks.length >= 2 && (
-        <BulkOperationsPanel
-          tracks={selectedTracks}
-          allActivityTypes={allActivityTypes}
-          onDelete={handleBulkDelete}
-        />
-      )}
 
       <ConfirmDialog
         isOpen={confirmDelete !== null}

@@ -385,59 +385,26 @@ body {
   overflow: hidden;
 }
 
-/* Drawer Panel Header (reusable for all drawer panels) */
-.drawer-panel-header {
+/* Sidebar Panel Header (unified panel header styling) */
+.sidebar-panel-header {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  border-bottom: 2px solid var(--color-border-strong);
-  background: var(--color-bg);
+  border-top: 4px solid var(--color-border-strong);
+  border-bottom: 2px solid var(--color-border);
+  background: var(--color-overlay);
   flex-shrink: 0;
 }
 
-.drawer-panel-header-accent {
-  background: var(--color-overlay);
-}
-
-.drawer-panel-header-bar {
+.sidebar-panel-header-bar {
   width: 3px;
   height: 14px;
   background: var(--color-primary);
   border-radius: 2px;
 }
 
-.drawer-panel-header-title {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-.track-status-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
-  border-top: 2px solid var(--color-border-strong);
-  background: var(--color-bg);
-  flex-shrink: 0;
-}
-
-.track-status-bar-selected {
-  background: var(--color-overlay);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.track-status-bar-accent {
-  width: 3px;
-  height: 14px;
-  background: var(--color-primary);
-  border-radius: 2px;
-}
-
-.track-status-bar-text {
+.sidebar-panel-header-title {
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.02em;
