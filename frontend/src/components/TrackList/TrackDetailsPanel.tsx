@@ -13,11 +13,13 @@ import {
 interface TrackDetailsPanelProps {
   track: Track;
   allActivityTypes: string[];
+  onDelete: () => void;
 }
 
 export function TrackDetailsPanel({
   track,
   allActivityTypes,
+  onDelete,
 }: TrackDetailsPanelProps) {
   const queryClient = useQueryClient();
   const [name, setName] = useState(track.name);
@@ -174,6 +176,16 @@ export function TrackDetailsPanel({
             </div>
           )}
         </div>
+
+        <div className="track-details-divider" />
+
+        <button
+          className="track-details-delete-button"
+          onClick={onDelete}
+          type="button"
+        >
+          Delete Track
+        </button>
       </div>
     </div>
   );
