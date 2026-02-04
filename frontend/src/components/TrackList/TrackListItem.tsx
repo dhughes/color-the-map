@@ -1,5 +1,6 @@
 import { Eye, EyeOff, X } from "lucide-react";
 import type { Track } from "../../types/track";
+import { formatDateShort, formatDistance } from "../../utils/formatters";
 
 interface TrackListItemProps {
   track: Track;
@@ -18,20 +19,6 @@ export function TrackListItem({
   onDoubleClick,
   onDelete,
 }: TrackListItemProps) {
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const formatDistance = (meters: number | null) => {
-    if (!meters) return null;
-    const km = meters / 1000;
-    return `${km.toFixed(1)} km`;
-  };
-
   const handleEyeClick = (event: React.MouseEvent) => {
     event.stopPropagation();
     onToggleVisibility(event);
@@ -71,7 +58,7 @@ export function TrackListItem({
           </span>
           <span className="track-item-separator">•</span>
           <span className="track-item-date">
-            {formatDate(track.activity_date)}
+            {formatDateShort(track.activity_date)}
           </span>
           {formatDistance(track.distance_meters) && (
             <>

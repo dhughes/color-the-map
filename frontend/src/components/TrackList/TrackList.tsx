@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { updateTrack, deleteTracks } from "../../api/client";
 import { TrackListItem } from "./TrackListItem";
+import { TrackDetailsPanel } from "./TrackDetailsPanel";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
 import type { SelectionSource } from "../../hooks/useSelection";
@@ -187,6 +188,23 @@ export function TrackList({
 
   const selectedCount = selectedTrackIds.size;
 
+  const selectedTrack = useMemo(() => {
+    if (selectedTrackIds.size === 1) {
+      const selectedId = Array.from(selectedTrackIds)[0];
+      return tracks.find((t) => t.id === selectedId) || null;
+    }
+    return null;
+  }, [selectedTrackIds, tracks]);
+
+  const allActivityTypes = useMemo(() => {
+    const types = new Set(
+      tracks
+        .map((t) => t.activity_type)
+        .filter((type): type is string => type !== null && type !== ""),
+    );
+    return Array.from(types).sort();
+  }, [tracks]);
+
   return (
     <div className="track-list">
       <div className="track-list-header">
@@ -229,6 +247,14 @@ export function TrackList({
           />
         ))}
       </div>
+
+      {selectedTrack && (
+        <TrackDetailsPanel
+          key={selectedTrack.id}
+          track={selectedTrack}
+          allActivityTypes={allActivityTypes}
+        />
+      )}
 
       <ConfirmDialog
         isOpen={confirmDelete !== null}
