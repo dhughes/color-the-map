@@ -687,7 +687,11 @@ body {
 /* Track Details Panel */
 .track-details-panel {
   background: var(--color-bg);
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 50vh;
   animation: panelSlideUp 0.2s ease-out;
 }
 
@@ -704,6 +708,21 @@ body {
 
 .track-details-content {
   padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.track-details-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.track-details-footer {
+  flex-shrink: 0;
+  padding-top: 16px;
 }
 
 .track-details-field {
