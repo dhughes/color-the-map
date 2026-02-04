@@ -203,9 +203,7 @@ describe("BulkOperationsPanel", () => {
     });
   });
 
-  it("calls bulkUpdateTracks on Enter key press when value entered", async () => {
-    const { bulkUpdateTracks } = await import("../../api/client");
-
+  it("blurs input on Enter key press", () => {
     render(
       <BulkOperationsPanel
         tracks={mockTracks}
@@ -216,14 +214,12 @@ describe("BulkOperationsPanel", () => {
     );
 
     const activityInput = screen.getByLabelText("Activity Type");
-    fireEvent.change(activityInput, { target: { value: "Hiking" } });
+    activityInput.focus();
+    expect(document.activeElement).toBe(activityInput);
+
     fireEvent.keyDown(activityInput, { key: "Enter" });
 
-    await waitFor(() => {
-      expect(bulkUpdateTracks).toHaveBeenCalledWith([1, 2], {
-        activity_type: "Hiking",
-      });
-    });
+    expect(document.activeElement).not.toBe(activityInput);
   });
 
   it("renders delete button with track count", () => {

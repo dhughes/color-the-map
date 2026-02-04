@@ -210,37 +210,33 @@ describe("TrackDetailsPanel", () => {
     });
   });
 
-  it("calls updateTrack on name Enter key press when value changed", async () => {
-    const { updateTrack } = await import("../../api/client");
-
+  it("blurs name input on Enter key press", () => {
     render(
       <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
       { wrapper: createWrapper() },
     );
 
     const nameInput = screen.getByLabelText("Name");
-    fireEvent.change(nameInput, { target: { value: "Evening Walk" } });
+    nameInput.focus();
+    expect(document.activeElement).toBe(nameInput);
+
     fireEvent.keyDown(nameInput, { key: "Enter" });
 
-    await waitFor(() => {
-      expect(updateTrack).toHaveBeenCalledWith(1, { name: "Evening Walk" });
-    });
+    expect(document.activeElement).not.toBe(nameInput);
   });
 
-  it("calls updateTrack on activity type Enter key press when value changed", async () => {
-    const { updateTrack } = await import("../../api/client");
-
+  it("blurs activity type input on Enter key press", () => {
     render(
       <TrackDetailsPanel track={mockTrack} allActivityTypes={["Running"]} />,
       { wrapper: createWrapper() },
     );
 
     const activityInput = screen.getByLabelText("Activity");
-    fireEvent.change(activityInput, { target: { value: "Walking" } });
+    activityInput.focus();
+    expect(document.activeElement).toBe(activityInput);
+
     fireEvent.keyDown(activityInput, { key: "Enter" });
 
-    await waitFor(() => {
-      expect(updateTrack).toHaveBeenCalledWith(1, { activity_type: "Walking" });
-    });
+    expect(document.activeElement).not.toBe(activityInput);
   });
 });

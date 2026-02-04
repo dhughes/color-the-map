@@ -72,7 +72,6 @@ export function BulkOperationsPanel({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.currentTarget.blur();
-      handleActivityTypeSave();
     }
   };
 

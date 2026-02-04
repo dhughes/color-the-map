@@ -57,13 +57,9 @@ export function TrackDetailsPanel({
     }
   };
 
-  const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    saveHandler: () => void,
-  ) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.currentTarget.blur();
-      saveHandler();
     }
   };
 
@@ -92,7 +88,7 @@ export function TrackDetailsPanel({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={handleNameSave}
-            onKeyDown={(e) => handleKeyDown(e, handleNameSave)}
+            onKeyDown={handleKeyDown}
             className="track-details-input"
           />
         </div>
@@ -106,7 +102,7 @@ export function TrackDetailsPanel({
             value={activityType}
             onChange={(e) => setActivityType(e.target.value)}
             onBlur={handleActivityTypeSave}
-            onKeyDown={(e) => handleKeyDown(e, handleActivityTypeSave)}
+            onKeyDown={handleKeyDown}
             placeholder="Unknown"
             className="track-details-input"
           />
