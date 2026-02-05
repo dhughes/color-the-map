@@ -1,4 +1,4 @@
-import { Fullscreen } from "lucide-react";
+import { Focus } from "lucide-react";
 import { SidebarPanel } from "../SidebarPanel";
 import { TrackDetailsPanel } from "./TrackDetailsPanel";
 import { BulkOperationsPanel } from "./BulkOperationsPanel";
@@ -49,7 +49,7 @@ export function SelectionPanel({
         aria-label="Zoom to selected tracks"
         title="Zoom to selected tracks"
       >
-        <Fullscreen size={16} />
+        <Focus size={16} />
       </button>
     ) : undefined;
 
