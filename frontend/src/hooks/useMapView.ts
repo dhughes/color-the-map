@@ -17,9 +17,6 @@ export function useMapView() {
       const savedView = mapViewStorage.getMapView();
 
       if (savedView) {
-        console.log(
-          `[MapView] Using saved view: [${savedView.center[0].toFixed(4)}, ${savedView.center[1].toFixed(4)}] zoom ${savedView.zoom}`,
-        );
         setInitialView(savedView);
         setIsLoading(false);
         return;
@@ -28,23 +25,15 @@ export function useMapView() {
       const location = await getUserLocation();
 
       if (location) {
-        const view: MapViewState = {
+        setInitialView({
           center: [location.longitude, location.latitude],
           zoom: config.mapZoom,
-        };
-        console.log(
-          `[MapView] Using ${location.source} location: [${view.center[0].toFixed(4)}, ${view.center[1].toFixed(4)}] zoom ${view.zoom}`,
-        );
-        setInitialView(view);
+        });
       } else {
-        const view: MapViewState = {
+        setInitialView({
           center: config.mapCenter,
           zoom: config.mapZoom,
-        };
-        console.log(
-          `[MapView] Using config default: [${view.center[0].toFixed(4)}, ${view.center[1].toFixed(4)}] zoom ${view.zoom}`,
-        );
-        setInitialView(view);
+        });
       }
 
       setIsLoading(false);
