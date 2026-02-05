@@ -26,9 +26,15 @@ interface MapProps {
 function speedToColor(speed: number, maxSpeed: number): string {
   if (maxSpeed <= 0) return config.trackColor;
   const ratio = Math.min(speed / maxSpeed, 1);
-  const r = Math.round(255 * (1 - ratio));
-  const g = Math.round(255 * ratio);
-  return `rgb(${r}, ${g}, 0)`;
+
+  const slowColor = { r: 0, g: 190, b: 200 };
+  const fastColor = { r: 255, g: 90, b: 20 };
+
+  const r = Math.round(slowColor.r + (fastColor.r - slowColor.r) * ratio);
+  const g = Math.round(slowColor.g + (fastColor.g - slowColor.g) * ratio);
+  const b = Math.round(slowColor.b + (fastColor.b - slowColor.b) * ratio);
+
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 export interface MapRef {
@@ -171,18 +177,7 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
         });
 
         mapInstance.addLayer({
-          id: "track-outlines",
-          type: "line",
-          source: "tracks",
-          paint: {
-            "line-color": "#444",
-            "line-width": 10,
-            "line-opacity": 0,
-          },
-        });
-
-        mapInstance.addLayer({
-          id: "track-lines",
+          id: "deselected-tracks",
           type: "line",
           source: "tracks",
           paint: {
@@ -192,32 +187,64 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
           },
         });
 
-        mapInstance.on("click", "track-lines", (e) => {
-          if (e.features && e.features.length > 0) {
-            const trackId = e.features[0].properties?.id;
-            if (trackId) {
-              const isMultiSelect =
-                e.originalEvent.metaKey || e.originalEvent.ctrlKey;
-              onSelect(trackId, isMultiSelect);
-            }
-          }
+        mapInstance.addLayer({
+          id: "selected-track-outlines",
+          type: "line",
+          source: "tracks",
+          paint: {
+            "line-color": "#444",
+            "line-width": 10,
+            "line-opacity": 1,
+          },
+          filter: ["==", ["get", "id"], -1],
         });
+
+        mapInstance.addLayer({
+          id: "selected-tracks",
+          type: "line",
+          source: "tracks",
+          paint: {
+            "line-color": "#FF66FF",
+            "line-width": 6,
+            "line-opacity": 0.85,
+          },
+          filter: ["==", ["get", "id"], -1],
+        });
+
+        const clickableLayers = [
+          "deselected-tracks",
+          "selected-tracks",
+          "selected-track-outlines",
+        ];
+
+        for (const layerId of clickableLayers) {
+          mapInstance.on("click", layerId, (e) => {
+            if (e.features && e.features.length > 0) {
+              const trackId = e.features[0].properties?.id;
+              if (trackId) {
+                const isMultiSelect =
+                  e.originalEvent.metaKey || e.originalEvent.ctrlKey;
+                onSelect(trackId, isMultiSelect);
+              }
+            }
+          });
+
+          mapInstance.on("mouseenter", layerId, () => {
+            mapInstance.getCanvas().style.cursor = "pointer";
+          });
+
+          mapInstance.on("mouseleave", layerId, () => {
+            mapInstance.getCanvas().style.cursor = "";
+          });
+        }
 
         mapInstance.on("click", (e) => {
           const features = mapInstance.queryRenderedFeatures(e.point, {
-            layers: ["track-lines"],
+            layers: clickableLayers,
           });
           if (features.length === 0) {
             onClearSelection();
           }
-        });
-
-        mapInstance.on("mouseenter", "track-lines", () => {
-          mapInstance.getCanvas().style.cursor = "pointer";
-        });
-
-        mapInstance.on("mouseleave", "track-lines", () => {
-          mapInstance.getCanvas().style.cursor = "";
         });
       }
     },
@@ -268,36 +295,43 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       ? Array.from(speedColorTrackIds)
       : [];
 
-    if (mapInstance.getLayer("track-outlines")) {
-      mapInstance.setPaintProperty("track-outlines", "line-opacity", [
-        "case",
+    const selectedIdsWithSpeedColor = selectedIds.filter((id) =>
+      speedColorIds.includes(id),
+    );
+    const selectedIdsWithoutSpeedColor = selectedIds.filter(
+      (id) => !speedColorIds.includes(id),
+    );
+
+    if (mapInstance.getLayer("deselected-tracks")) {
+      mapInstance.setFilter("deselected-tracks", [
+        "!",
         ["in", ["get", "id"], ["literal", selectedIds]],
-        1,
-        0,
       ]);
     }
 
-    if (mapInstance.getLayer("track-lines")) {
-      mapInstance.setPaintProperty("track-lines", "line-color", [
-        "case",
-        ["in", ["get", "id"], ["literal", selectedIds]],
-        "#FF66FF",
-        config.trackColor,
-      ]);
+    if (mapInstance.getLayer("selected-track-outlines")) {
+      mapInstance.setFilter(
+        "selected-track-outlines",
+        selectedIds.length > 0
+          ? ["in", ["get", "id"], ["literal", selectedIds]]
+          : ["==", ["get", "id"], -1],
+      );
+    }
 
-      mapInstance.setPaintProperty("track-lines", "line-width", [
-        "case",
-        ["in", ["get", "id"], ["literal", selectedIds]],
-        6,
-        3,
-      ]);
+    if (mapInstance.getLayer("selected-tracks")) {
+      mapInstance.setFilter(
+        "selected-tracks",
+        selectedIdsWithoutSpeedColor.length > 0
+          ? ["in", ["get", "id"], ["literal", selectedIdsWithoutSpeedColor]]
+          : ["==", ["get", "id"], -1],
+      );
+    }
 
-      mapInstance.setPaintProperty("track-lines", "line-opacity", [
-        "case",
-        ["in", ["get", "id"], ["literal", speedColorIds]],
-        0,
-        0.85,
-      ]);
+    for (const trackId of selectedIdsWithSpeedColor) {
+      const layerId = `speed-track-${trackId}`;
+      if (mapInstance.getLayer(layerId)) {
+        mapInstance.moveLayer(layerId);
+      }
     }
   }, [selectedTrackIds, speedColorTrackIds, mapLoaded]);
 
