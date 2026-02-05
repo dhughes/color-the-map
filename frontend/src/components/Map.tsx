@@ -308,9 +308,10 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
     );
 
     if (mapInstance.getLayer("deselected-tracks")) {
+      const hideIds = [...new Set([...selectedIds, ...speedColorIds])];
       mapInstance.setFilter("deselected-tracks", [
         "!",
-        ["in", ["get", "id"], ["literal", selectedIds]],
+        ["in", ["get", "id"], ["literal", hideIds]],
       ]);
     }
 
