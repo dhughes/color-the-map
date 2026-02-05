@@ -1,3 +1,4 @@
+import { Fullscreen } from "lucide-react";
 import { SidebarPanel } from "../SidebarPanel";
 import { TrackDetailsPanel } from "./TrackDetailsPanel";
 import { BulkOperationsPanel } from "./BulkOperationsPanel";
@@ -8,6 +9,7 @@ interface SelectionPanelProps {
   selectedTracks: Track[];
   allActivityTypes: string[];
   onDelete: () => void;
+  onZoomToSelectedTracks?: () => void;
 }
 
 export function SelectionPanel({
@@ -15,6 +17,7 @@ export function SelectionPanel({
   selectedTracks,
   allActivityTypes,
   onDelete,
+  onZoomToSelectedTracks,
 }: SelectionPanelProps) {
   const selectionCount = selectedTracks.length;
 
@@ -39,5 +42,20 @@ export function SelectionPanel({
       />
     ) : null;
 
-  return <SidebarPanel title={headerText}>{content}</SidebarPanel>;
+  const zoomAction =
+    selectionCount > 0 && onZoomToSelectedTracks ? (
+      <button
+        onClick={onZoomToSelectedTracks}
+        aria-label="Zoom to selected tracks"
+        title="Zoom to selected tracks"
+      >
+        <Fullscreen size={16} />
+      </button>
+    ) : undefined;
+
+  return (
+    <SidebarPanel title={headerText} action={zoomAction}>
+      {content}
+    </SidebarPanel>
+  );
 }
