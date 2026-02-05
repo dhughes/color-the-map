@@ -45,6 +45,7 @@ class Track(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     # JSON deserialization returns lists, not tuples
     coordinates: Mapped[List[List[float]] | None] = mapped_column(JSON, nullable=True)
+    segment_speeds: Mapped[List[float] | None] = mapped_column(JSON, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

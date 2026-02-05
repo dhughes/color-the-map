@@ -1,7 +1,7 @@
 import gpxpy
 import numpy as np
 from datetime import datetime
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Any
 from ..models.gpx_data import ParsedGPXData
 
 
@@ -62,6 +62,7 @@ class GPXParser:
             avg_speed_ms=speed_stats["avg"],
             max_speed_ms=speed_stats["max"],
             min_speed_ms=speed_stats["min"],
+            segment_speeds=speed_stats["speeds"],
             elevation_gain_meters=elevation_stats["gain"],
             elevation_loss_meters=elevation_stats["loss"],
             bounds_min_lat=bounds["min_lat"],
@@ -82,9 +83,9 @@ class GPXParser:
 
     def _calculate_speed(
         self, coordinates: List[Tuple[float, float]], timestamps: List[datetime]
-    ) -> Dict[str, float]:
+    ) -> Dict[str, Any]:
         if len(coordinates) < 2 or len(timestamps) < 2:
-            return {"avg": 0.0, "max": 0.0, "min": 0.0}
+            return {"avg": 0.0, "max": 0.0, "min": 0.0, "speeds": []}
 
         segment_distances = self._calculate_segment_distances(coordinates)
         segment_durations = np.array(
@@ -96,7 +97,7 @@ class GPXParser:
 
         valid_mask = segment_durations > 0
         if not np.any(valid_mask):
-            return {"avg": 0.0, "max": 0.0, "min": 0.0}
+            return {"avg": 0.0, "max": 0.0, "min": 0.0, "speeds": []}
 
         segment_speeds = np.zeros_like(segment_distances)
         segment_speeds[valid_mask] = (
@@ -113,6 +114,7 @@ class GPXParser:
             "avg": avg_speed,
             "max": float(np.max(valid_speeds)),
             "min": float(np.min(valid_speeds)),
+            "speeds": segment_speeds.tolist(),
         }
 
     def _calculate_segment_distances(

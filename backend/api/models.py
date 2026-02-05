@@ -59,12 +59,14 @@ class GeometryRequest(BaseModel):
 class TrackGeometry(BaseModel):
     track_id: int
     coordinates: List[List[float]]
+    segment_speeds: Optional[List[float]] = None
 
     @classmethod
     def from_domain(cls, geometry: "TrackGeometryData") -> "TrackGeometry":
         return cls(
             track_id=geometry.track_id,
             coordinates=[list(coord) for coord in geometry.coordinates],
+            segment_speeds=geometry.segment_speeds,
         )
 
 

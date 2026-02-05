@@ -1,4 +1,4 @@
-import { Focus } from "lucide-react";
+import { Focus, Gauge } from "lucide-react";
 import { SidebarPanel } from "../SidebarPanel";
 import { TrackDetailsPanel } from "./TrackDetailsPanel";
 import { BulkOperationsPanel } from "./BulkOperationsPanel";
@@ -10,6 +10,8 @@ interface SelectionPanelProps {
   allActivityTypes: string[];
   onDelete: () => void;
   onZoomToSelectedTracks?: () => void;
+  speedColorMode: boolean;
+  onToggleSpeedColor: () => void;
 }
 
 export function SelectionPanel({
@@ -18,6 +20,8 @@ export function SelectionPanel({
   allActivityTypes,
   onDelete,
   onZoomToSelectedTracks,
+  speedColorMode,
+  onToggleSpeedColor,
 }: SelectionPanelProps) {
   const selectionCount = selectedTracks.length;
 
@@ -42,19 +46,34 @@ export function SelectionPanel({
       />
     ) : null;
 
-  const zoomAction =
-    selectionCount > 0 && onZoomToSelectedTracks ? (
+  const actions = (
+    <>
       <button
-        onClick={onZoomToSelectedTracks}
-        aria-label="Zoom to selected tracks"
-        title="Zoom to selected tracks"
+        onClick={onToggleSpeedColor}
+        aria-label={
+          speedColorMode ? "Disable speed coloring" : "Enable speed coloring"
+        }
+        title={
+          speedColorMode ? "Disable speed coloring" : "Enable speed coloring"
+        }
+        className={speedColorMode ? "active" : undefined}
       >
-        <Focus size={16} />
+        <Gauge size={16} />
       </button>
-    ) : undefined;
+      {selectionCount > 0 && onZoomToSelectedTracks && (
+        <button
+          onClick={onZoomToSelectedTracks}
+          aria-label="Zoom to selected tracks"
+          title="Zoom to selected tracks"
+        >
+          <Focus size={16} />
+        </button>
+      )}
+    </>
+  );
 
   return (
-    <SidebarPanel title={headerText} action={zoomAction}>
+    <SidebarPanel title={headerText} action={actions}>
       {content}
     </SidebarPanel>
   );

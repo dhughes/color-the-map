@@ -15,9 +15,20 @@ import { useMapView } from "../hooks/useMapView";
 interface MapProps {
   geometries: TrackGeometry[];
   selectedTrackIds: Set<number>;
+  speedColorMode: boolean;
+  speedColorTrackIds: Set<number> | null;
+  maxSpeedMs: number | null;
   onSelect: (trackId: number, isMultiSelect: boolean) => void;
   onClearSelection: () => void;
   onViewportChange?: (bounds: ViewportBounds) => void;
+}
+
+function speedToColor(speed: number, maxSpeed: number): string {
+  if (maxSpeed <= 0) return config.trackColor;
+  const ratio = Math.min(speed / maxSpeed, 1);
+  const r = Math.round(255 * (1 - ratio));
+  const g = Math.round(255 * ratio);
+  return `rgb(${r}, ${g}, 0)`;
 }
 
 export interface MapRef {
@@ -33,6 +44,9 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
   {
     geometries,
     selectedTrackIds,
+    speedColorMode,
+    speedColorTrackIds,
+    maxSpeedMs,
     onSelect,
     onClearSelection,
     onViewportChange,
@@ -250,6 +264,9 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
 
     const mapInstance = map.current;
     const selectedIds = Array.from(selectedTrackIds);
+    const speedColorIds = speedColorTrackIds
+      ? Array.from(speedColorTrackIds)
+      : [];
 
     if (mapInstance.getLayer("track-outlines")) {
       mapInstance.setPaintProperty("track-outlines", "line-opacity", [
@@ -274,8 +291,99 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
         6,
         3,
       ]);
+
+      mapInstance.setPaintProperty("track-lines", "line-opacity", [
+        "case",
+        ["in", ["get", "id"], ["literal", speedColorIds]],
+        0,
+        0.85,
+      ]);
     }
-  }, [selectedTrackIds, mapLoaded]);
+  }, [selectedTrackIds, speedColorTrackIds, mapLoaded]);
+
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    const mapInstance = map.current;
+
+    const existingLayers = geometries
+      .map((g) => `speed-track-${g.track_id}`)
+      .filter((id) => mapInstance.getLayer(id));
+
+    for (const layerId of existingLayers) {
+      mapInstance.removeLayer(layerId);
+    }
+
+    const existingSources = geometries
+      .map((g) => `speed-track-${g.track_id}`)
+      .filter((id) => mapInstance.getSource(id));
+
+    for (const sourceId of existingSources) {
+      mapInstance.removeSource(sourceId);
+    }
+
+    if (
+      !speedColorMode ||
+      !speedColorTrackIds ||
+      !maxSpeedMs ||
+      maxSpeedMs <= 0
+    ) {
+      return;
+    }
+
+    for (const geometry of geometries) {
+      if (!speedColorTrackIds.has(geometry.track_id)) continue;
+      if (!geometry.segment_speeds || geometry.segment_speeds.length === 0)
+        continue;
+
+      const sourceId = `speed-track-${geometry.track_id}`;
+      const layerId = `speed-track-${geometry.track_id}`;
+
+      const gradientStops: (number | string)[] = [];
+      const numCoords = geometry.coordinates.length;
+
+      for (let i = 0; i < numCoords; i++) {
+        const progress = i / (numCoords - 1);
+        const speed =
+          i < geometry.segment_speeds.length
+            ? geometry.segment_speeds[i]
+            : (geometry.segment_speeds[geometry.segment_speeds.length - 1] ??
+              0);
+        const color = speedToColor(speed, maxSpeedMs);
+        gradientStops.push(progress, color);
+      }
+
+      mapInstance.addSource(sourceId, {
+        type: "geojson",
+        lineMetrics: true,
+        data: {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "LineString",
+            coordinates: geometry.coordinates,
+          },
+        },
+      });
+
+      mapInstance.addLayer({
+        id: layerId,
+        type: "line",
+        source: sourceId,
+        paint: {
+          "line-color": "red",
+          "line-width": 4,
+          "line-opacity": 0.9,
+          "line-gradient": [
+            "interpolate",
+            ["linear"],
+            ["line-progress"],
+            ...gradientStops,
+          ],
+        },
+      });
+    }
+  }, [speedColorMode, speedColorTrackIds, maxSpeedMs, geometries, mapLoaded]);
 
   if (isLoadingMapView) {
     return (

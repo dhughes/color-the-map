@@ -19,6 +19,8 @@ interface TrackListProps {
   onZoomToSelectedTracks: () => void;
   lastSelectedTrackId: number | null;
   selectionSource: SelectionSource | null;
+  speedColorMode: boolean;
+  onToggleSpeedColor: () => void;
 }
 
 export function TrackList({
@@ -31,6 +33,8 @@ export function TrackList({
   onZoomToSelectedTracks,
   lastSelectedTrackId,
   selectionSource,
+  speedColorMode,
+  onToggleSpeedColor,
 }: TrackListProps) {
   const queryClient = useQueryClient();
   const listRef = useRef<HTMLDivElement>(null);
@@ -279,6 +283,8 @@ export function TrackList({
         allActivityTypes={allActivityTypes}
         onDelete={handleDelete}
         onZoomToSelectedTracks={onZoomToSelectedTracks}
+        speedColorMode={speedColorMode}
+        onToggleSpeedColor={onToggleSpeedColor}
       />
 
       <ConfirmDialog

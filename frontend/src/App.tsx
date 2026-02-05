@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   QueryClient,
   QueryClientProvider,
@@ -52,6 +52,9 @@ export function AppContent() {
     selectionSource,
   } = useSelection();
 
+  const [speedColorMode, setSpeedColorMode] = useState(false);
+  const speedColorWasTriggeredBySelection = useRef(false);
+
   const { data: tracksData = [] } = useQuery<Track[]>({
     queryKey: ["tracks"],
     queryFn: listTracks,
@@ -78,6 +81,46 @@ export function AppContent() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      selectedTrackIds.size === 0 &&
+      speedColorWasTriggeredBySelection.current
+    ) {
+      setSpeedColorMode(false);
+      speedColorWasTriggeredBySelection.current = false;
+    }
+  }, [selectedTrackIds]);
+
+  const handleToggleSpeedColor = useCallback(() => {
+    const newMode = !speedColorMode;
+    setSpeedColorMode(newMode);
+    if (newMode && selectedTrackIds.size > 0) {
+      speedColorWasTriggeredBySelection.current = true;
+    } else {
+      speedColorWasTriggeredBySelection.current = false;
+    }
+  }, [speedColorMode, selectedTrackIds.size]);
+
+  const maxSpeedMs = useMemo(() => {
+    if (!speedColorMode) return null;
+    const relevantTracks =
+      selectedTrackIds.size > 0
+        ? tracks.filter((t) => selectedTrackIds.has(t.id))
+        : tracks;
+    const speeds = relevantTracks
+      .map((t) => t.max_speed_ms)
+      .filter((s): s is number => s !== null && s > 0);
+    return speeds.length > 0 ? Math.max(...speeds) : null;
+  }, [speedColorMode, selectedTrackIds, tracks]);
+
+  const speedColorTrackIds = useMemo(() => {
+    if (!speedColorMode) return null;
+    if (selectedTrackIds.size > 0) {
+      return selectedTrackIds;
+    }
+    return new Set(tracks.map((t) => t.id));
+  }, [speedColorMode, selectedTrackIds, tracks]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -276,6 +319,9 @@ export function AppContent() {
             ref={mapRef}
             geometries={visibleGeometries}
             selectedTrackIds={selectedTrackIds}
+            speedColorMode={speedColorMode}
+            speedColorTrackIds={speedColorTrackIds}
+            maxSpeedMs={maxSpeedMs}
             onSelect={(trackId, isMultiSelect) =>
               toggleSelection(trackId, isMultiSelect, "map")
             }
@@ -367,6 +413,8 @@ export function AppContent() {
           onZoomToSelectedTracks={handleZoomToSelectedTracks}
           lastSelectedTrackId={lastSelectedTrackId}
           selectionSource={selectionSource}
+          speedColorMode={speedColorMode}
+          onToggleSpeedColor={handleToggleSpeedColor}
         />
       </div>
     </>

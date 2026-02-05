@@ -415,6 +415,8 @@ body {
 
 .sidebar-panel-header-action {
   flex-shrink: 0;
+  display: flex;
+  gap: 4px;
 }
 
 .sidebar-panel-header-action button {
@@ -440,6 +442,16 @@ body {
 
 .sidebar-panel-header-action button:active {
   transform: scale(0.95);
+}
+
+.sidebar-panel-header-action button.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+.sidebar-panel-header-action button.active:hover {
+  background: #cc00cc;
+  color: white;
 }
 
 .track-list-loading {
