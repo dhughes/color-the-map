@@ -25,10 +25,15 @@ interface MapProps {
 
 function speedToColor(speed: number, maxSpeed: number): string {
   if (maxSpeed <= 0) return config.trackColor;
-  const ratio = Math.min(speed / maxSpeed, 1);
+  const linearRatio = Math.min(speed / maxSpeed, 1);
 
-  const slowColor = { r: 0, g: 190, b: 200 };
-  const fastColor = { r: 255, g: 90, b: 20 };
+  const ratio =
+    linearRatio < 0.5
+      ? 0.5 * Math.pow(2 * linearRatio, 2.5)
+      : 1 - 0.5 * Math.pow(2 * (1 - linearRatio), 2.5);
+
+  const slowColor = { r: 200, g: 50, b: 70 };
+  const fastColor = { r: 66, g: 255, b: 140 };
 
   const r = Math.round(slowColor.r + (fastColor.r - slowColor.r) * ratio);
   const g = Math.round(slowColor.g + (fastColor.g - slowColor.g) * ratio);
