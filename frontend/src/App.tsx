@@ -19,6 +19,7 @@ import {
   setAccessToken,
 } from "./api/client";
 import { geometryCache } from "./utils/geometryCache";
+import { mapViewStorage } from "./utils/mapViewStorage";
 import type { Track } from "./types/track";
 import { version } from "../package.json";
 
@@ -120,6 +121,7 @@ export function AppContent() {
     try {
       queryClient.clear();
       await geometryCache.clearCache();
+      mapViewStorage.clearMapView();
       clearSelection();
       await logout();
     } catch (error) {
