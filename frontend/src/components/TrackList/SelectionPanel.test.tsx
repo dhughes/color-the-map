@@ -193,4 +193,98 @@ describe("SelectionPanel", () => {
       expect(onDelete).toHaveBeenCalled();
     });
   });
+
+  describe("zoom to selected tracks", () => {
+    it("shows zoom button when one track is selected", () => {
+      const track = createTrack();
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          onZoomToSelectedTracks={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.getByRole("button", { name: /zoom to selected tracks/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("shows zoom button when multiple tracks are selected", () => {
+      const tracks = [createTrack({ id: 1 }), createTrack({ id: 2 })];
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={tracks}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          onZoomToSelectedTracks={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.getByRole("button", { name: /zoom to selected tracks/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("does not show zoom button when no tracks are selected", () => {
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          onZoomToSelectedTracks={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.queryByRole("button", { name: /zoom to selected tracks/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not show zoom button when callback is not provided", () => {
+      const track = createTrack();
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.queryByRole("button", { name: /zoom to selected tracks/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("calls onZoomToSelectedTracks when zoom button is clicked", async () => {
+      const onZoomToSelectedTracks = vi.fn();
+      const track = createTrack();
+      const user = userEvent.setup();
+
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          onZoomToSelectedTracks={onZoomToSelectedTracks}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      await user.click(
+        screen.getByRole("button", { name: /zoom to selected tracks/i }),
+      );
+      expect(onZoomToSelectedTracks).toHaveBeenCalled();
+    });
+  });
 });

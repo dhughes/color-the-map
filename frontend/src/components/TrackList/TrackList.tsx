@@ -16,6 +16,7 @@ interface TrackListProps {
   onSelect: (trackId: number, isMultiSelect: boolean) => void;
   onSelectRange: (trackIds: number[], startId: number, endId: number) => void;
   onZoomToTrack: (track: Track) => void;
+  onZoomToSelectedTracks: () => void;
   lastSelectedTrackId: number | null;
   selectionSource: SelectionSource | null;
 }
@@ -27,6 +28,7 @@ export function TrackList({
   onSelect,
   onSelectRange,
   onZoomToTrack,
+  onZoomToSelectedTracks,
   lastSelectedTrackId,
   selectionSource,
 }: TrackListProps) {
@@ -276,6 +278,7 @@ export function TrackList({
         selectedTracks={selectedTracks}
         allActivityTypes={allActivityTypes}
         onDelete={handleDelete}
+        onZoomToSelectedTracks={onZoomToSelectedTracks}
       />
 
       <ConfirmDialog

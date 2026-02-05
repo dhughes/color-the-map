@@ -71,4 +71,36 @@ describe("SidebarPanel", () => {
       expect(container.firstChild).toHaveClass("sidebar-panel-header");
     });
   });
+
+  describe("with action", () => {
+    it("renders action content in the header", () => {
+      render(
+        <SidebarPanel
+          title="Panel"
+          action={<button data-testid="action-button">Click me</button>}
+        />,
+      );
+
+      expect(screen.getByTestId("action-button")).toBeInTheDocument();
+      expect(screen.getByText("Click me")).toBeInTheDocument();
+    });
+
+    it("wraps action in header-action container", () => {
+      const { container } = render(
+        <SidebarPanel title="Panel" action={<button>Action</button>} />,
+      );
+
+      expect(
+        container.querySelector(".sidebar-panel-header-action"),
+      ).toBeInTheDocument();
+    });
+
+    it("does not render action container when action is undefined", () => {
+      const { container } = render(<SidebarPanel title="Panel" />);
+
+      expect(
+        container.querySelector(".sidebar-panel-header-action"),
+      ).not.toBeInTheDocument();
+    });
+  });
 });

@@ -148,6 +148,30 @@ export function AppContent() {
     });
   };
 
+  const handleZoomToSelectedTracks = () => {
+    const selectedTracks = tracks.filter((t) => selectedTrackIds.has(t.id));
+    const tracksWithBounds = selectedTracks.filter(
+      (t) =>
+        t.bounds_min_lat !== null &&
+        t.bounds_max_lat !== null &&
+        t.bounds_min_lon !== null &&
+        t.bounds_max_lon !== null,
+    );
+
+    if (tracksWithBounds.length === 0) {
+      return;
+    }
+
+    const combinedBounds = {
+      minLat: Math.min(...tracksWithBounds.map((t) => t.bounds_min_lat!)),
+      maxLat: Math.max(...tracksWithBounds.map((t) => t.bounds_max_lat!)),
+      minLon: Math.min(...tracksWithBounds.map((t) => t.bounds_min_lon!)),
+      maxLon: Math.max(...tracksWithBounds.map((t) => t.bounds_max_lon!)),
+    };
+
+    mapRef.current?.zoomToBounds(combinedBounds);
+  };
+
   const handleFilesDropped = async (files: File[]) => {
     setIsUploading(true);
     setUploadProgress({ current: 0, total: files.length });
@@ -338,6 +362,7 @@ export function AppContent() {
           onSelect={toggleSelection}
           onSelectRange={selectRange}
           onZoomToTrack={handleZoomToTrack}
+          onZoomToSelectedTracks={handleZoomToSelectedTracks}
           lastSelectedTrackId={lastSelectedTrackId}
           selectionSource={selectionSource}
         />
