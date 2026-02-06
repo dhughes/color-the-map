@@ -7,17 +7,28 @@ import type { Track } from "../../types/track";
 
 const createTrack = (overrides: Partial<Track> = {}): Track => ({
   id: 1,
+  user_id: "test-user-id",
+  hash: "abc123",
   name: "Test Track",
+  filename: "test-track.gpx",
+  creator: null,
   activity_type: "Cycling",
   activity_date: "2025-01-15T10:00:00Z",
+  uploaded_at: "2025-01-15T10:00:00Z",
   distance_meters: 5000,
   duration_seconds: 1800,
   avg_speed_ms: 2.78,
   max_speed_ms: 5.0,
+  min_speed_ms: 1.0,
   elevation_gain_meters: 100,
   elevation_loss_meters: 80,
+  bounds_min_lat: 35.9,
+  bounds_max_lat: 35.92,
+  bounds_min_lon: -79.06,
+  bounds_max_lon: -79.05,
   visible: true,
-  hash: "abc123",
+  created_at: "2025-01-15T10:00:00Z",
+  updated_at: "2025-01-15T10:00:00Z",
   ...overrides,
 });
 
@@ -353,6 +364,230 @@ describe("SelectionPanel", () => {
 
       const button = screen.getByRole("button", { name: /compare/i });
       expect(button.className).toContain("active");
+    });
+  });
+
+  describe("visibility toggle", () => {
+    it("shows visibility button when one track is selected and callback provided", () => {
+      const track = createTrack({ visible: true });
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          selectedTracksVisibility="all"
+          onToggleSelectedTracksVisibility={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.getByRole("button", { name: /hide selected tracks/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("shows visibility button when multiple tracks are selected", () => {
+      const tracks = [
+        createTrack({ id: 1, visible: true }),
+        createTrack({ id: 2, visible: true }),
+      ];
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={tracks}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          selectedTracksVisibility="all"
+          onToggleSelectedTracksVisibility={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.getByRole("button", { name: /hide selected tracks/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("does not show visibility button when no tracks are selected", () => {
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          selectedTracksVisibility="all"
+          onToggleSelectedTracksVisibility={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.queryByRole("button", { name: /hide selected tracks/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /show selected tracks/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not show visibility button when callback is not provided", () => {
+      const track = createTrack({ visible: true });
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.queryByRole("button", { name: /hide selected tracks/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /show selected tracks/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows 'Hide selected tracks' label when all tracks are visible", () => {
+      const track = createTrack({ visible: true });
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          selectedTracksVisibility="all"
+          onToggleSelectedTracksVisibility={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const button = screen.getByRole("button", {
+        name: /hide selected tracks/i,
+      });
+      expect(button).toBeInTheDocument();
+    });
+
+    it("shows 'Show selected tracks' label when all tracks are hidden", () => {
+      const track = createTrack({ visible: false });
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          selectedTracksVisibility="none"
+          onToggleSelectedTracksVisibility={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const button = screen.getByRole("button", {
+        name: /show selected tracks/i,
+      });
+      expect(button).toBeInTheDocument();
+    });
+
+    it("shows 'Show selected tracks' label when visibility is mixed", () => {
+      const tracks = [
+        createTrack({ id: 1, visible: true }),
+        createTrack({ id: 2, visible: false }),
+      ];
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={tracks}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          selectedTracksVisibility="mixed"
+          onToggleSelectedTracksVisibility={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const button = screen.getByRole("button", {
+        name: /show selected tracks/i,
+      });
+      expect(button).toBeInTheDocument();
+    });
+
+    it("shows asterisk indicator when visibility is mixed", () => {
+      const tracks = [
+        createTrack({ id: 1, visible: true }),
+        createTrack({ id: 2, visible: false }),
+      ];
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={tracks}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          selectedTracksVisibility="mixed"
+          onToggleSelectedTracksVisibility={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(screen.getByText("*")).toBeInTheDocument();
+    });
+
+    it("does not show asterisk indicator when all visible", () => {
+      const track = createTrack({ visible: true });
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          selectedTracksVisibility="all"
+          onToggleSelectedTracksVisibility={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(screen.queryByText("*")).not.toBeInTheDocument();
+    });
+
+    it("does not show asterisk indicator when all hidden", () => {
+      const track = createTrack({ visible: false });
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          selectedTracksVisibility="none"
+          onToggleSelectedTracksVisibility={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(screen.queryByText("*")).not.toBeInTheDocument();
+    });
+
+    it("calls onToggleSelectedTracksVisibility when visibility button is clicked", async () => {
+      const onToggle = vi.fn();
+      const track = createTrack({ visible: true });
+      const user = userEvent.setup();
+
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          selectedTracksVisibility="all"
+          onToggleSelectedTracksVisibility={onToggle}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      await user.click(
+        screen.getByRole("button", { name: /hide selected tracks/i }),
+      );
+      expect(onToggle).toHaveBeenCalled();
     });
   });
 

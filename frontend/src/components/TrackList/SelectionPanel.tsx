@@ -1,8 +1,12 @@
-import { Focus, Gauge, Layers } from "lucide-react";
+import { Eye, EyeOff, Focus, Gauge, Layers } from "lucide-react";
 import { SidebarPanel } from "../SidebarPanel";
 import { TrackDetailsPanel } from "./TrackDetailsPanel";
 import { BulkOperationsPanel } from "./BulkOperationsPanel";
-import type { Track, SpeedColorRelative } from "../../types/track";
+import type {
+  Track,
+  SpeedColorRelative,
+  TrackVisibility,
+} from "../../types/track";
 
 interface SelectionPanelProps {
   totalTracks: number;
@@ -14,6 +18,8 @@ interface SelectionPanelProps {
   onToggleSpeedColor?: () => void;
   speedColorRelative?: SpeedColorRelative;
   onToggleSpeedColorRelative?: () => void;
+  selectedTracksVisibility?: TrackVisibility;
+  onToggleSelectedTracksVisibility?: () => void;
 }
 
 export function SelectionPanel({
@@ -26,6 +32,8 @@ export function SelectionPanel({
   onToggleSpeedColor,
   speedColorRelative = "each",
   onToggleSpeedColorRelative,
+  selectedTracksVisibility,
+  onToggleSelectedTracksVisibility,
 }: SelectionPanelProps) {
   const selectionCount = selectedTracks.length;
 
@@ -55,7 +63,9 @@ export function SelectionPanel({
       {onToggleSpeedColor && (
         <button
           onClick={onToggleSpeedColor}
-          className={`panel-icon-button${speedColorEnabled ? " active" : ""}`}
+          className={["panel-icon-button", speedColorEnabled && "active"]
+            .filter(Boolean)
+            .join(" ")}
           aria-label="Speed coloring"
           title={
             speedColorEnabled
@@ -87,6 +97,33 @@ export function SelectionPanel({
           }
         >
           <Layers size={16} />
+        </button>
+      )}
+      {selectionCount > 0 && onToggleSelectedTracksVisibility && (
+        <button
+          onClick={onToggleSelectedTracksVisibility}
+          className="panel-icon-button visibility-toggle"
+          aria-label={
+            selectedTracksVisibility === "all"
+              ? "Hide selected tracks"
+              : "Show selected tracks"
+          }
+          title={
+            selectedTracksVisibility === "all"
+              ? "Hide selected tracks"
+              : selectedTracksVisibility === "mixed"
+                ? "Show selected tracks (mixed visibility)"
+                : "Show selected tracks"
+          }
+        >
+          {selectedTracksVisibility === "all" ? (
+            <Eye size={16} />
+          ) : (
+            <EyeOff size={16} />
+          )}
+          {selectedTracksVisibility === "mixed" && (
+            <span className="visibility-mixed-indicator">*</span>
+          )}
         </button>
       )}
       {selectionCount > 0 && onZoomToSelectedTracks && (

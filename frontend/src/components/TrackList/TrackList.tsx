@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Upload } from "lucide-react";
-import { updateTrack, deleteTracks } from "../../api/client";
+import { updateTrack, bulkUpdateTracks, deleteTracks } from "../../api/client";
 import { SidebarPanel } from "../SidebarPanel";
 import { TrackListItem } from "./TrackListItem";
 import { SelectionPanel } from "./SelectionPanel";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
 import type { SelectionSource } from "../../hooks/useSelection";
-import type { SpeedColorRelative } from "../../types/track";
+import type { SpeedColorRelative, TrackVisibility } from "../../types/track";
 import { geometryCache } from "../../utils/geometryCache";
 
 interface TrackListProps {
@@ -253,6 +253,50 @@ export function TrackList({
     [selectedTrackIds, tracks],
   );
 
+  const selectedTracksVisibility = useMemo((): TrackVisibility => {
+    if (selectedTracks.length === 0) return "none";
+    const allVisible = selectedTracks.every((t) => t.visible);
+    const allHidden = selectedTracks.every((t) => !t.visible);
+    if (allVisible) return "all";
+    if (allHidden) return "none";
+    return "mixed";
+  }, [selectedTracks]);
+
+  const toggleSelectedTracksVisibility = useMutation({
+    mutationFn: ({
+      trackIds,
+      visible,
+    }: {
+      trackIds: number[];
+      visible: boolean;
+    }) => bulkUpdateTracks(trackIds, { visible }),
+    onMutate: async ({ trackIds, visible }) => {
+      await queryClient.cancelQueries({ queryKey: ["tracks"] });
+
+      const previousTracks = queryClient.getQueryData(["tracks"]);
+
+      const idSet = new Set(trackIds);
+      queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
+        old?.map((track) =>
+          idSet.has(track.id) ? { ...track, visible } : track,
+        ),
+      );
+
+      return { previousTracks };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousTracks) {
+        queryClient.setQueryData(["tracks"], context.previousTracks);
+      }
+    },
+  });
+
+  const handleToggleSelectedTracksVisibility = () => {
+    const trackIds = selectedTracks.map((t) => t.id);
+    const visible = selectedTracksVisibility !== "all";
+    toggleSelectedTracksVisibility.mutate({ trackIds, visible });
+  };
+
   const allActivityTypes = useMemo(() => {
     const types = new Set(
       tracks
@@ -332,6 +376,8 @@ export function TrackList({
         onToggleSpeedColor={onToggleSpeedColor}
         speedColorRelative={speedColorRelative}
         onToggleSpeedColorRelative={onToggleSpeedColorRelative}
+        selectedTracksVisibility={selectedTracksVisibility}
+        onToggleSelectedTracksVisibility={handleToggleSelectedTracksVisibility}
       />
 
       <ConfirmDialog

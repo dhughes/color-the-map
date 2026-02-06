@@ -456,6 +456,21 @@ body {
   color: white;
 }
 
+.sidebar-panel-header-action button.panel-icon-button.visibility-toggle {
+  position: relative;
+}
+
+.visibility-mixed-indicator {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-primary);
+  pointer-events: none;
+}
+
 .sidebar-panel-header-action button.panel-icon-button.disabled {
   opacity: 0.35;
   cursor: not-allowed;
