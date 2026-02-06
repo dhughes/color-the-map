@@ -297,6 +297,41 @@ export function TrackList({
     toggleSelectedTracksVisibility.mutate({ trackIds, visible });
   };
 
+  const hideUnselectedTracks = useMutation({
+    mutationFn: ({ trackIds }: { trackIds: number[] }) =>
+      bulkUpdateTracks(trackIds, { visible: false }),
+    onMutate: async ({ trackIds }) => {
+      await queryClient.cancelQueries({ queryKey: ["tracks"] });
+      const previousTracks = queryClient.getQueryData(["tracks"]);
+      const idSet = new Set(trackIds);
+      queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
+        old?.map((track) =>
+          idSet.has(track.id) ? { ...track, visible: false } : track,
+        ),
+      );
+      return { previousTracks };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousTracks) {
+        queryClient.setQueryData(["tracks"], context.previousTracks);
+      }
+    },
+  });
+
+  const handleHideUnselectedTracks = () => {
+    const unselectedTrackIds = tracks
+      .filter((t) => !selectedTrackIds.has(t.id) && t.visible)
+      .map((t) => t.id);
+    if (unselectedTrackIds.length > 0) {
+      hideUnselectedTracks.mutate({ trackIds: unselectedTrackIds });
+    }
+  };
+
+  const hasVisibleUnselectedTracks = useMemo(
+    () => tracks.some((t) => !selectedTrackIds.has(t.id) && t.visible),
+    [tracks, selectedTrackIds],
+  );
+
   const allActivityTypes = useMemo(() => {
     const types = new Set(
       tracks
@@ -378,6 +413,8 @@ export function TrackList({
         onToggleSpeedColorRelative={onToggleSpeedColorRelative}
         selectedTracksVisibility={selectedTracksVisibility}
         onToggleSelectedTracksVisibility={handleToggleSelectedTracksVisibility}
+        hasVisibleUnselectedTracks={hasVisibleUnselectedTracks}
+        onHideUnselectedTracks={handleHideUnselectedTracks}
       />
 
       <ConfirmDialog

@@ -591,6 +591,145 @@ describe("SelectionPanel", () => {
     });
   });
 
+  describe("hide unselected tracks", () => {
+    it("shows hide unselected button when tracks are selected and callback provided", () => {
+      const track = createTrack();
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          hasVisibleUnselectedTracks={true}
+          onHideUnselectedTracks={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.getByRole("button", { name: /hide unselected tracks/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("does not show hide unselected button when no tracks are selected", () => {
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          hasVisibleUnselectedTracks={true}
+          onHideUnselectedTracks={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.queryByRole("button", { name: /hide unselected tracks/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not show hide unselected button when callback is not provided", () => {
+      const track = createTrack();
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.queryByRole("button", { name: /hide unselected tracks/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("disables button when no visible unselected tracks exist", () => {
+      const track = createTrack();
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          hasVisibleUnselectedTracks={false}
+          onHideUnselectedTracks={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const button = screen.getByRole("button", {
+        name: /hide unselected tracks/i,
+      });
+      expect(button).toBeDisabled();
+    });
+
+    it("enables button when visible unselected tracks exist", () => {
+      const track = createTrack();
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          hasVisibleUnselectedTracks={true}
+          onHideUnselectedTracks={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const button = screen.getByRole("button", {
+        name: /hide unselected tracks/i,
+      });
+      expect(button).not.toBeDisabled();
+    });
+
+    it("calls onHideUnselectedTracks when button is clicked", async () => {
+      const onHide = vi.fn();
+      const track = createTrack();
+      const user = userEvent.setup();
+
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          hasVisibleUnselectedTracks={true}
+          onHideUnselectedTracks={onHide}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      await user.click(
+        screen.getByRole("button", { name: /hide unselected tracks/i }),
+      );
+      expect(onHide).toHaveBeenCalled();
+    });
+
+    it("shows disabled style when no visible unselected tracks", () => {
+      const track = createTrack();
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          hasVisibleUnselectedTracks={false}
+          onHideUnselectedTracks={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const button = screen.getByRole("button", {
+        name: /hide unselected tracks/i,
+      });
+      expect(button.className).toContain("disabled");
+    });
+  });
+
   describe("zoom to selected tracks", () => {
     it("shows zoom button when one track is selected", () => {
       const track = createTrack();

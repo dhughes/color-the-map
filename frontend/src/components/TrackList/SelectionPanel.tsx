@@ -1,4 +1,11 @@
-import { Eye, EyeOff, Focus, Gauge, Layers } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Focus,
+  Gauge,
+  Layers,
+  SquaresExclude,
+} from "lucide-react";
 import { SidebarPanel } from "../SidebarPanel";
 import { TrackDetailsPanel } from "./TrackDetailsPanel";
 import { BulkOperationsPanel } from "./BulkOperationsPanel";
@@ -20,6 +27,8 @@ interface SelectionPanelProps {
   onToggleSpeedColorRelative?: () => void;
   selectedTracksVisibility?: TrackVisibility;
   onToggleSelectedTracksVisibility?: () => void;
+  hasVisibleUnselectedTracks?: boolean;
+  onHideUnselectedTracks?: () => void;
 }
 
 export function SelectionPanel({
@@ -34,6 +43,8 @@ export function SelectionPanel({
   onToggleSpeedColorRelative,
   selectedTracksVisibility,
   onToggleSelectedTracksVisibility,
+  hasVisibleUnselectedTracks = false,
+  onHideUnselectedTracks,
 }: SelectionPanelProps) {
   const selectionCount = selectedTracks.length;
 
@@ -124,6 +135,26 @@ export function SelectionPanel({
           {selectedTracksVisibility === "mixed" && (
             <span className="visibility-mixed-indicator">*</span>
           )}
+        </button>
+      )}
+      {selectionCount > 0 && onHideUnselectedTracks && (
+        <button
+          onClick={onHideUnselectedTracks}
+          className={[
+            "panel-icon-button",
+            !hasVisibleUnselectedTracks && "disabled",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          disabled={!hasVisibleUnselectedTracks}
+          aria-label="Hide unselected tracks"
+          title={
+            hasVisibleUnselectedTracks
+              ? "Hide unselected tracks"
+              : "No visible unselected tracks to hide"
+          }
+        >
+          <SquaresExclude size={16} />
         </button>
       )}
       {selectionCount > 0 && onZoomToSelectedTracks && (

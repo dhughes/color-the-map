@@ -65,7 +65,9 @@
       "Bash(./scripts/start-backend.sh:*)",
       "Bash(./scripts/start-frontend.sh:*)",
       "Bash(./scripts/check-for-worktree.sh:*)",
-      "Bash(./scripts/check-venv-exists.sh:*)"
+      "Bash(./scripts/check-venv-exists.sh:*)",
+      "Bash(./scripts/check-node-modules-exists.sh:*)",
+      "WebFetch(domain:lucide.dev)"
     ]
   }
 }
