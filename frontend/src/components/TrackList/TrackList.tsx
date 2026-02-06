@@ -297,18 +297,20 @@ export function TrackList({
     toggleSelectedTracksVisibility.mutate({ trackIds, visible });
   };
 
-  const [isolatedSelectionIds, setIsolatedSelectionIds] =
-    useState<Set<number> | null>(null);
-  const hiddenByIsolationRef = useRef<Set<number>>(new Set());
+  const [isolationState, setIsolationState] = useState<{
+    selectionIds: Set<number>;
+    hiddenTrackIds: number[];
+  } | null>(null);
 
   const isolationActive = useMemo(() => {
-    if (!isolatedSelectionIds) return false;
-    if (isolatedSelectionIds.size !== selectedTrackIds.size) return false;
+    if (!isolationState) return false;
+    if (isolationState.selectionIds.size !== selectedTrackIds.size)
+      return false;
     for (const id of selectedTrackIds) {
-      if (!isolatedSelectionIds.has(id)) return false;
+      if (!isolationState.selectionIds.has(id)) return false;
     }
     return true;
-  }, [selectedTrackIds, isolatedSelectionIds]);
+  }, [selectedTrackIds, isolationState]);
 
   const setUnselectedTracksVisibility = useMutation({
     mutationFn: ({
@@ -337,23 +339,24 @@ export function TrackList({
   });
 
   const handleToggleIsolation = () => {
-    if (isolationActive) {
-      const trackIdsToRestore = Array.from(hiddenByIsolationRef.current);
+    if (isolationActive && isolationState) {
+      const trackIdsToRestore = isolationState.hiddenTrackIds;
       if (trackIdsToRestore.length > 0) {
         setUnselectedTracksVisibility.mutate({
           trackIds: trackIdsToRestore,
           visible: true,
         });
       }
-      hiddenByIsolationRef.current = new Set();
-      setIsolatedSelectionIds(null);
+      setIsolationState(null);
     } else {
       const unselectedVisibleIds = tracks
         .filter((t) => !selectedTrackIds.has(t.id) && t.visible)
         .map((t) => t.id);
       if (unselectedVisibleIds.length > 0) {
-        hiddenByIsolationRef.current = new Set(unselectedVisibleIds);
-        setIsolatedSelectionIds(new Set(selectedTrackIds));
+        setIsolationState({
+          selectionIds: new Set(selectedTrackIds),
+          hiddenTrackIds: unselectedVisibleIds,
+        });
         setUnselectedTracksVisibility.mutate({
           trackIds: unselectedVisibleIds,
           visible: false,
