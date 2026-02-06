@@ -7,10 +7,14 @@ import {
   forwardRef,
 } from "react";
 import maplibregl from "maplibre-gl";
-import { config } from "../config";
 import type { TrackGeometry } from "../types/track";
 import type { ViewportBounds } from "../utils/viewport";
 import { useMapView } from "../hooks/useMapView";
+import {
+  syncTrackSources,
+  syncSelection,
+  parseTrackIdFromLayerId,
+} from "../utils/trackLayerManager";
 
 interface MapProps {
   geometries: TrackGeometry[];
@@ -42,6 +46,8 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const currentTrackIds = useRef<Set<number>>(new Set());
+  const previousSelectedIds = useRef<Set<number>>(new Set());
   const {
     initialView,
     isLoading: isLoadingMapView,
@@ -118,103 +124,75 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
         map.current.remove();
         map.current = null;
         setMapLoaded(false);
+        currentTrackIds.current = new Set();
+        previousSelectedIds.current = new Set();
       }
     };
   }, [isLoadingMapView, initialView]);
 
-  const updateTracks = useCallback(
-    (mapInstance: maplibregl.Map, geometries: TrackGeometry[]) => {
+  const handleClick = useCallback(
+    (e: maplibregl.MapMouseEvent) => {
+      const mapInstance = map.current;
       if (!mapInstance) return;
 
-      const features = geometries.map((geometry) => ({
-        type: "Feature" as const,
-        id: geometry.track_id,
-        properties: {
-          id: geometry.track_id,
-        },
-        geometry: {
-          type: "LineString" as const,
-          coordinates: geometry.coordinates,
-        },
-      }));
-
-      const source = mapInstance.getSource(
-        "tracks",
-      ) as maplibregl.GeoJSONSource;
-
-      if (source) {
-        source.setData({
-          type: "FeatureCollection",
-          features,
-        });
-      } else {
-        mapInstance.addSource("tracks", {
-          type: "geojson",
-          data: {
-            type: "FeatureCollection",
-            features,
-          },
-        });
-
-        mapInstance.addLayer({
-          id: "track-outlines",
-          type: "line",
-          source: "tracks",
-          paint: {
-            "line-color": "#444",
-            "line-width": 10,
-            "line-opacity": 0,
-          },
-        });
-
-        mapInstance.addLayer({
-          id: "track-lines",
-          type: "line",
-          source: "tracks",
-          paint: {
-            "line-color": config.trackColor,
-            "line-width": 3,
-            "line-opacity": 0.85,
-          },
-        });
-
-        mapInstance.on("click", "track-lines", (e) => {
-          if (e.features && e.features.length > 0) {
-            const trackId = e.features[0].properties?.id;
-            if (trackId) {
-              const isMultiSelect =
-                e.originalEvent.metaKey || e.originalEvent.ctrlKey;
-              onSelect(trackId, isMultiSelect);
-            }
-          }
-        });
-
-        mapInstance.on("click", (e) => {
-          const features = mapInstance.queryRenderedFeatures(e.point, {
-            layers: ["track-lines"],
-          });
-          if (features.length === 0) {
-            onClearSelection();
-          }
-        });
-
-        mapInstance.on("mouseenter", "track-lines", () => {
-          mapInstance.getCanvas().style.cursor = "pointer";
-        });
-
-        mapInstance.on("mouseleave", "track-lines", () => {
-          mapInstance.getCanvas().style.cursor = "";
-        });
+      const features = mapInstance.queryRenderedFeatures(e.point);
+      for (const feature of features) {
+        const trackId = parseTrackIdFromLayerId(feature.layer.id);
+        if (trackId !== null) {
+          const isMultiSelect =
+            e.originalEvent.metaKey || e.originalEvent.ctrlKey;
+          onSelect(trackId, isMultiSelect);
+          return;
+        }
       }
+
+      onClearSelection();
     },
     [onSelect, onClearSelection],
   );
 
+  const handleMouseMove = useCallback((e: maplibregl.MapMouseEvent) => {
+    const mapInstance = map.current;
+    if (!mapInstance) return;
+
+    const features = mapInstance.queryRenderedFeatures(e.point);
+    const isOverTrack = features.some(
+      (f) => parseTrackIdFromLayerId(f.layer.id) !== null,
+    );
+    mapInstance.getCanvas().style.cursor = isOverTrack ? "pointer" : "";
+  }, []);
+
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
-    updateTracks(map.current, geometries);
-  }, [geometries, mapLoaded, updateTracks]);
+    const mapInstance = map.current;
+    mapInstance.on("click", handleClick);
+    mapInstance.on("mousemove", handleMouseMove);
+
+    return () => {
+      mapInstance.off("click", handleClick);
+      mapInstance.off("mousemove", handleMouseMove);
+    };
+  }, [mapLoaded, handleClick, handleMouseMove]);
+
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    currentTrackIds.current = syncTrackSources(
+      map.current,
+      geometries,
+      currentTrackIds.current,
+      selectedTrackIds,
+    );
+
+    syncSelection(
+      map.current,
+      selectedTrackIds,
+      previousSelectedIds.current,
+      currentTrackIds.current,
+    );
+    previousSelectedIds.current = new Set(selectedTrackIds);
+  }, [geometries, selectedTrackIds, mapLoaded]);
 
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
@@ -244,38 +222,6 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       map.current?.off("moveend", handleMoveEnd);
     };
   }, [mapLoaded, onViewportChange, saveMapView]);
-
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
-
-    const mapInstance = map.current;
-    const selectedIds = Array.from(selectedTrackIds);
-
-    if (mapInstance.getLayer("track-outlines")) {
-      mapInstance.setPaintProperty("track-outlines", "line-opacity", [
-        "case",
-        ["in", ["get", "id"], ["literal", selectedIds]],
-        1,
-        0,
-      ]);
-    }
-
-    if (mapInstance.getLayer("track-lines")) {
-      mapInstance.setPaintProperty("track-lines", "line-color", [
-        "case",
-        ["in", ["get", "id"], ["literal", selectedIds]],
-        "#FF66FF",
-        config.trackColor,
-      ]);
-
-      mapInstance.setPaintProperty("track-lines", "line-width", [
-        "case",
-        ["in", ["get", "id"], ["literal", selectedIds]],
-        6,
-        3,
-      ]);
-    }
-  }, [selectedTrackIds, mapLoaded]);
 
   if (isLoadingMapView) {
     return (
