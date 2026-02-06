@@ -152,17 +152,19 @@ export function SelectionPanel({
             .join(" ")}
           disabled={!isolationActive && !hasVisibleUnselectedTracks}
           aria-label={
-            isolationActive ? "Show all tracks" : "Isolate selected tracks"
+            isolationActive
+              ? "Restore previous visibility"
+              : "Isolate selected tracks"
           }
           title={
             isolationActive
-              ? "Show all tracks"
+              ? "Restore previous visibility"
               : hasVisibleUnselectedTracks
                 ? "Isolate selected tracks"
                 : "No visible unselected tracks to hide"
           }
         >
-          {isolationActive ? <Blocks size={16} /> : <LayoutGrid size={16} />}
+          {isolationActive ? <LayoutGrid size={16} /> : <Blocks size={16} />}
         </button>
       )}
       {selectionCount > 0 && onZoomToSelectedTracks && (

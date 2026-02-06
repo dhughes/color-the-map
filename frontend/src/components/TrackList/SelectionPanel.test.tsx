@@ -687,7 +687,7 @@ describe("SelectionPanel", () => {
       expect(button).not.toBeDisabled();
     });
 
-    it("shows active style and 'Show all tracks' label when isolation is active", () => {
+    it("shows active style and 'Restore previous visibility' label when isolation is active", () => {
       const track = createTrack();
       render(
         <SelectionPanel
@@ -703,7 +703,7 @@ describe("SelectionPanel", () => {
       );
 
       const button = screen.getByRole("button", {
-        name: /show all tracks/i,
+        name: /restore previous visibility/i,
       });
       expect(button).not.toBeDisabled();
       expect(button.className).toContain("active");
@@ -751,7 +751,7 @@ describe("SelectionPanel", () => {
       );
 
       await user.click(
-        screen.getByRole("button", { name: /show all tracks/i }),
+        screen.getByRole("button", { name: /restore previous visibility/i }),
       );
       expect(onToggle).toHaveBeenCalled();
     });
