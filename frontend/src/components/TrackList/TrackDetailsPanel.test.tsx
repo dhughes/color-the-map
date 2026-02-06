@@ -30,7 +30,6 @@ const mockTrack: Track = {
   bounds_min_lon: -79.1,
   bounds_max_lon: -79.0,
   visible: true,
-  description: null,
   created_at: "2024-03-15T10:00:00Z",
   updated_at: "2024-03-15T10:00:00Z",
 };

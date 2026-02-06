@@ -132,7 +132,6 @@ export async function updateTrack(
     visible?: boolean;
     name?: string;
     activity_type?: string;
-    description?: string;
   },
 ): Promise<Track> {
   const response = await fetchWithAuth(`${API_BASE}api/v1/tracks/${trackId}`, {
@@ -171,7 +170,6 @@ export async function bulkUpdateTracks(
     visible?: boolean;
     name?: string;
     activity_type?: string;
-    description?: string;
   },
 ): Promise<BulkUpdateResult> {
   const response = await fetchWithAuth(`${API_BASE}api/v1/tracks/bulk`, {

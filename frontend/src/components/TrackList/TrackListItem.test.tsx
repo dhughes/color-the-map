@@ -26,7 +26,6 @@ describe("TrackListItem", () => {
     bounds_max_lat: 35.95,
     bounds_max_lon: -79.05,
     visible: true,
-    description: null,
     created_at: "2025-01-01T10:05:00Z",
     updated_at: "2025-01-01T10:05:00Z",
   };
