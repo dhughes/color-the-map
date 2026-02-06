@@ -152,13 +152,11 @@ export function SelectionPanel({
             .join(" ")}
           disabled={!isolationActive && !hasVisibleUnselectedTracks}
           aria-label={
-            isolationActive
-              ? "Restore previous visibility"
-              : "Isolate selected tracks"
+            isolationActive ? "Unisolate tracks" : "Isolate selected tracks"
           }
           title={
             isolationActive
-              ? "Restore previous visibility"
+              ? "Unisolate tracks"
               : hasVisibleUnselectedTracks
                 ? "Isolate selected tracks"
                 : "No visible unselected tracks to hide"
