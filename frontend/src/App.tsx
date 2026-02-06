@@ -21,7 +21,7 @@ import {
 import { geometryCache } from "./utils/geometryCache";
 import { mapViewStorage } from "./utils/mapViewStorage";
 import type { Track } from "./types/track";
-import type { SpeedColorRelative } from "./components/TrackList/SelectionPanel";
+import type { SpeedColorRelative } from "./types/track";
 import { version } from "../package.json";
 
 const queryClient = new QueryClient();

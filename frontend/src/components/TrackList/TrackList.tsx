@@ -7,7 +7,7 @@ import { SelectionPanel } from "./SelectionPanel";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
 import type { SelectionSource } from "../../hooks/useSelection";
-import type { SpeedColorRelative } from "./SelectionPanel";
+import type { SpeedColorRelative } from "../../types/track";
 import { geometryCache } from "../../utils/geometryCache";
 
 interface TrackListProps {

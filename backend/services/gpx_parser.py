@@ -1,8 +1,15 @@
 import gpxpy
 import numpy as np
 from datetime import datetime
-from typing import Any, List, Dict, Tuple
+from typing import List, Dict, Tuple, TypedDict, cast
 from ..models.gpx_data import ParsedGPXData
+
+
+class SpeedStats(TypedDict):
+    avg: float
+    max: float
+    min: float
+    speeds: List[float]
 
 
 class GPXParser:
@@ -83,7 +90,7 @@ class GPXParser:
 
     def _calculate_speed(
         self, coordinates: List[Tuple[float, float]], timestamps: List[datetime]
-    ) -> Dict[str, Any]:
+    ) -> SpeedStats:
         if len(coordinates) < 2 or len(timestamps) < 2:
             return {"avg": 0.0, "max": 0.0, "min": 0.0, "speeds": []}
 
@@ -114,7 +121,7 @@ class GPXParser:
             "avg": avg_speed,
             "max": float(np.max(valid_speeds)),
             "min": float(np.min(valid_speeds)),
-            "speeds": segment_speeds.tolist(),
+            "speeds": cast(List[float], segment_speeds.tolist()),
         }
 
     def _calculate_segment_distances(

@@ -2,6 +2,7 @@
 
 :root {
   --color-primary: #ff00ff;
+  --color-primary-hover: #cc00cc;
   --color-bg: #fafaf8;
   --color-overlay: #fffef9;
   --color-text: #1a1a1a;
@@ -451,7 +452,7 @@ body {
 }
 
 .sidebar-panel-header-action button.panel-icon-button.active:hover {
-  background: #cc00cc;
+  background: var(--color-primary-hover);
   color: white;
 }
 

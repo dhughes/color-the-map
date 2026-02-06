@@ -60,9 +60,10 @@ class TrackService:
 
         reduced_speeds: List[float] | None = None
         if gpx_data.segment_speeds:
-            reduced_speeds = gpx_data.segment_speeds[::2][
-                : len(reduced_coordinates) - 1
-            ]
+            speeds = gpx_data.segment_speeds
+            reduced_speeds = [
+                (speeds[i] + speeds[i + 1]) / 2 for i in range(0, len(speeds) - 1, 2)
+            ][: len(reduced_coordinates) - 1]
 
         track_model = TrackModel(
             user_id=user_id,

@@ -48,3 +48,5 @@ export interface DeleteResult {
 export interface BulkUpdateResult {
   updated: number;
 }
+
+export type SpeedColorRelative = "each" | "all";

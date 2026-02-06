@@ -17,7 +17,7 @@ import {
   parseTrackIdFromLayerId,
   type TrackSpeedData,
 } from "../utils/trackLayerManager";
-import type { SpeedColorRelative } from "./TrackList/SelectionPanel";
+import type { SpeedColorRelative } from "../types/track";
 
 interface MapProps {
   geometries: TrackGeometry[];
@@ -199,10 +199,6 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       currentTrackIds.current,
     );
     previousSelectedIds.current = new Set(selectedTrackIds);
-  }, [geometries, selectedTrackIds, mapLoaded]);
-
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
 
     const speedDataMap = new globalThis.Map<number, TrackSpeedData>();
 
@@ -212,7 +208,10 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
 
       for (const geom of geometries) {
         if (!geom.segment_speeds || geom.segment_speeds.length === 0) continue;
-        const trackMax = Math.max(...geom.segment_speeds);
+        const trackMax = geom.segment_speeds.reduce(
+          (max, s) => (s > max ? s : max),
+          0,
+        );
         trackMaxSpeeds.set(geom.track_id, trackMax);
         if (trackMax > globalMax) globalMax = trackMax;
       }

@@ -2,9 +2,7 @@ import { Focus, Gauge, Layers } from "lucide-react";
 import { SidebarPanel } from "../SidebarPanel";
 import { TrackDetailsPanel } from "./TrackDetailsPanel";
 import { BulkOperationsPanel } from "./BulkOperationsPanel";
-import type { Track } from "../../types/track";
-
-export type SpeedColorRelative = "each" | "all";
+import type { Track, SpeedColorRelative } from "../../types/track";
 
 interface SelectionPanelProps {
   totalTracks: number;
@@ -71,7 +69,13 @@ export function SelectionPanel({
       {onToggleSpeedColorRelative && (
         <button
           onClick={onToggleSpeedColorRelative}
-          className={`panel-icon-button${speedColorRelative === "all" && speedColorEnabled ? " active" : ""}${!speedColorEnabled ? " disabled" : ""}`}
+          className={[
+            "panel-icon-button",
+            speedColorRelative === "all" && speedColorEnabled && "active",
+            !speedColorEnabled && "disabled",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           disabled={!speedColorEnabled}
           aria-label="Compare across all tracks"
           title={

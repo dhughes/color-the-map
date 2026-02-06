@@ -28,11 +28,18 @@ export function speedToColor(
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+export type LineGradientExpression = [
+  "interpolate",
+  ["linear"],
+  ["line-progress"],
+  ...Array<number | string>,
+];
+
 export function buildLineGradientStops(
   segmentSpeeds: number[],
   maxSpeed: number,
   minSpeed: number = 0,
-): unknown[] {
+): LineGradientExpression {
   const fallbackColor = `rgb(${SLOW_COLOR.r}, ${SLOW_COLOR.g}, ${SLOW_COLOR.b})`;
 
   if (segmentSpeeds.length === 0 || maxSpeed <= 0) {
@@ -47,7 +54,11 @@ export function buildLineGradientStops(
     ];
   }
 
-  const stops: unknown[] = ["interpolate", ["linear"], ["line-progress"]];
+  const stops: LineGradientExpression = [
+    "interpolate",
+    ["linear"],
+    ["line-progress"],
+  ];
 
   for (let i = 0; i < segmentSpeeds.length; i++) {
     const progress = i / (segmentSpeeds.length - 1 || 1);
