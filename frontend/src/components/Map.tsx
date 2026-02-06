@@ -13,7 +13,6 @@ import { useMapView } from "../hooks/useMapView";
 import {
   syncTrackSources,
   syncSelection,
-  getTrackLayerIds,
   parseTrackIdFromLayerId,
 } from "../utils/trackLayerManager";
 
@@ -136,30 +135,9 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       const mapInstance = map.current;
       if (!mapInstance) return;
 
-      const layerIds = getTrackLayerIds(
-        currentTrackIds.current,
-        previousSelectedIds.current,
-      );
-      if (layerIds.length === 0) {
-        onClearSelection();
-        return;
-      }
-
-      const existingLayerIds = layerIds.filter((id) =>
-        mapInstance.getLayer(id),
-      );
-      if (existingLayerIds.length === 0) {
-        onClearSelection();
-        return;
-      }
-
-      const features = mapInstance.queryRenderedFeatures(e.point, {
-        layers: existingLayerIds,
-      });
-
-      if (features.length > 0) {
-        const layerId = features[0].layer.id;
-        const trackId = parseTrackIdFromLayerId(layerId);
+      const features = mapInstance.queryRenderedFeatures(e.point);
+      for (const feature of features) {
+        const trackId = parseTrackIdFromLayerId(feature.layer.id);
         if (trackId !== null) {
           const isMultiSelect =
             e.originalEvent.metaKey || e.originalEvent.ctrlKey;
@@ -177,26 +155,11 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
     const mapInstance = map.current;
     if (!mapInstance) return;
 
-    const layerIds = getTrackLayerIds(
-      currentTrackIds.current,
-      previousSelectedIds.current,
+    const features = mapInstance.queryRenderedFeatures(e.point);
+    const isOverTrack = features.some(
+      (f) => parseTrackIdFromLayerId(f.layer.id) !== null,
     );
-    if (layerIds.length === 0) {
-      mapInstance.getCanvas().style.cursor = "";
-      return;
-    }
-
-    const existingLayerIds = layerIds.filter((id) => mapInstance.getLayer(id));
-    if (existingLayerIds.length === 0) {
-      mapInstance.getCanvas().style.cursor = "";
-      return;
-    }
-
-    const features = mapInstance.queryRenderedFeatures(e.point, {
-      layers: existingLayerIds,
-    });
-
-    mapInstance.getCanvas().style.cursor = features.length > 0 ? "pointer" : "";
+    mapInstance.getCanvas().style.cursor = isOverTrack ? "pointer" : "";
   }, []);
 
   useEffect(() => {

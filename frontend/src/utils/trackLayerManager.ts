@@ -196,22 +196,3 @@ export function syncSelection(
     }
   }
 }
-
-export function getTrackLayerIds(
-  currentTrackIds: Set<number>,
-  selectedIds: Set<number>,
-): string[] {
-  const deselectedLayers: string[] = [];
-  const selectedLayers: string[] = [];
-
-  for (const id of currentTrackIds) {
-    if (selectedIds.has(id)) {
-      selectedLayers.push(selectedBgLayerId(id));
-      selectedLayers.push(selectedFgLayerId(id));
-    } else {
-      deselectedLayers.push(deselectedLayerId(id));
-    }
-  }
-
-  return [...deselectedLayers, ...selectedLayers];
-}

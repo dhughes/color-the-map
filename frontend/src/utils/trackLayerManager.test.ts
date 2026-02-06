@@ -13,7 +13,6 @@ import {
   removeTrackLayers,
   syncTrackSources,
   syncSelection,
-  getTrackLayerIds,
 } from "./trackLayerManager";
 
 function createMockMap() {
@@ -548,34 +547,6 @@ describe("trackLayerManager", () => {
 
       expect(mockMap._layers.has("selected-bg-3")).toBe(true);
       expect(mockMap._layers.has("selected-fg-3")).toBe(true);
-    });
-  });
-
-  describe("getTrackLayerIds", () => {
-    it("returns deselected layer IDs for unselected tracks", () => {
-      const ids = getTrackLayerIds(new Set([1, 2, 3]), new Set());
-      expect(ids).toEqual(["deselected-1", "deselected-2", "deselected-3"]);
-    });
-
-    it("returns selected layer IDs for selected tracks", () => {
-      const ids = getTrackLayerIds(new Set([1, 2]), new Set([2]));
-      expect(ids).toEqual(["deselected-1", "selected-bg-2", "selected-fg-2"]);
-    });
-
-    it("returns empty array when no tracks", () => {
-      const ids = getTrackLayerIds(new Set(), new Set());
-      expect(ids).toEqual([]);
-    });
-
-    it("groups deselected layers before selected layers", () => {
-      const ids = getTrackLayerIds(new Set([1, 2, 3]), new Set([1, 3]));
-      expect(ids).toEqual([
-        "deselected-2",
-        "selected-bg-1",
-        "selected-fg-1",
-        "selected-bg-3",
-        "selected-fg-3",
-      ]);
     });
   });
 });
