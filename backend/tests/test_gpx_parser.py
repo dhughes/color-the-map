@@ -246,3 +246,40 @@ def test_speed_calculation_with_varying_speeds(parser):
 
     assert result.max_speed_ms > result.min_speed_ms
     assert result.min_speed_ms <= result.avg_speed_ms <= result.max_speed_ms
+
+
+def test_segment_speeds_returned_for_multi_point_track(parser, sample_gpx_content):
+    result = parser.parse(sample_gpx_content)
+
+    assert result.segment_speeds is not None
+    assert len(result.segment_speeds) == len(result.coordinates) - 1
+    assert all(speed >= 0 for speed in result.segment_speeds)
+
+
+def test_segment_speeds_empty_without_timestamps(parser):
+    gpx_content = b"""<?xml version="1.0"?>
+    <gpx version="1.1">
+        <trk><trkseg>
+            <trkpt lat="35.0" lon="-79.0"></trkpt>
+            <trkpt lat="35.001" lon="-79.001"></trkpt>
+        </trkseg></trk>
+    </gpx>"""
+    result = parser.parse(gpx_content)
+
+    assert result.segment_speeds == []
+
+
+def test_segment_speeds_match_speed_stats(parser):
+    gpx_content = b"""<?xml version="1.0"?>
+    <gpx version="1.1">
+        <trk><trkseg>
+            <trkpt lat="35.0" lon="-79.0"><time>2025-01-01T10:00:00Z</time></trkpt>
+            <trkpt lat="35.001" lon="-79.0"><time>2025-01-01T10:00:10Z</time></trkpt>
+            <trkpt lat="35.002" lon="-79.0"><time>2025-01-01T10:00:30Z</time></trkpt>
+        </trkseg></trk>
+    </gpx>"""
+    result = parser.parse(gpx_content)
+
+    assert len(result.segment_speeds) == 2
+    assert max(result.segment_speeds) == pytest.approx(result.max_speed_ms)
+    assert min(result.segment_speeds) == pytest.approx(result.min_speed_ms)

@@ -127,6 +127,28 @@ def test_get_track_geometry(sample_gpx_file, auth_token):
     assert len(geometries[0]["coordinates"]) > 0
 
 
+def test_get_track_geometry_includes_segment_speeds(sample_gpx_file, auth_token):
+    upload_response = client.post(
+        "/api/v1/tracks",
+        files=[("files", ("test.gpx", sample_gpx_file, "application/gpx+xml"))],
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    track_id = upload_response.json()["track_ids"][0]
+
+    response = client.post(
+        "/api/v1/tracks/geometry",
+        json={"track_ids": [track_id]},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+
+    assert response.status_code == 200
+    geometries = response.json()
+    assert len(geometries) == 1
+    assert "segment_speeds" in geometries[0]
+    assert geometries[0]["segment_speeds"] is not None
+    assert len(geometries[0]["segment_speeds"]) == len(geometries[0]["coordinates"]) - 1
+
+
 def test_update_track(sample_gpx_file, auth_token):
     upload_response = client.post(
         "/api/v1/tracks",

@@ -58,6 +58,13 @@ class TrackService:
             list(coord) for coord in gpx_data.coordinates[::2]
         ]
 
+        reduced_speeds: List[float] | None = None
+        if gpx_data.segment_speeds:
+            speeds = gpx_data.segment_speeds
+            reduced_speeds = [
+                (speeds[i] + speeds[i + 1]) / 2 for i in range(0, len(speeds) - 1, 2)
+            ][: len(reduced_coordinates) - 1]
+
         track_model = TrackModel(
             user_id=user_id,
             hash=gpx_hash,
@@ -78,6 +85,7 @@ class TrackService:
             bounds_min_lon=gpx_data.bounds_min_lon,
             bounds_max_lon=gpx_data.bounds_max_lon,
             coordinates=reduced_coordinates,
+            segment_speeds=reduced_speeds,
         )
 
         session.add(track_model)
@@ -129,7 +137,11 @@ class TrackService:
         coordinates: List[Tuple[float, float]] = [
             cast(Tuple[float, float], tuple(coord)) for coord in track.coordinates
         ]
-        return TrackGeometryData(track_id=track_id, coordinates=coordinates)
+        return TrackGeometryData(
+            track_id=track_id,
+            coordinates=coordinates,
+            segment_speeds=track.segment_speeds,
+        )
 
     async def get_multiple_geometries(
         self, track_ids: List[int], user_id: str, session: AsyncSession
@@ -137,7 +149,6 @@ class TrackService:
         if not track_ids:
             return []
 
-        # Batch query all tracks at once to avoid N+1 problem
         result = await session.execute(
             select(TrackModel).where(
                 TrackModel.id.in_(track_ids), TrackModel.user_id == user_id
@@ -148,13 +159,16 @@ class TrackService:
         geometries = []
         for track_model in track_models:
             if track_model.coordinates:
-                # Convert lists to tuples (domain model uses tuples, DB uses lists from JSON)
                 coordinates: List[Tuple[float, float]] = [
                     cast(Tuple[float, float], tuple(coord))
                     for coord in track_model.coordinates
                 ]
                 geometries.append(
-                    TrackGeometryData(track_id=track_model.id, coordinates=coordinates)
+                    TrackGeometryData(
+                        track_id=track_model.id,
+                        coordinates=coordinates,
+                        segment_speeds=track_model.segment_speeds,
+                    )
                 )
 
         return geometries

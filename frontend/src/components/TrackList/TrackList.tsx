@@ -7,6 +7,7 @@ import { SelectionPanel } from "./SelectionPanel";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
 import type { SelectionSource } from "../../hooks/useSelection";
+import type { SpeedColorRelative } from "../../types/track";
 import { geometryCache } from "../../utils/geometryCache";
 
 interface TrackListProps {
@@ -19,6 +20,10 @@ interface TrackListProps {
   onZoomToSelectedTracks: () => void;
   lastSelectedTrackId: number | null;
   selectionSource: SelectionSource | null;
+  speedColorEnabled: boolean;
+  onToggleSpeedColor: () => void;
+  speedColorRelative: SpeedColorRelative;
+  onToggleSpeedColorRelative: () => void;
 }
 
 export function TrackList({
@@ -31,6 +36,10 @@ export function TrackList({
   onZoomToSelectedTracks,
   lastSelectedTrackId,
   selectionSource,
+  speedColorEnabled,
+  onToggleSpeedColor,
+  speedColorRelative,
+  onToggleSpeedColorRelative,
 }: TrackListProps) {
   const queryClient = useQueryClient();
   const listRef = useRef<HTMLDivElement>(null);
@@ -279,6 +288,10 @@ export function TrackList({
         allActivityTypes={allActivityTypes}
         onDelete={handleDelete}
         onZoomToSelectedTracks={onZoomToSelectedTracks}
+        speedColorEnabled={speedColorEnabled}
+        onToggleSpeedColor={onToggleSpeedColor}
+        speedColorRelative={speedColorRelative}
+        onToggleSpeedColorRelative={onToggleSpeedColorRelative}
       />
 
       <ConfirmDialog

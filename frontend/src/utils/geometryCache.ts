@@ -6,7 +6,7 @@ export interface CachedGeometry extends TrackGeometry {
 
 const DB_NAME = "color-the-map-geometries";
 const STORE_NAME = "geometries";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 class GeometryCacheImpl {
   private db: IDBDatabase | null = null;

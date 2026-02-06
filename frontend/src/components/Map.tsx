@@ -13,8 +13,11 @@ import { useMapView } from "../hooks/useMapView";
 import {
   syncTrackSources,
   syncSelection,
+  syncSpeedColoring,
   parseTrackIdFromLayerId,
+  type TrackSpeedData,
 } from "../utils/trackLayerManager";
+import type { SpeedColorRelative } from "../types/track";
 
 interface MapProps {
   geometries: TrackGeometry[];
@@ -22,6 +25,8 @@ interface MapProps {
   onSelect: (trackId: number, isMultiSelect: boolean) => void;
   onClearSelection: () => void;
   onViewportChange?: (bounds: ViewportBounds) => void;
+  speedColorEnabled?: boolean;
+  speedColorRelative?: SpeedColorRelative;
 }
 
 export interface MapRef {
@@ -40,6 +45,8 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
     onSelect,
     onClearSelection,
     onViewportChange,
+    speedColorEnabled = false,
+    speedColorRelative = "each",
   },
   ref,
 ) {
@@ -192,7 +199,51 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       currentTrackIds.current,
     );
     previousSelectedIds.current = new Set(selectedTrackIds);
-  }, [geometries, selectedTrackIds, mapLoaded]);
+
+    const speedDataMap = new globalThis.Map<number, TrackSpeedData>();
+
+    if (speedColorEnabled) {
+      let globalMax = 0;
+      const trackMaxSpeeds = new globalThis.Map<number, number>();
+
+      for (const geom of geometries) {
+        if (!geom.segment_speeds || geom.segment_speeds.length === 0) continue;
+        const trackMax = geom.segment_speeds.reduce(
+          (max, s) => (s > max ? s : max),
+          0,
+        );
+        trackMaxSpeeds.set(geom.track_id, trackMax);
+        if (trackMax > globalMax) globalMax = trackMax;
+      }
+
+      for (const geom of geometries) {
+        if (!geom.segment_speeds || geom.segment_speeds.length === 0) continue;
+        const maxSpeed =
+          speedColorRelative === "all"
+            ? globalMax
+            : (trackMaxSpeeds.get(geom.track_id) ?? 0);
+        speedDataMap.set(geom.track_id, {
+          speeds: geom.segment_speeds,
+          maxSpeed,
+          minSpeed: 0,
+        });
+      }
+    }
+
+    syncSpeedColoring(
+      map.current,
+      speedColorEnabled,
+      speedDataMap,
+      currentTrackIds.current,
+      selectedTrackIds,
+    );
+  }, [
+    geometries,
+    selectedTrackIds,
+    mapLoaded,
+    speedColorEnabled,
+    speedColorRelative,
+  ]);
 
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
