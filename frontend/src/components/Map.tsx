@@ -133,7 +133,8 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
 
   const handleClick = useCallback(
     (e: maplibregl.MapMouseEvent) => {
-      if (!map.current) return;
+      const mapInstance = map.current;
+      if (!mapInstance) return;
 
       const layerIds = getTrackLayerIds(
         currentTrackIds.current,
@@ -145,14 +146,14 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       }
 
       const existingLayerIds = layerIds.filter((id) =>
-        map.current!.getLayer(id),
+        mapInstance.getLayer(id),
       );
       if (existingLayerIds.length === 0) {
         onClearSelection();
         return;
       }
 
-      const features = map.current.queryRenderedFeatures(e.point, {
+      const features = mapInstance.queryRenderedFeatures(e.point, {
         layers: existingLayerIds,
       });
 
@@ -173,28 +174,29 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
   );
 
   const handleMouseMove = useCallback((e: maplibregl.MapMouseEvent) => {
-    if (!map.current) return;
+    const mapInstance = map.current;
+    if (!mapInstance) return;
 
     const layerIds = getTrackLayerIds(
       currentTrackIds.current,
       previousSelectedIds.current,
     );
     if (layerIds.length === 0) {
-      map.current.getCanvas().style.cursor = "";
+      mapInstance.getCanvas().style.cursor = "";
       return;
     }
 
-    const existingLayerIds = layerIds.filter((id) => map.current!.getLayer(id));
+    const existingLayerIds = layerIds.filter((id) => mapInstance.getLayer(id));
     if (existingLayerIds.length === 0) {
-      map.current.getCanvas().style.cursor = "";
+      mapInstance.getCanvas().style.cursor = "";
       return;
     }
 
-    const features = map.current.queryRenderedFeatures(e.point, {
+    const features = mapInstance.queryRenderedFeatures(e.point, {
       layers: existingLayerIds,
     });
 
-    map.current.getCanvas().style.cursor = features.length > 0 ? "pointer" : "";
+    mapInstance.getCanvas().style.cursor = features.length > 0 ? "pointer" : "";
   }, []);
 
   useEffect(() => {
@@ -217,12 +219,8 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       map.current,
       geometries,
       currentTrackIds.current,
-      previousSelectedIds.current,
+      selectedTrackIds,
     );
-  }, [geometries, mapLoaded]);
-
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
 
     syncSelection(
       map.current,
@@ -231,7 +229,7 @@ export const Map = forwardRef<MapRef, MapProps>(function Map(
       currentTrackIds.current,
     );
     previousSelectedIds.current = new Set(selectedTrackIds);
-  }, [selectedTrackIds, mapLoaded]);
+  }, [geometries, selectedTrackIds, mapLoaded]);
 
   useEffect(() => {
     if (!map.current || !mapLoaded) return;

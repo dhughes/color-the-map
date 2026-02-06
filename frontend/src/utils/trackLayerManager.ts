@@ -8,20 +8,20 @@ const SELECTED_FG_PREFIX = "selected-fg-";
 
 const DESELECTED_PAINT = {
   "line-color": config.trackColor,
-  "line-width": 3,
-  "line-opacity": 0.85,
+  "line-width": config.trackLineWidth,
+  "line-opacity": config.trackOpacity,
 };
 
 const SELECTED_BG_PAINT = {
-  "line-color": "#444",
-  "line-width": 10,
+  "line-color": config.trackSelectedBorderColor,
+  "line-width": config.trackSelectedBorderWidth,
   "line-opacity": 1,
 };
 
 const SELECTED_FG_PAINT = {
-  "line-color": "#FF66FF",
-  "line-width": 6,
-  "line-opacity": 0.85,
+  "line-color": config.trackSelectedColor,
+  "line-width": config.trackSelectedLineWidth,
+  "line-opacity": config.trackOpacity,
 };
 
 export function sourceId(trackId: number): string {
@@ -52,14 +52,6 @@ export function parseTrackIdFromLayerId(layerId: string): number | null {
     }
   }
   return null;
-}
-
-export function isTrackLayer(layerId: string): boolean {
-  return (
-    layerId.startsWith(DESELECTED_PREFIX) ||
-    layerId.startsWith(SELECTED_BG_PREFIX) ||
-    layerId.startsWith(SELECTED_FG_PREFIX)
-  );
 }
 
 export function addTrackSource(
@@ -150,17 +142,26 @@ export function syncTrackSources(
 
   const toRemove = [...currentTrackIds].filter((id) => !incomingIds.has(id));
   for (const id of toRemove) {
-    removeTrackSource(map, id);
+    try {
+      removeTrackSource(map, id);
+    } catch (error) {
+      console.error(`Failed to remove track source ${id}:`, error);
+    }
   }
 
   for (const geometry of geometries) {
     const { track_id, coordinates } = geometry;
     if (!currentTrackIds.has(track_id)) {
-      addTrackSource(map, track_id, coordinates);
-      if (selectedTrackIds.has(track_id)) {
-        addSelectedLayers(map, track_id);
-      } else {
-        addDeselectedLayer(map, track_id);
+      try {
+        addTrackSource(map, track_id, coordinates);
+        if (selectedTrackIds.has(track_id)) {
+          addSelectedLayers(map, track_id);
+        } else {
+          addDeselectedLayer(map, track_id);
+        }
+      } catch (error) {
+        console.error(`Failed to add track ${track_id}:`, error);
+        incomingIds.delete(track_id);
       }
     }
   }
@@ -179,11 +180,19 @@ export function syncSelection(
     const isSelected = selectedIds.has(id);
 
     if (!wasSelected && isSelected) {
-      removeTrackLayers(map, id);
-      addSelectedLayers(map, id);
+      try {
+        removeTrackLayers(map, id);
+        addSelectedLayers(map, id);
+      } catch (error) {
+        console.error(`Failed to select track ${id}:`, error);
+      }
     } else if (wasSelected && !isSelected) {
-      removeTrackLayers(map, id);
-      addDeselectedLayer(map, id);
+      try {
+        removeTrackLayers(map, id);
+        addDeselectedLayer(map, id);
+      } catch (error) {
+        console.error(`Failed to deselect track ${id}:`, error);
+      }
     }
   }
 }
@@ -192,14 +201,17 @@ export function getTrackLayerIds(
   currentTrackIds: Set<number>,
   selectedIds: Set<number>,
 ): string[] {
-  const layerIds: string[] = [];
+  const deselectedLayers: string[] = [];
+  const selectedLayers: string[] = [];
+
   for (const id of currentTrackIds) {
     if (selectedIds.has(id)) {
-      layerIds.push(selectedBgLayerId(id));
-      layerIds.push(selectedFgLayerId(id));
+      selectedLayers.push(selectedBgLayerId(id));
+      selectedLayers.push(selectedFgLayerId(id));
     } else {
-      layerIds.push(deselectedLayerId(id));
+      deselectedLayers.push(deselectedLayerId(id));
     }
   }
-  return layerIds;
+
+  return [...deselectedLayers, ...selectedLayers];
 }

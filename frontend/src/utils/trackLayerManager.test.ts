@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { config } from "../config";
 import {
   sourceId,
   deselectedLayerId,
   selectedBgLayerId,
   selectedFgLayerId,
   parseTrackIdFromLayerId,
-  isTrackLayer,
   addTrackSource,
   removeTrackSource,
   addDeselectedLayer,
@@ -18,20 +18,37 @@ import {
 
 function createMockMap() {
   const sources = new Map<string, unknown>();
-  const layers = new Map<string, unknown>();
+  const layers = new Map<string, { id: string; source: string }>();
 
   return {
     addSource: vi.fn((id: string, spec: unknown) => {
+      if (sources.has(id)) {
+        throw new Error(`Source '${id}' already exists`);
+      }
       sources.set(id, spec);
     }),
     removeSource: vi.fn((id: string) => {
+      if (!sources.has(id)) {
+        throw new Error(`Source '${id}' does not exist`);
+      }
       sources.delete(id);
     }),
     getSource: vi.fn((id: string) => sources.get(id) ?? null),
-    addLayer: vi.fn((spec: { id: string }) => {
+    addLayer: vi.fn((spec: { id: string; source: string }) => {
+      if (layers.has(spec.id)) {
+        throw new Error(`Layer '${spec.id}' already exists`);
+      }
+      if (!sources.has(spec.source)) {
+        throw new Error(
+          `Source '${spec.source}' does not exist for layer '${spec.id}'`,
+        );
+      }
       layers.set(spec.id, spec);
     }),
     removeLayer: vi.fn((id: string) => {
+      if (!layers.has(id)) {
+        throw new Error(`Layer '${id}' does not exist`);
+      }
       layers.delete(id);
     }),
     getLayer: vi.fn((id: string) => layers.get(id) ?? null),
@@ -85,25 +102,6 @@ describe("trackLayerManager", () => {
     });
   });
 
-  describe("isTrackLayer", () => {
-    it("returns true for deselected layers", () => {
-      expect(isTrackLayer("deselected-5")).toBe(true);
-    });
-
-    it("returns true for selected-bg layers", () => {
-      expect(isTrackLayer("selected-bg-5")).toBe(true);
-    });
-
-    it("returns true for selected-fg layers", () => {
-      expect(isTrackLayer("selected-fg-5")).toBe(true);
-    });
-
-    it("returns false for non-track layers", () => {
-      expect(isTrackLayer("osm")).toBe(false);
-      expect(isTrackLayer("track-5")).toBe(false);
-    });
-  });
-
   describe("addTrackSource", () => {
     let mockMap: MockMap;
 
@@ -140,6 +138,11 @@ describe("trackLayerManager", () => {
       addTrackSource(mockMap as never, 1, coords);
 
       expect(mockMap.addSource).toHaveBeenCalledTimes(1);
+    });
+
+    it("handles empty coordinate arrays", () => {
+      addTrackSource(mockMap as never, 1, []);
+      expect(mockMap._sources.has("track-1")).toBe(true);
     });
   });
 
@@ -189,9 +192,9 @@ describe("trackLayerManager", () => {
         type: "line",
         source: "track-1",
         paint: {
-          "line-color": "#FF00FF",
-          "line-width": 3,
-          "line-opacity": 0.85,
+          "line-color": config.trackColor,
+          "line-width": config.trackLineWidth,
+          "line-opacity": config.trackOpacity,
         },
       });
     });
@@ -230,8 +233,8 @@ describe("trackLayerManager", () => {
         expect.objectContaining({
           id: "selected-bg-1",
           paint: {
-            "line-color": "#444",
-            "line-width": 10,
+            "line-color": config.trackSelectedBorderColor,
+            "line-width": config.trackSelectedBorderWidth,
             "line-opacity": 1,
           },
         }),
@@ -245,9 +248,9 @@ describe("trackLayerManager", () => {
         expect.objectContaining({
           id: "selected-fg-1",
           paint: {
-            "line-color": "#FF66FF",
-            "line-width": 6,
-            "line-opacity": 0.85,
+            "line-color": config.trackSelectedColor,
+            "line-width": config.trackSelectedLineWidth,
+            "line-opacity": config.trackOpacity,
           },
         }),
       );
@@ -367,6 +370,73 @@ describe("trackLayerManager", () => {
       expect(mockMap.addSource).not.toHaveBeenCalled();
       expect(mockMap.addLayer).not.toHaveBeenCalled();
     });
+
+    it("handles duplicate track IDs in geometries", () => {
+      const geometries = [
+        { track_id: 1, coordinates: [[-79, 35]] as [number, number][] },
+        { track_id: 1, coordinates: [[-78, 34]] as [number, number][] },
+      ];
+      const result = syncTrackSources(
+        mockMap as never,
+        geometries,
+        new Set(),
+        new Set(),
+      );
+
+      expect(result).toEqual(new Set([1]));
+      expect(mockMap.addSource).toHaveBeenCalledTimes(1);
+    });
+
+    it("excludes failed tracks from returned set", () => {
+      mockMap.addSource.mockImplementationOnce(() => {
+        throw new Error("WebGL error");
+      });
+
+      const geometries = [
+        { track_id: 1, coordinates: [[-79, 35]] as [number, number][] },
+        { track_id: 2, coordinates: [[-78, 34]] as [number, number][] },
+      ];
+
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const result = syncTrackSources(
+        mockMap as never,
+        geometries,
+        new Set(),
+        new Set(),
+      );
+      consoleSpy.mockRestore();
+
+      expect(result).toEqual(new Set([2]));
+      expect(mockMap._sources.has("track-1")).toBe(false);
+      expect(mockMap._sources.has("track-2")).toBe(true);
+    });
+
+    it("continues removing other tracks when one removal fails", () => {
+      const geometries = [
+        { track_id: 1, coordinates: [[-79, 35]] as [number, number][] },
+        { track_id: 2, coordinates: [[-78, 34]] as [number, number][] },
+      ];
+      const currentIds = syncTrackSources(
+        mockMap as never,
+        geometries,
+        new Set(),
+        new Set(),
+      );
+
+      mockMap.removeLayer.mockImplementationOnce(() => {
+        throw new Error("WebGL error");
+      });
+
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      syncTrackSources(mockMap as never, [], currentIds, new Set());
+      consoleSpy.mockRestore();
+
+      expect(mockMap._sources.has("track-2")).toBe(false);
+    });
   });
 
   describe("syncSelection", () => {
@@ -453,6 +523,32 @@ describe("trackLayerManager", () => {
       expect(mockMap.addLayer).not.toHaveBeenCalled();
       expect(mockMap.removeLayer).not.toHaveBeenCalled();
     });
+
+    it("continues selecting other tracks when one fails", () => {
+      let callCount = 0;
+      const originalRemoveLayer = mockMap.removeLayer.getMockImplementation()!;
+      mockMap.removeLayer.mockImplementation((id: string) => {
+        callCount++;
+        if (callCount === 1) {
+          throw new Error("WebGL error");
+        }
+        return originalRemoveLayer(id);
+      });
+
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      syncSelection(
+        mockMap as never,
+        new Set([1, 3]),
+        new Set(),
+        new Set([1, 2, 3]),
+      );
+      consoleSpy.mockRestore();
+
+      expect(mockMap._layers.has("selected-bg-3")).toBe(true);
+      expect(mockMap._layers.has("selected-fg-3")).toBe(true);
+    });
   });
 
   describe("getTrackLayerIds", () => {
@@ -469,6 +565,17 @@ describe("trackLayerManager", () => {
     it("returns empty array when no tracks", () => {
       const ids = getTrackLayerIds(new Set(), new Set());
       expect(ids).toEqual([]);
+    });
+
+    it("groups deselected layers before selected layers", () => {
+      const ids = getTrackLayerIds(new Set([1, 2, 3]), new Set([1, 3]));
+      expect(ids).toEqual([
+        "deselected-2",
+        "selected-bg-1",
+        "selected-fg-1",
+        "selected-bg-3",
+        "selected-fg-3",
+      ]);
     });
   });
 });
