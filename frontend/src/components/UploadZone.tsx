@@ -17,7 +17,7 @@ export function UploadZone({
   const processFileDrop = useCallback(
     (dataTransfer: DataTransfer) => {
       const files = Array.from(dataTransfer.files).filter((f) =>
-        f.name.endsWith(".gpx"),
+        f.name.toLowerCase().endsWith(".gpx"),
       );
       if (files.length > 0) {
         onFilesDropped(files);

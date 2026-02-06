@@ -59,7 +59,7 @@ export function TrackList({
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files ?? []).filter((f) =>
-        f.name.endsWith(".gpx"),
+        f.name.toLowerCase().endsWith(".gpx"),
       );
       if (files.length > 0) {
         onUploadFiles(files);

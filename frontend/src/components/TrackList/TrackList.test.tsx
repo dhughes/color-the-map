@@ -574,6 +574,35 @@ describe("TrackList", () => {
       expect(mockOnUploadFiles).not.toHaveBeenCalled();
     });
 
+    it("accepts files with uppercase .GPX extension", async () => {
+      render(
+        <TrackList
+          tracks={mockTracks}
+          selectedTrackIds={mockSelectedTrackIds}
+          anchorTrackId={null}
+          onSelect={mockOnSelect}
+          onSelectRange={mockOnSelectRange}
+          onZoomToTrack={mockOnZoomToTrack}
+          onUploadFiles={mockOnUploadFiles}
+          lastSelectedTrackId={null}
+          selectionSource={null}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+
+      const gpxFile = new File(["<gpx></gpx>"], "track.GPX", {
+        type: "application/gpx+xml",
+      });
+
+      await userEvent.upload(fileInput, gpxFile);
+
+      expect(mockOnUploadFiles).toHaveBeenCalledWith([gpxFile]);
+    });
+
     it("accepts multiple gpx files", async () => {
       render(
         <TrackList
