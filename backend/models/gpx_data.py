@@ -11,6 +11,7 @@ class ParsedGPXData:
     avg_speed_ms: float
     max_speed_ms: float
     min_speed_ms: float
+    segment_speeds: List[float]
     elevation_gain_meters: float
     elevation_loss_meters: float
     bounds_min_lat: float

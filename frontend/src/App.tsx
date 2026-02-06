@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   QueryClient,
   QueryClientProvider,
@@ -21,6 +21,7 @@ import {
 import { geometryCache } from "./utils/geometryCache";
 import { mapViewStorage } from "./utils/mapViewStorage";
 import type { Track } from "./types/track";
+import type { SpeedColorRelative } from "./components/TrackList/SelectionPanel";
 import { version } from "../package.json";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,18 @@ export function AppContent() {
     lastSelectedTrackId,
     selectionSource,
   } = useSelection();
+
+  const [speedColorEnabled, setSpeedColorEnabled] = useState(false);
+  const [speedColorRelative, setSpeedColorRelative] =
+    useState<SpeedColorRelative>("each");
+
+  const handleToggleSpeedColor = useCallback(() => {
+    setSpeedColorEnabled((prev) => !prev);
+  }, []);
+
+  const handleToggleSpeedColorRelative = useCallback(() => {
+    setSpeedColorRelative((prev) => (prev === "each" ? "all" : "each"));
+  }, []);
 
   const { data: tracksData = [] } = useQuery<Track[]>({
     queryKey: ["tracks"],
@@ -281,6 +294,8 @@ export function AppContent() {
             }
             onClearSelection={clearSelection}
             onViewportChange={onViewportChange}
+            speedColorEnabled={speedColorEnabled}
+            speedColorRelative={speedColorRelative}
           />
           <div className="version-display">v{version}</div>
           {isLoadingGeometries && (
@@ -367,6 +382,10 @@ export function AppContent() {
           onZoomToSelectedTracks={handleZoomToSelectedTracks}
           lastSelectedTrackId={lastSelectedTrackId}
           selectionSource={selectionSource}
+          speedColorEnabled={speedColorEnabled}
+          onToggleSpeedColor={handleToggleSpeedColor}
+          speedColorRelative={speedColorRelative}
+          onToggleSpeedColorRelative={handleToggleSpeedColorRelative}
         />
       </div>
     </>

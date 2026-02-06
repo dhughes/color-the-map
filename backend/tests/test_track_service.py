@@ -294,6 +294,59 @@ async def test_upload_unknown_filename(track_service, sample_gpx, test_db_sessio
 
 
 @pytest.mark.asyncio
+async def test_geometry_includes_segment_speeds(
+    track_service, sample_gpx, test_db_session
+):
+    result = await track_service.upload_track(
+        "test.gpx", sample_gpx, "test-user-id", test_db_session
+    )
+    track_id = result.track.id
+    await test_db_session.commit()
+
+    geometry = await track_service.get_track_geometry(
+        track_id, "test-user-id", test_db_session
+    )
+
+    assert geometry is not None
+    assert geometry.segment_speeds is not None
+    assert len(geometry.segment_speeds) == len(geometry.coordinates) - 1
+    assert all(speed >= 0 for speed in geometry.segment_speeds)
+
+
+@pytest.mark.asyncio
+async def test_multiple_geometries_include_segment_speeds(
+    track_service, test_db_session
+):
+    test_dir = Path(__file__).parent
+    gpx1_path = (
+        test_dir / ".." / ".." / "sample-gpx-files" / "Cycling 2025-12-19T211415Z.gpx"
+    )
+    gpx2_path = test_dir / ".." / ".." / "sample-gpx-files" / "Walking 2031.gpx"
+
+    with open(gpx1_path, "rb") as f:
+        content1 = f.read()
+    with open(gpx2_path, "rb") as f:
+        content2 = f.read()
+
+    result1 = await track_service.upload_track(
+        "track1.gpx", content1, "test-user-id", test_db_session
+    )
+    result2 = await track_service.upload_track(
+        "track2.gpx", content2, "test-user-id", test_db_session
+    )
+    await test_db_session.commit()
+
+    track_ids = [result1.track.id, result2.track.id]
+    geometries = await track_service.get_multiple_geometries(
+        track_ids, "test-user-id", test_db_session
+    )
+
+    for geometry in geometries:
+        assert geometry.segment_speeds is not None
+        assert len(geometry.segment_speeds) == len(geometry.coordinates) - 1
+
+
+@pytest.mark.asyncio
 async def test_coordinates_stored_at_50_percent_resolution(
     track_service, test_db_session
 ):

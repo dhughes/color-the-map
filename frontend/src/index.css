@@ -415,6 +415,9 @@ body {
 
 .sidebar-panel-header-action {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .sidebar-panel-header-action button {
@@ -440,6 +443,27 @@ body {
 
 .sidebar-panel-header-action button:active {
   transform: scale(0.95);
+}
+
+.sidebar-panel-header-action button.panel-icon-button.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+.sidebar-panel-header-action button.panel-icon-button.active:hover {
+  background: #cc00cc;
+  color: white;
+}
+
+.sidebar-panel-header-action button.panel-icon-button.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sidebar-panel-header-action button.panel-icon-button.disabled:hover {
+  background: transparent;
+  color: var(--color-text-muted);
+  transform: none;
 }
 
 .track-list-loading {

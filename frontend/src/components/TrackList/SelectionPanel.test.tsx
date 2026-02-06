@@ -194,6 +194,168 @@ describe("SelectionPanel", () => {
     });
   });
 
+  describe("speed coloring controls", () => {
+    it("shows speed coloring toggle button", () => {
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          speedColorEnabled={false}
+          onToggleSpeedColor={vi.fn()}
+          speedColorRelative="each"
+          onToggleSpeedColorRelative={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.getByRole("button", { name: /speed coloring/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("calls onToggleSpeedColor when speed button is clicked", async () => {
+      const onToggle = vi.fn();
+      const user = userEvent.setup();
+
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          speedColorEnabled={false}
+          onToggleSpeedColor={onToggle}
+          speedColorRelative="each"
+          onToggleSpeedColorRelative={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      await user.click(screen.getByRole("button", { name: /speed coloring/i }));
+      expect(onToggle).toHaveBeenCalled();
+    });
+
+    it("shows active style when speed coloring is enabled", () => {
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          speedColorEnabled={true}
+          onToggleSpeedColor={vi.fn()}
+          speedColorRelative="each"
+          onToggleSpeedColorRelative={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const button = screen.getByRole("button", { name: /speed coloring/i });
+      expect(button.className).toContain("active");
+    });
+
+    it("shows relative mode button", () => {
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          speedColorEnabled={false}
+          onToggleSpeedColor={vi.fn()}
+          speedColorRelative="each"
+          onToggleSpeedColorRelative={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.getByRole("button", { name: /compare/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("disables relative mode button when speed coloring is off", () => {
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          speedColorEnabled={false}
+          onToggleSpeedColor={vi.fn()}
+          speedColorRelative="each"
+          onToggleSpeedColorRelative={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const button = screen.getByRole("button", { name: /compare/i });
+      expect(button).toBeDisabled();
+    });
+
+    it("enables relative mode button when speed coloring is on", () => {
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          speedColorEnabled={true}
+          onToggleSpeedColor={vi.fn()}
+          speedColorRelative="each"
+          onToggleSpeedColorRelative={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const button = screen.getByRole("button", { name: /compare/i });
+      expect(button).not.toBeDisabled();
+    });
+
+    it("calls onToggleSpeedColorRelative when relative mode button is clicked", async () => {
+      const onToggle = vi.fn();
+      const user = userEvent.setup();
+
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          speedColorEnabled={true}
+          onToggleSpeedColor={vi.fn()}
+          speedColorRelative="each"
+          onToggleSpeedColorRelative={onToggle}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      await user.click(screen.getByRole("button", { name: /compare/i }));
+      expect(onToggle).toHaveBeenCalled();
+    });
+
+    it("shows active style on relative mode button when set to all", () => {
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          speedColorEnabled={true}
+          onToggleSpeedColor={vi.fn()}
+          speedColorRelative="all"
+          onToggleSpeedColorRelative={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const button = screen.getByRole("button", { name: /compare/i });
+      expect(button.className).toContain("active");
+    });
+  });
+
   describe("zoom to selected tracks", () => {
     it("shows zoom button when one track is selected", () => {
       const track = createTrack();

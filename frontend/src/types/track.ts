@@ -31,6 +31,7 @@ export interface Track {
 export interface TrackGeometry {
   track_id: number;
   coordinates: [number, number][];
+  segment_speeds: number[] | null;
 }
 
 export interface UploadResult {

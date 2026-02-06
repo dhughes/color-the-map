@@ -1,5 +1,6 @@
 import type maplibregl from "maplibre-gl";
 import { config } from "../config";
+import { buildLineGradientStops } from "./speedColors";
 
 const SOURCE_PREFIX = "track-";
 const DESELECTED_PREFIX = "deselected-";
@@ -64,6 +65,7 @@ export function addTrackSource(
 
   map.addSource(id, {
     type: "geojson",
+    lineMetrics: true,
     data: {
       type: "Feature",
       properties: { id: trackId },
@@ -193,6 +195,55 @@ export function syncSelection(
       } catch (error) {
         console.error(`Failed to deselect track ${id}:`, error);
       }
+    }
+  }
+}
+
+export interface TrackSpeedData {
+  speeds: number[];
+  maxSpeed: number;
+  minSpeed: number;
+}
+
+export function syncSpeedColoring(
+  map: maplibregl.Map,
+  enabled: boolean,
+  speedData: Map<number, TrackSpeedData>,
+  currentTrackIds: Set<number>,
+  selectedIds: Set<number>,
+): void {
+  for (const trackId of currentTrackIds) {
+    const isSelected = selectedIds.has(trackId);
+    const colorLayerId = isSelected
+      ? selectedFgLayerId(trackId)
+      : deselectedLayerId(trackId);
+
+    if (!map.getLayer(colorLayerId)) continue;
+
+    try {
+      if (enabled) {
+        const data = speedData.get(trackId);
+        if (!data) continue;
+
+        const gradient = buildLineGradientStops(
+          data.speeds,
+          data.maxSpeed,
+          data.minSpeed,
+        );
+        map.setPaintProperty(colorLayerId, "line-gradient", gradient);
+        map.setPaintProperty(colorLayerId, "line-color", undefined);
+      } else {
+        const restoreColor = isSelected
+          ? config.trackSelectedColor
+          : config.trackColor;
+        map.setPaintProperty(colorLayerId, "line-gradient", undefined);
+        map.setPaintProperty(colorLayerId, "line-color", restoreColor);
+      }
+    } catch (error) {
+      console.error(
+        `Failed to update speed coloring for track ${trackId}:`,
+        error,
+      );
     }
   }
 }

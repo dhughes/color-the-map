@@ -13,11 +13,12 @@ import {
   removeTrackLayers,
   syncTrackSources,
   syncSelection,
+  syncSpeedColoring,
 } from "./trackLayerManager";
 
 function createMockMap() {
   const sources = new Map<string, unknown>();
-  const layers = new Map<string, { id: string; source: string }>();
+  const layers = new Map<string, Record<string, unknown>>();
 
   return {
     addSource: vi.fn((id: string, spec: unknown) => {
@@ -51,6 +52,17 @@ function createMockMap() {
       layers.delete(id);
     }),
     getLayer: vi.fn((id: string) => layers.get(id) ?? null),
+    setPaintProperty: vi.fn((layerId: string, name: string, value: unknown) => {
+      const layer = layers.get(layerId);
+      if (!layer) throw new Error(`Layer '${layerId}' does not exist`);
+      const paint = { ...((layer.paint || {}) as Record<string, unknown>) };
+      if (value === null || value === undefined) {
+        delete paint[name];
+      } else {
+        paint[name] = value;
+      }
+      layer.paint = paint;
+    }),
     _sources: sources,
     _layers: layers,
   };
@@ -117,6 +129,7 @@ describe("trackLayerManager", () => {
 
       expect(mockMap.addSource).toHaveBeenCalledWith("track-1", {
         type: "geojson",
+        lineMetrics: true,
         data: {
           type: "Feature",
           properties: { id: 1 },
@@ -547,6 +560,228 @@ describe("trackLayerManager", () => {
 
       expect(mockMap._layers.has("selected-bg-3")).toBe(true);
       expect(mockMap._layers.has("selected-fg-3")).toBe(true);
+    });
+  });
+
+  describe("addTrackSource with lineMetrics", () => {
+    let mockMap: MockMap;
+
+    beforeEach(() => {
+      mockMap = createMockMap();
+    });
+
+    it("creates sources with lineMetrics enabled", () => {
+      const coords: [number, number][] = [
+        [-79, 35],
+        [-79.1, 35.1],
+      ];
+      addTrackSource(mockMap as never, 1, coords);
+
+      const sourceSpec = mockMap._sources.get("track-1") as Record<
+        string,
+        unknown
+      >;
+      expect(sourceSpec.lineMetrics).toBe(true);
+    });
+  });
+
+  describe("syncSpeedColoring", () => {
+    let mockMap: MockMap;
+
+    beforeEach(() => {
+      mockMap = createMockMap();
+      const geometries = [
+        { track_id: 1, coordinates: [[-79, 35]] as [number, number][] },
+        { track_id: 2, coordinates: [[-78, 34]] as [number, number][] },
+        { track_id: 3, coordinates: [[-77, 33]] as [number, number][] },
+      ];
+      syncTrackSources(mockMap as never, geometries, new Set(), new Set());
+    });
+
+    it("applies line-gradient to deselected tracks when enabled", () => {
+      const speedData = new Map<
+        number,
+        { speeds: number[]; maxSpeed: number; minSpeed: number }
+      >([
+        [1, { speeds: [2, 5, 8], maxSpeed: 10, minSpeed: 0 }],
+        [2, { speeds: [1, 3], maxSpeed: 10, minSpeed: 0 }],
+      ]);
+
+      syncSpeedColoring(
+        mockMap as never,
+        true,
+        speedData,
+        new Set([1, 2, 3]),
+        new Set(),
+      );
+
+      const layer1 = mockMap._layers.get("deselected-1") as Record<
+        string,
+        unknown
+      >;
+      const paint1 = layer1.paint as Record<string, unknown>;
+      expect(paint1["line-gradient"]).toBeDefined();
+      expect(paint1["line-color"]).toBeUndefined();
+    });
+
+    it("applies line-gradient to selected foreground layers", () => {
+      syncSelection(
+        mockMap as never,
+        new Set([1]),
+        new Set(),
+        new Set([1, 2, 3]),
+      );
+
+      const speedData = new Map<
+        number,
+        { speeds: number[]; maxSpeed: number; minSpeed: number }
+      >([[1, { speeds: [2, 5, 8], maxSpeed: 10, minSpeed: 0 }]]);
+
+      syncSpeedColoring(
+        mockMap as never,
+        true,
+        speedData,
+        new Set([1, 2, 3]),
+        new Set([1]),
+      );
+
+      const fgLayer = mockMap._layers.get("selected-fg-1") as Record<
+        string,
+        unknown
+      >;
+      const fgPaint = fgLayer.paint as Record<string, unknown>;
+      expect(fgPaint["line-gradient"]).toBeDefined();
+
+      const bgLayer = mockMap._layers.get("selected-bg-1") as Record<
+        string,
+        unknown
+      >;
+      const bgPaint = bgLayer.paint as Record<string, unknown>;
+      expect(bgPaint["line-gradient"]).toBeUndefined();
+    });
+
+    it("removes line-gradient and restores line-color when disabled", () => {
+      const speedData = new Map<
+        number,
+        { speeds: number[]; maxSpeed: number; minSpeed: number }
+      >([[1, { speeds: [2, 5, 8], maxSpeed: 10, minSpeed: 0 }]]);
+
+      syncSpeedColoring(
+        mockMap as never,
+        true,
+        speedData,
+        new Set([1, 2, 3]),
+        new Set(),
+      );
+
+      syncSpeedColoring(
+        mockMap as never,
+        false,
+        speedData,
+        new Set([1, 2, 3]),
+        new Set(),
+      );
+
+      const layer1 = mockMap._layers.get("deselected-1") as Record<
+        string,
+        unknown
+      >;
+      const paint1 = layer1.paint as Record<string, unknown>;
+      expect(paint1["line-gradient"]).toBeUndefined();
+      expect(paint1["line-color"]).toBe(config.trackColor);
+    });
+
+    it("restores selected foreground line-color when disabled", () => {
+      syncSelection(
+        mockMap as never,
+        new Set([1]),
+        new Set(),
+        new Set([1, 2, 3]),
+      );
+
+      const speedData = new Map<
+        number,
+        { speeds: number[]; maxSpeed: number; minSpeed: number }
+      >([[1, { speeds: [2, 5, 8], maxSpeed: 10, minSpeed: 0 }]]);
+
+      syncSpeedColoring(
+        mockMap as never,
+        true,
+        speedData,
+        new Set([1, 2, 3]),
+        new Set([1]),
+      );
+
+      syncSpeedColoring(
+        mockMap as never,
+        false,
+        speedData,
+        new Set([1, 2, 3]),
+        new Set([1]),
+      );
+
+      const fgLayer = mockMap._layers.get("selected-fg-1") as Record<
+        string,
+        unknown
+      >;
+      const fgPaint = fgLayer.paint as Record<string, unknown>;
+      expect(fgPaint["line-gradient"]).toBeUndefined();
+      expect(fgPaint["line-color"]).toBe(config.trackSelectedColor);
+    });
+
+    it("skips tracks without speed data", () => {
+      const speedData = new Map<
+        number,
+        { speeds: number[]; maxSpeed: number; minSpeed: number }
+      >([[1, { speeds: [2, 5, 8], maxSpeed: 10, minSpeed: 0 }]]);
+
+      syncSpeedColoring(
+        mockMap as never,
+        true,
+        speedData,
+        new Set([1, 2, 3]),
+        new Set(),
+      );
+
+      const layer2 = mockMap._layers.get("deselected-2") as Record<
+        string,
+        unknown
+      >;
+      const paint2 = layer2.paint as Record<string, unknown>;
+      expect(paint2["line-gradient"]).toBeUndefined();
+    });
+
+    it("handles errors gracefully for individual tracks", () => {
+      const speedData = new Map<
+        number,
+        { speeds: number[]; maxSpeed: number; minSpeed: number }
+      >([
+        [1, { speeds: [2, 5, 8], maxSpeed: 10, minSpeed: 0 }],
+        [2, { speeds: [1, 3], maxSpeed: 10, minSpeed: 0 }],
+      ]);
+
+      mockMap.setPaintProperty.mockImplementationOnce(() => {
+        throw new Error("WebGL error");
+      });
+
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      syncSpeedColoring(
+        mockMap as never,
+        true,
+        speedData,
+        new Set([1, 2, 3]),
+        new Set(),
+      );
+      consoleSpy.mockRestore();
+
+      const layer2 = mockMap._layers.get("deselected-2") as Record<
+        string,
+        unknown
+      >;
+      const paint2 = layer2.paint as Record<string, unknown>;
+      expect(paint2["line-gradient"]).toBeDefined();
     });
   });
 });
