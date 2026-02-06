@@ -50,3 +50,5 @@ export interface BulkUpdateResult {
 }
 
 export type SpeedColorRelative = "each" | "all";
+
+export type TrackVisibility = "all" | "none" | "mixed";
