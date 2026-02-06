@@ -11,7 +11,7 @@ from ..models.track import Track
 from ..models.track_upload_result import TrackUploadResult
 from ..models.track_geometry_data import TrackGeometryData
 
-ALLOWED_UPDATE_FIELDS = {"visible", "name", "activity_type", "description"}
+ALLOWED_UPDATE_FIELDS = {"visible", "name", "activity_type"}
 
 
 @dataclass

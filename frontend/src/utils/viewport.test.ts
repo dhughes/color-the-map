@@ -35,7 +35,7 @@ const createMockTrack = (
   bounds_min_lon: bounds.minLon,
   bounds_max_lon: bounds.maxLon,
   visible: true,
-  description: null,
+
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-01T00:00:00Z",
 });

@@ -29,7 +29,6 @@ class Track:
     bounds_max_lon: Optional[float]
 
     visible: bool
-    description: Optional[str]
 
     created_at: datetime
     updated_at: datetime
@@ -59,7 +58,6 @@ class Track:
             bounds_max_lat=model.bounds_max_lat,
             bounds_max_lon=model.bounds_max_lon,
             visible=model.visible,
-            description=model.description,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )

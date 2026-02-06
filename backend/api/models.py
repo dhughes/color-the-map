@@ -32,7 +32,6 @@ class TrackResponse(BaseModel):
     bounds_max_lon: Optional[float]
 
     visible: bool
-    description: Optional[str]
 
     created_at: datetime
     updated_at: datetime
@@ -72,7 +71,6 @@ class TrackUpdate(BaseModel):
     visible: Optional[bool] = None
     name: Optional[str] = None
     activity_type: Optional[str] = None
-    description: Optional[str] = None
 
 
 class LocationResponse(BaseModel):

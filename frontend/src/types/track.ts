@@ -23,7 +23,6 @@ export interface Track {
   bounds_max_lon: number | null;
 
   visible: boolean;
-  description: string | null;
 
   created_at: string;
   updated_at: string;

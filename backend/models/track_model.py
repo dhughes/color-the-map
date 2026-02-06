@@ -8,7 +8,6 @@ from sqlalchemy import (
     Integer,
     Float,
     Boolean,
-    Text,
     JSON,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -42,7 +41,6 @@ class Track(Base):
     bounds_max_lon: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     visible: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     # JSON deserialization returns lists, not tuples
     coordinates: Mapped[List[List[float]] | None] = mapped_column(JSON, nullable=True)
 

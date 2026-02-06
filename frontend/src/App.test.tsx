@@ -52,7 +52,7 @@ describe("App - Zoom to Track Feature", () => {
     bounds_max_lat: 35.95,
     bounds_max_lon: -79.05,
     visible: true,
-    description: null,
+
     created_at: "2025-01-01T10:05:00Z",
     updated_at: "2025-01-01T10:05:00Z",
   };
@@ -187,7 +187,7 @@ describe("App - Logout Functionality", () => {
       bounds_max_lat: 35.91,
       bounds_max_lon: -79.09,
       visible: true,
-      description: null,
+
       created_at: "2025-01-01T10:05:00Z",
       updated_at: "2025-01-01T10:05:00Z",
     };
