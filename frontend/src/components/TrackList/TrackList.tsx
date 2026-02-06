@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { Upload } from "lucide-react";
 import { updateTrack, deleteTracks } from "../../api/client";
 import { SidebarPanel } from "../SidebarPanel";
 import { TrackListItem } from "./TrackListItem";
@@ -18,6 +19,7 @@ interface TrackListProps {
   onSelectRange: (trackIds: number[], startId: number, endId: number) => void;
   onZoomToTrack: (track: Track) => void;
   onZoomToSelectedTracks: () => void;
+  onUploadFiles: (files: File[]) => void;
   lastSelectedTrackId: number | null;
   selectionSource: SelectionSource | null;
   speedColorEnabled: boolean;
@@ -34,6 +36,7 @@ export function TrackList({
   onSelectRange,
   onZoomToTrack,
   onZoomToSelectedTracks,
+  onUploadFiles,
   lastSelectedTrackId,
   selectionSource,
   speedColorEnabled,
@@ -43,10 +46,28 @@ export function TrackList({
 }: TrackListProps) {
   const queryClient = useQueryClient();
   const listRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [confirmDelete, setConfirmDelete] = useState<{
     trackIds: number[];
     count: number;
   } | null>(null);
+
+  const handleUploadClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files ?? []).filter((f) =>
+        f.name.toLowerCase().endsWith(".gpx"),
+      );
+      if (files.length > 0) {
+        onUploadFiles(files);
+      }
+      e.target.value = "";
+    },
+    [onUploadFiles],
+  );
 
   const toggleVisibility = useMutation({
     mutationFn: ({ trackId, visible }: { trackId: number; visible: boolean }) =>
@@ -251,7 +272,26 @@ export function TrackList({
 
   return (
     <div className="track-list">
-      <SidebarPanel title="Tracks">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".gpx"
+        multiple
+        onChange={handleFileChange}
+        hidden
+      />
+      <SidebarPanel
+        title="Tracks"
+        action={
+          <button
+            onClick={handleUploadClick}
+            aria-label="Upload GPX files"
+            title="Upload GPX files"
+          >
+            <Upload size={16} />
+          </button>
+        }
+      >
         <div className="track-list-items" ref={listRef}>
           {tracks.map((track) => (
             <TrackListItem

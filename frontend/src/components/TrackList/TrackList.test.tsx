@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TrackList } from "./TrackList";
 
@@ -32,6 +33,7 @@ describe("TrackList", () => {
   const mockOnSelect = vi.fn();
   const mockOnSelectRange = vi.fn();
   const mockOnZoomToTrack = vi.fn();
+  const mockOnUploadFiles = vi.fn();
 
   const createWrapper = () => {
     const queryClient = new QueryClient({
@@ -51,6 +53,7 @@ describe("TrackList", () => {
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
         onZoomToTrack={mockOnZoomToTrack}
+        onUploadFiles={mockOnUploadFiles}
         lastSelectedTrackId={null}
         selectionSource={null}
       />,
@@ -69,6 +72,7 @@ describe("TrackList", () => {
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
         onZoomToTrack={mockOnZoomToTrack}
+        onUploadFiles={mockOnUploadFiles}
         lastSelectedTrackId={null}
         selectionSource={null}
       />,
@@ -87,6 +91,7 @@ describe("TrackList", () => {
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
         onZoomToTrack={mockOnZoomToTrack}
+        onUploadFiles={mockOnUploadFiles}
         lastSelectedTrackId={null}
         selectionSource={null}
       />,
@@ -108,6 +113,7 @@ describe("TrackList", () => {
         onSelect={mockOnSelect}
         onSelectRange={mockOnSelectRange}
         onZoomToTrack={mockOnZoomToTrack}
+        onUploadFiles={mockOnUploadFiles}
         lastSelectedTrackId={null}
         selectionSource={null}
       />,
@@ -193,6 +199,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={null}
             selectionSource={null}
           />
@@ -212,6 +219,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={1}
             selectionSource="map"
           />
@@ -238,6 +246,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={null}
             selectionSource={null}
           />
@@ -257,6 +266,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={1}
             selectionSource="map"
           />
@@ -280,6 +290,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={null}
             selectionSource={null}
           />
@@ -299,6 +310,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={1}
             selectionSource="sidebar"
           />
@@ -325,6 +337,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={null}
             selectionSource={null}
           />
@@ -344,6 +357,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={1}
             selectionSource="sidebar"
           />
@@ -365,6 +379,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={null}
             selectionSource={null}
           />
@@ -384,6 +399,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={2}
             selectionSource="sidebar"
           />
@@ -405,6 +421,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={1}
             selectionSource={null}
           />
@@ -428,6 +445,7 @@ describe("TrackList", () => {
             onSelect={vi.fn()}
             onSelectRange={vi.fn()}
             onZoomToTrack={vi.fn()}
+            onUploadFiles={vi.fn()}
             lastSelectedTrackId={null}
             selectionSource="map"
           />
@@ -439,6 +457,237 @@ describe("TrackList", () => {
       });
 
       expect(mockScrollIntoView).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("upload button", () => {
+    beforeEach(() => {
+      mockOnUploadFiles.mockClear();
+    });
+
+    it("renders an upload button in the tracks header", () => {
+      render(
+        <TrackList
+          tracks={mockTracks}
+          selectedTrackIds={mockSelectedTrackIds}
+          anchorTrackId={null}
+          onSelect={mockOnSelect}
+          onSelectRange={mockOnSelectRange}
+          onZoomToTrack={mockOnZoomToTrack}
+          onUploadFiles={mockOnUploadFiles}
+          lastSelectedTrackId={null}
+          selectionSource={null}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      expect(
+        screen.getByRole("button", { name: "Upload GPX files" }),
+      ).toBeInTheDocument();
+    });
+
+    it("opens file picker when upload button is clicked", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <TrackList
+          tracks={mockTracks}
+          selectedTrackIds={mockSelectedTrackIds}
+          anchorTrackId={null}
+          onSelect={mockOnSelect}
+          onSelectRange={mockOnSelectRange}
+          onZoomToTrack={mockOnZoomToTrack}
+          onUploadFiles={mockOnUploadFiles}
+          lastSelectedTrackId={null}
+          selectionSource={null}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+      const clickSpy = vi.spyOn(fileInput, "click");
+
+      await user.click(
+        screen.getByRole("button", { name: "Upload GPX files" }),
+      );
+
+      expect(clickSpy).toHaveBeenCalled();
+    });
+
+    it("calls onUploadFiles with selected gpx files", async () => {
+      render(
+        <TrackList
+          tracks={mockTracks}
+          selectedTrackIds={mockSelectedTrackIds}
+          anchorTrackId={null}
+          onSelect={mockOnSelect}
+          onSelectRange={mockOnSelectRange}
+          onZoomToTrack={mockOnZoomToTrack}
+          onUploadFiles={mockOnUploadFiles}
+          lastSelectedTrackId={null}
+          selectionSource={null}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+
+      const gpxFile = new File(["<gpx></gpx>"], "track.gpx", {
+        type: "application/gpx+xml",
+      });
+
+      await userEvent.upload(fileInput, gpxFile);
+
+      expect(mockOnUploadFiles).toHaveBeenCalledWith([gpxFile]);
+    });
+
+    it("filters out non-gpx files", async () => {
+      render(
+        <TrackList
+          tracks={mockTracks}
+          selectedTrackIds={mockSelectedTrackIds}
+          anchorTrackId={null}
+          onSelect={mockOnSelect}
+          onSelectRange={mockOnSelectRange}
+          onZoomToTrack={mockOnZoomToTrack}
+          onUploadFiles={mockOnUploadFiles}
+          lastSelectedTrackId={null}
+          selectionSource={null}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+
+      const txtFile = new File(["hello"], "notes.txt", {
+        type: "text/plain",
+      });
+
+      await userEvent.upload(fileInput, txtFile);
+
+      expect(mockOnUploadFiles).not.toHaveBeenCalled();
+    });
+
+    it("accepts files with uppercase .GPX extension", async () => {
+      render(
+        <TrackList
+          tracks={mockTracks}
+          selectedTrackIds={mockSelectedTrackIds}
+          anchorTrackId={null}
+          onSelect={mockOnSelect}
+          onSelectRange={mockOnSelectRange}
+          onZoomToTrack={mockOnZoomToTrack}
+          onUploadFiles={mockOnUploadFiles}
+          lastSelectedTrackId={null}
+          selectionSource={null}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+
+      const gpxFile = new File(["<gpx></gpx>"], "track.GPX", {
+        type: "application/gpx+xml",
+      });
+
+      await userEvent.upload(fileInput, gpxFile);
+
+      expect(mockOnUploadFiles).toHaveBeenCalledWith([gpxFile]);
+    });
+
+    it("accepts multiple gpx files", async () => {
+      render(
+        <TrackList
+          tracks={mockTracks}
+          selectedTrackIds={mockSelectedTrackIds}
+          anchorTrackId={null}
+          onSelect={mockOnSelect}
+          onSelectRange={mockOnSelectRange}
+          onZoomToTrack={mockOnZoomToTrack}
+          onUploadFiles={mockOnUploadFiles}
+          lastSelectedTrackId={null}
+          selectionSource={null}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+
+      const file1 = new File(["<gpx></gpx>"], "track1.gpx", {
+        type: "application/gpx+xml",
+      });
+      const file2 = new File(["<gpx></gpx>"], "track2.gpx", {
+        type: "application/gpx+xml",
+      });
+
+      await userEvent.upload(fileInput, [file1, file2]);
+
+      expect(mockOnUploadFiles).toHaveBeenCalledWith([file1, file2]);
+    });
+
+    it("resets file input after selection", async () => {
+      render(
+        <TrackList
+          tracks={mockTracks}
+          selectedTrackIds={mockSelectedTrackIds}
+          anchorTrackId={null}
+          onSelect={mockOnSelect}
+          onSelectRange={mockOnSelectRange}
+          onZoomToTrack={mockOnZoomToTrack}
+          onUploadFiles={mockOnUploadFiles}
+          lastSelectedTrackId={null}
+          selectionSource={null}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+
+      const gpxFile = new File(["<gpx></gpx>"], "track.gpx", {
+        type: "application/gpx+xml",
+      });
+
+      await userEvent.upload(fileInput, gpxFile);
+
+      expect(fileInput.value).toBe("");
+    });
+
+    it("has correct file input attributes", () => {
+      render(
+        <TrackList
+          tracks={mockTracks}
+          selectedTrackIds={mockSelectedTrackIds}
+          anchorTrackId={null}
+          onSelect={mockOnSelect}
+          onSelectRange={mockOnSelectRange}
+          onZoomToTrack={mockOnZoomToTrack}
+          onUploadFiles={mockOnUploadFiles}
+          lastSelectedTrackId={null}
+          selectionSource={null}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const fileInput = document.querySelector(
+        'input[type="file"]',
+      ) as HTMLInputElement;
+
+      expect(fileInput).toBeInTheDocument();
+      expect(fileInput.accept).toBe(".gpx");
+      expect(fileInput.multiple).toBe(true);
+      expect(fileInput.hidden).toBe(true);
     });
   });
 });

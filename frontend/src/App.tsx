@@ -380,6 +380,7 @@ export function AppContent() {
           onSelectRange={selectRange}
           onZoomToTrack={handleZoomToTrack}
           onZoomToSelectedTracks={handleZoomToSelectedTracks}
+          onUploadFiles={handleFilesDropped}
           lastSelectedTrackId={lastSelectedTrackId}
           selectionSource={selectionSource}
           speedColorEnabled={speedColorEnabled}
