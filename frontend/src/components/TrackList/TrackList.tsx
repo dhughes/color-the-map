@@ -297,16 +297,34 @@ export function TrackList({
     toggleSelectedTracksVisibility.mutate({ trackIds, visible });
   };
 
-  const hideUnselectedTracks = useMutation({
-    mutationFn: ({ trackIds }: { trackIds: number[] }) =>
-      bulkUpdateTracks(trackIds, { visible: false }),
-    onMutate: async ({ trackIds }) => {
+  const [isolatedSelectionIds, setIsolatedSelectionIds] =
+    useState<Set<number> | null>(null);
+  const hiddenByIsolationRef = useRef<Set<number>>(new Set());
+
+  const isolationActive = useMemo(() => {
+    if (!isolatedSelectionIds) return false;
+    if (isolatedSelectionIds.size !== selectedTrackIds.size) return false;
+    for (const id of selectedTrackIds) {
+      if (!isolatedSelectionIds.has(id)) return false;
+    }
+    return true;
+  }, [selectedTrackIds, isolatedSelectionIds]);
+
+  const setUnselectedTracksVisibility = useMutation({
+    mutationFn: ({
+      trackIds,
+      visible,
+    }: {
+      trackIds: number[];
+      visible: boolean;
+    }) => bulkUpdateTracks(trackIds, { visible }),
+    onMutate: async ({ trackIds, visible }) => {
       await queryClient.cancelQueries({ queryKey: ["tracks"] });
       const previousTracks = queryClient.getQueryData(["tracks"]);
       const idSet = new Set(trackIds);
       queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
         old?.map((track) =>
-          idSet.has(track.id) ? { ...track, visible: false } : track,
+          idSet.has(track.id) ? { ...track, visible } : track,
         ),
       );
       return { previousTracks };
@@ -318,12 +336,29 @@ export function TrackList({
     },
   });
 
-  const handleHideUnselectedTracks = () => {
-    const unselectedTrackIds = tracks
-      .filter((t) => !selectedTrackIds.has(t.id) && t.visible)
-      .map((t) => t.id);
-    if (unselectedTrackIds.length > 0) {
-      hideUnselectedTracks.mutate({ trackIds: unselectedTrackIds });
+  const handleToggleIsolation = () => {
+    if (isolationActive) {
+      const trackIdsToRestore = Array.from(hiddenByIsolationRef.current);
+      if (trackIdsToRestore.length > 0) {
+        setUnselectedTracksVisibility.mutate({
+          trackIds: trackIdsToRestore,
+          visible: true,
+        });
+      }
+      hiddenByIsolationRef.current = new Set();
+      setIsolatedSelectionIds(null);
+    } else {
+      const unselectedVisibleIds = tracks
+        .filter((t) => !selectedTrackIds.has(t.id) && t.visible)
+        .map((t) => t.id);
+      if (unselectedVisibleIds.length > 0) {
+        hiddenByIsolationRef.current = new Set(unselectedVisibleIds);
+        setIsolatedSelectionIds(new Set(selectedTrackIds));
+        setUnselectedTracksVisibility.mutate({
+          trackIds: unselectedVisibleIds,
+          visible: false,
+        });
+      }
     }
   };
 
@@ -413,8 +448,9 @@ export function TrackList({
         onToggleSpeedColorRelative={onToggleSpeedColorRelative}
         selectedTracksVisibility={selectedTracksVisibility}
         onToggleSelectedTracksVisibility={handleToggleSelectedTracksVisibility}
+        isolationActive={isolationActive}
         hasVisibleUnselectedTracks={hasVisibleUnselectedTracks}
-        onHideUnselectedTracks={handleHideUnselectedTracks}
+        onToggleIsolation={handleToggleIsolation}
       />
 
       <ConfirmDialog

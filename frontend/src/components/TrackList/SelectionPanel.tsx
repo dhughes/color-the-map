@@ -1,10 +1,11 @@
 import {
+  Blocks,
   Eye,
   EyeOff,
   Focus,
   Gauge,
+  LayoutGrid,
   Layers,
-  SquaresExclude,
 } from "lucide-react";
 import { SidebarPanel } from "../SidebarPanel";
 import { TrackDetailsPanel } from "./TrackDetailsPanel";
@@ -27,8 +28,9 @@ interface SelectionPanelProps {
   onToggleSpeedColorRelative?: () => void;
   selectedTracksVisibility?: TrackVisibility;
   onToggleSelectedTracksVisibility?: () => void;
+  isolationActive?: boolean;
   hasVisibleUnselectedTracks?: boolean;
-  onHideUnselectedTracks?: () => void;
+  onToggleIsolation?: () => void;
 }
 
 export function SelectionPanel({
@@ -43,8 +45,9 @@ export function SelectionPanel({
   onToggleSpeedColorRelative,
   selectedTracksVisibility,
   onToggleSelectedTracksVisibility,
+  isolationActive = false,
   hasVisibleUnselectedTracks = false,
-  onHideUnselectedTracks,
+  onToggleIsolation,
 }: SelectionPanelProps) {
   const selectionCount = selectedTracks.length;
 
@@ -137,24 +140,29 @@ export function SelectionPanel({
           )}
         </button>
       )}
-      {selectionCount > 0 && onHideUnselectedTracks && (
+      {selectionCount > 0 && onToggleIsolation && (
         <button
-          onClick={onHideUnselectedTracks}
+          onClick={onToggleIsolation}
           className={[
             "panel-icon-button",
-            !hasVisibleUnselectedTracks && "disabled",
+            isolationActive && "active",
+            !isolationActive && !hasVisibleUnselectedTracks && "disabled",
           ]
             .filter(Boolean)
             .join(" ")}
-          disabled={!hasVisibleUnselectedTracks}
-          aria-label="Hide unselected tracks"
+          disabled={!isolationActive && !hasVisibleUnselectedTracks}
+          aria-label={
+            isolationActive ? "Show all tracks" : "Isolate selected tracks"
+          }
           title={
-            hasVisibleUnselectedTracks
-              ? "Hide unselected tracks"
-              : "No visible unselected tracks to hide"
+            isolationActive
+              ? "Show all tracks"
+              : hasVisibleUnselectedTracks
+                ? "Isolate selected tracks"
+                : "No visible unselected tracks to hide"
           }
         >
-          <SquaresExclude size={16} />
+          {isolationActive ? <Blocks size={16} /> : <LayoutGrid size={16} />}
         </button>
       )}
       {selectionCount > 0 && onZoomToSelectedTracks && (

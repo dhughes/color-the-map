@@ -591,8 +591,8 @@ describe("SelectionPanel", () => {
     });
   });
 
-  describe("hide unselected tracks", () => {
-    it("shows hide unselected button when tracks are selected and callback provided", () => {
+  describe("isolate selected tracks", () => {
+    it("shows isolate button when tracks are selected and callback provided", () => {
       const track = createTrack();
       render(
         <SelectionPanel
@@ -601,17 +601,17 @@ describe("SelectionPanel", () => {
           allActivityTypes={[]}
           onDelete={vi.fn()}
           hasVisibleUnselectedTracks={true}
-          onHideUnselectedTracks={vi.fn()}
+          onToggleIsolation={vi.fn()}
         />,
         { wrapper: createWrapper() },
       );
 
       expect(
-        screen.getByRole("button", { name: /hide unselected tracks/i }),
+        screen.getByRole("button", { name: /isolate selected tracks/i }),
       ).toBeInTheDocument();
     });
 
-    it("does not show hide unselected button when no tracks are selected", () => {
+    it("does not show isolate button when no tracks are selected", () => {
       render(
         <SelectionPanel
           totalTracks={6}
@@ -619,17 +619,17 @@ describe("SelectionPanel", () => {
           allActivityTypes={[]}
           onDelete={vi.fn()}
           hasVisibleUnselectedTracks={true}
-          onHideUnselectedTracks={vi.fn()}
+          onToggleIsolation={vi.fn()}
         />,
         { wrapper: createWrapper() },
       );
 
       expect(
-        screen.queryByRole("button", { name: /hide unselected tracks/i }),
+        screen.queryByRole("button", { name: /isolate selected tracks/i }),
       ).not.toBeInTheDocument();
     });
 
-    it("does not show hide unselected button when callback is not provided", () => {
+    it("does not show isolate button when callback is not provided", () => {
       const track = createTrack();
       render(
         <SelectionPanel
@@ -642,11 +642,11 @@ describe("SelectionPanel", () => {
       );
 
       expect(
-        screen.queryByRole("button", { name: /hide unselected tracks/i }),
+        screen.queryByRole("button", { name: /isolate selected tracks/i }),
       ).not.toBeInTheDocument();
     });
 
-    it("disables button when no visible unselected tracks exist", () => {
+    it("disables button when not isolated and no visible unselected tracks", () => {
       const track = createTrack();
       render(
         <SelectionPanel
@@ -654,14 +654,15 @@ describe("SelectionPanel", () => {
           selectedTracks={[track]}
           allActivityTypes={[]}
           onDelete={vi.fn()}
+          isolationActive={false}
           hasVisibleUnselectedTracks={false}
-          onHideUnselectedTracks={vi.fn()}
+          onToggleIsolation={vi.fn()}
         />,
         { wrapper: createWrapper() },
       );
 
       const button = screen.getByRole("button", {
-        name: /hide unselected tracks/i,
+        name: /isolate selected tracks/i,
       });
       expect(button).toBeDisabled();
     });
@@ -675,19 +676,41 @@ describe("SelectionPanel", () => {
           allActivityTypes={[]}
           onDelete={vi.fn()}
           hasVisibleUnselectedTracks={true}
-          onHideUnselectedTracks={vi.fn()}
+          onToggleIsolation={vi.fn()}
         />,
         { wrapper: createWrapper() },
       );
 
       const button = screen.getByRole("button", {
-        name: /hide unselected tracks/i,
+        name: /isolate selected tracks/i,
       });
       expect(button).not.toBeDisabled();
     });
 
-    it("calls onHideUnselectedTracks when button is clicked", async () => {
-      const onHide = vi.fn();
+    it("shows active style and 'Show all tracks' label when isolation is active", () => {
+      const track = createTrack();
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          isolationActive={true}
+          hasVisibleUnselectedTracks={false}
+          onToggleIsolation={vi.fn()}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      const button = screen.getByRole("button", {
+        name: /show all tracks/i,
+      });
+      expect(button).not.toBeDisabled();
+      expect(button.className).toContain("active");
+    });
+
+    it("calls onToggleIsolation when isolate button is clicked", async () => {
+      const onToggle = vi.fn();
       const track = createTrack();
       const user = userEvent.setup();
 
@@ -698,18 +721,42 @@ describe("SelectionPanel", () => {
           allActivityTypes={[]}
           onDelete={vi.fn()}
           hasVisibleUnselectedTracks={true}
-          onHideUnselectedTracks={onHide}
+          onToggleIsolation={onToggle}
         />,
         { wrapper: createWrapper() },
       );
 
       await user.click(
-        screen.getByRole("button", { name: /hide unselected tracks/i }),
+        screen.getByRole("button", { name: /isolate selected tracks/i }),
       );
-      expect(onHide).toHaveBeenCalled();
+      expect(onToggle).toHaveBeenCalled();
     });
 
-    it("shows disabled style when no visible unselected tracks", () => {
+    it("calls onToggleIsolation when unisolate button is clicked", async () => {
+      const onToggle = vi.fn();
+      const track = createTrack();
+      const user = userEvent.setup();
+
+      render(
+        <SelectionPanel
+          totalTracks={6}
+          selectedTracks={[track]}
+          allActivityTypes={[]}
+          onDelete={vi.fn()}
+          isolationActive={true}
+          hasVisibleUnselectedTracks={false}
+          onToggleIsolation={onToggle}
+        />,
+        { wrapper: createWrapper() },
+      );
+
+      await user.click(
+        screen.getByRole("button", { name: /show all tracks/i }),
+      );
+      expect(onToggle).toHaveBeenCalled();
+    });
+
+    it("shows disabled style when not isolated and no visible unselected tracks", () => {
       const track = createTrack();
       render(
         <SelectionPanel
@@ -717,14 +764,15 @@ describe("SelectionPanel", () => {
           selectedTracks={[track]}
           allActivityTypes={[]}
           onDelete={vi.fn()}
+          isolationActive={false}
           hasVisibleUnselectedTracks={false}
-          onHideUnselectedTracks={vi.fn()}
+          onToggleIsolation={vi.fn()}
         />,
         { wrapper: createWrapper() },
       );
 
       const button = screen.getByRole("button", {
-        name: /hide unselected tracks/i,
+        name: /isolate selected tracks/i,
       });
       expect(button.className).toContain("disabled");
     });
