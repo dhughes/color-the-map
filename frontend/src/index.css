@@ -375,6 +375,136 @@ body {
   }
 }
 
+/* Map Selector */
+.map-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  min-height: 58px;
+  box-sizing: border-box;
+  border-bottom: 2px solid var(--color-border);
+  background: var(--color-overlay);
+  flex-shrink: 0;
+}
+
+.map-selector-bar {
+  width: 3px;
+  height: 14px;
+  background: var(--color-primary);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.map-selector-select {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6b6b' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  padding-right: 24px;
+}
+
+.map-selector-select:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.map-selector-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(255, 0, 255, 0.08);
+}
+
+.map-selector-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.map-selector-icon-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  transition: all 0.15s ease;
+  padding: 0;
+  color: var(--color-text-muted);
+}
+
+.map-selector-icon-btn:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+  transform: scale(1.1);
+}
+
+.map-selector-icon-btn:active {
+  transform: scale(0.92);
+}
+
+.map-selector-icon-btn.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.map-selector-icon-btn.disabled:hover {
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.map-selector-input-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.map-selector-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.map-selector-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(255, 0, 255, 0.08);
+}
+
+.map-selector-input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
 /* Track List Sidebar */
 .track-list {
   width: 350px;

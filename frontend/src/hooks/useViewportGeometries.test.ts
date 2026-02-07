@@ -48,7 +48,7 @@ beforeEach(() => {
 describe("useViewportGeometries", () => {
   it("returns empty geometries with empty tracks", () => {
     const tracks: Track[] = [];
-    const { result } = renderHook(() => useViewportGeometries(tracks));
+    const { result } = renderHook(() => useViewportGeometries(tracks, 1));
 
     expect(result.current.geometries).toEqual([]);
     expect(result.current.isLoading).toBe(false);
@@ -69,7 +69,7 @@ describe("useViewportGeometries", () => {
     ).mockResolvedValue();
     vi.mocked(apiClient.getTrackGeometries).mockResolvedValue([geometry]);
 
-    const { result } = renderHook(() => useViewportGeometries(tracks));
+    const { result } = renderHook(() => useViewportGeometries(tracks, 1));
 
     const viewport: ViewportBounds = {
       minLat: 5,
@@ -91,8 +91,9 @@ describe("useViewportGeometries", () => {
 
     expect(vi.mocked(apiClient.getTrackGeometries)).toHaveBeenCalled();
     const callArgs = vi.mocked(apiClient.getTrackGeometries).mock.calls[0];
-    expect(callArgs[0]).toEqual([1]);
-    expect(callArgs[1]).toBeInstanceOf(AbortSignal);
+    expect(callArgs[0]).toBe(1);
+    expect(callArgs[1]).toEqual([1]);
+    expect(callArgs[2]).toBeInstanceOf(AbortSignal);
   });
 
   it("uses cached geometries", async () => {
@@ -105,7 +106,7 @@ describe("useViewportGeometries", () => {
       geometryCacheModule.geometryCache.getGeometries,
     ).mockResolvedValue([geometry]);
 
-    const { result } = renderHook(() => useViewportGeometries(tracks));
+    const { result } = renderHook(() => useViewportGeometries(tracks, 1));
 
     const viewport: ViewportBounds = {
       minLat: 5,
@@ -140,7 +141,7 @@ describe("useViewportGeometries", () => {
       new Error("Network error"),
     );
 
-    const { result } = renderHook(() => useViewportGeometries(tracks));
+    const { result } = renderHook(() => useViewportGeometries(tracks, 1));
 
     const viewport: ViewportBounds = {
       minLat: 5,
@@ -168,7 +169,7 @@ describe("useViewportGeometries", () => {
       createTrack(1, { minLat: 50, maxLat: 60, minLon: 70, maxLon: 80 }),
     ];
 
-    const { result } = renderHook(() => useViewportGeometries(tracks));
+    const { result } = renderHook(() => useViewportGeometries(tracks, 1));
 
     const viewport: ViewportBounds = {
       minLat: 0,
@@ -201,7 +202,7 @@ describe("useViewportGeometries", () => {
     ).mockResolvedValue();
     vi.mocked(apiClient.getTrackGeometries).mockResolvedValue([geometry]);
 
-    const { result } = renderHook(() => useViewportGeometries(tracks));
+    const { result } = renderHook(() => useViewportGeometries(tracks, 1));
 
     const viewport: ViewportBounds = {
       minLat: 5,
@@ -222,6 +223,6 @@ describe("useViewportGeometries", () => {
     );
 
     const callArgs = vi.mocked(apiClient.getTrackGeometries).mock.calls[0];
-    expect(callArgs[1]).toBeInstanceOf(AbortSignal);
+    expect(callArgs[2]).toBeInstanceOf(AbortSignal);
   });
 });

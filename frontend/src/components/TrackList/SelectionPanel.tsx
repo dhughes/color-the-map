@@ -19,6 +19,7 @@ import type {
 interface SelectionPanelProps {
   totalTracks: number;
   selectedTracks: Track[];
+  mapId: number | null;
   allActivityTypes: string[];
   onDelete: () => void;
   onZoomToSelectedTracks?: () => void;
@@ -36,6 +37,7 @@ interface SelectionPanelProps {
 export function SelectionPanel({
   totalTracks,
   selectedTracks,
+  mapId,
   allActivityTypes,
   onDelete,
   onZoomToSelectedTracks,
@@ -61,12 +63,14 @@ export function SelectionPanel({
       <TrackDetailsPanel
         key={selectedTracks[0].id}
         track={selectedTracks[0]}
+        mapId={mapId}
         allActivityTypes={allActivityTypes}
         onDelete={onDelete}
       />
     ) : selectionCount >= 2 ? (
       <BulkOperationsPanel
         tracks={selectedTracks}
+        mapId={mapId}
         allActivityTypes={allActivityTypes}
         onDelete={onDelete}
       />

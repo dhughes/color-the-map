@@ -29,6 +29,17 @@ vi.mock("./components/Map", () => ({
   }),
 }));
 
+const mockMaps = [
+  {
+    id: 1,
+    user_id: "1",
+    name: "Default Map",
+    is_default: true,
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
+  },
+];
+
 describe("App - Zoom to Track Feature", () => {
   let queryClient: QueryClient;
 
@@ -75,6 +86,7 @@ describe("App - Zoom to Track Feature", () => {
       },
     });
 
+    vi.mocked(apiClient.listMaps).mockResolvedValue(mockMaps);
     vi.mocked(apiClient.listTracks).mockResolvedValue([
       mockTrackWithBounds,
       mockTrackWithNullBounds,
@@ -130,6 +142,7 @@ describe("App - Logout Functionality", () => {
 
     mockLogout = vi.fn();
 
+    vi.mocked(apiClient.listMaps).mockResolvedValue(mockMaps);
     vi.mocked(apiClient.listTracks).mockResolvedValue([]);
 
     vi.spyOn(authContext, "useAuth").mockReturnValue({
@@ -197,7 +210,7 @@ describe("App - Logout Functionality", () => {
       name: "Test Track 2",
     };
 
-    queryClient.setQueryData(["tracks"], [mockTrack1, mockTrack2]);
+    queryClient.setQueryData(["tracks", 1], [mockTrack1, mockTrack2]);
 
     vi.spyOn(authContext, "useAuth").mockReturnValue({
       user: null,
@@ -231,6 +244,7 @@ describe("App - Version Display", () => {
       },
     });
 
+    vi.mocked(apiClient.listMaps).mockResolvedValue(mockMaps);
     vi.mocked(apiClient.listTracks).mockResolvedValue([]);
 
     vi.spyOn(authContext, "useAuth").mockReturnValue({

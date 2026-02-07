@@ -18,6 +18,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 from backend.database import Base  # noqa: E402
 from backend.models.track_model import Track  # noqa: E402, F401
+from backend.models.map_model import Map  # noqa: E402, F401
 from backend.auth.models import User, RefreshToken  # noqa: E402, F401
 
 target_metadata = Base.metadata

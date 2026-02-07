@@ -3,6 +3,7 @@ import {
   QueryClient,
   QueryClientProvider,
   useQuery,
+  useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
 import { Map, type MapRef } from "./components/Map";
@@ -16,6 +17,10 @@ import { useViewportGeometries } from "./hooks/useViewportGeometries";
 import {
   uploadTracksWithProgress,
   listTracks,
+  listMaps,
+  createMap,
+  updateMap,
+  deleteMap,
   setAccessToken,
 } from "./api/client";
 import { geometryCache } from "./utils/geometryCache";
@@ -30,6 +35,7 @@ const EMPTY_TRACKS: Track[] = [];
 export function AppContent() {
   const { isAuthenticated, isLoading, accessToken, logout } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [currentMapId, setCurrentMapId] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{
     current: number;
@@ -65,10 +71,23 @@ export function AppContent() {
     setSpeedColorRelative((prev) => (prev === "each" ? "all" : "each"));
   }, []);
 
-  const { data: tracksData = [] } = useQuery<Track[]>({
-    queryKey: ["tracks"],
-    queryFn: listTracks,
+  const { data: mapsData = [] } = useQuery({
+    queryKey: ["maps"],
+    queryFn: listMaps,
     enabled: isAuthenticated,
+  });
+
+  useEffect(() => {
+    if (mapsData.length > 0 && currentMapId === null) {
+      const defaultMap = mapsData.find((m) => m.is_default) ?? mapsData[0];
+      setCurrentMapId(defaultMap.id);
+    }
+  }, [mapsData, currentMapId]);
+
+  const { data: tracksData = [] } = useQuery<Track[]>({
+    queryKey: ["tracks", currentMapId],
+    queryFn: () => listTracks(currentMapId!),
+    enabled: isAuthenticated && currentMapId !== null,
   });
 
   const tracks = useMemo(
@@ -119,7 +138,7 @@ export function AppContent() {
     error: geometryError,
     onViewportChange,
     retryFetch,
-  } = useViewportGeometries(tracks);
+  } = useViewportGeometries(tracks, currentMapId);
 
   const visibleGeometries = useMemo(() => {
     const visibleIds = new Set(
@@ -130,12 +149,48 @@ export function AppContent() {
     );
   }, [tracks, allGeometries]);
 
+  const createMapMutation = useMutation({
+    mutationFn: createMap,
+    onSuccess: (newMap) => {
+      queryClient.invalidateQueries({ queryKey: ["maps"] });
+      setCurrentMapId(newMap.id);
+      clearSelection();
+    },
+  });
+
+  const renameMapMutation = useMutation({
+    mutationFn: ({ mapId, name }: { mapId: number; name: string }) =>
+      updateMap(mapId, { name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["maps"] });
+    },
+  });
+
+  const deleteMapMutation = useMutation({
+    mutationFn: deleteMap,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["maps"] });
+      const remaining = mapsData.filter((m) => m.id !== currentMapId);
+      if (remaining.length > 0) {
+        const next = remaining.find((m) => m.is_default) ?? remaining[0];
+        setCurrentMapId(next.id);
+      }
+      clearSelection();
+    },
+  });
+
+  const handleSelectMap = (mapId: number) => {
+    setCurrentMapId(mapId);
+    clearSelection();
+  };
+
   const handleLogout = async () => {
     try {
       queryClient.clear();
       await geometryCache.clearCache();
       mapViewStorage.clearMapView();
       clearSelection();
+      setCurrentMapId(null);
       await logout();
     } catch (error) {
       console.error("Logout cleanup failed:", error);
@@ -188,15 +243,21 @@ export function AppContent() {
   };
 
   const handleFilesDropped = async (files: File[]) => {
+    if (currentMapId === null) return;
+
     setIsUploading(true);
     setUploadProgress({ current: 0, total: files.length });
 
     try {
-      const result = await uploadTracksWithProgress(files, (current, total) => {
-        setUploadProgress({ current, total });
-      });
+      const result = await uploadTracksWithProgress(
+        currentMapId,
+        files,
+        (current, total) => {
+          setUploadProgress({ current, total });
+        },
+      );
 
-      queryClient.invalidateQueries({ queryKey: ["tracks"] });
+      queryClient.invalidateQueries({ queryKey: ["tracks", currentMapId] });
       queryClient.invalidateQueries({
         predicate: (query) => query.queryKey[0] === "geometries",
       });
@@ -374,6 +435,14 @@ export function AppContent() {
         </div>
         <TrackList
           tracks={tracks}
+          mapId={currentMapId}
+          maps={mapsData}
+          onSelectMap={handleSelectMap}
+          onCreateMap={(name) => createMapMutation.mutate(name)}
+          onRenameMap={(mapId, name) =>
+            renameMapMutation.mutate({ mapId, name })
+          }
+          onDeleteMap={(mapId) => deleteMapMutation.mutate(mapId)}
           selectedTrackIds={selectedTrackIds}
           anchorTrackId={anchorTrackId}
           onSelect={toggleSelection}

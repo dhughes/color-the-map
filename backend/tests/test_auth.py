@@ -173,7 +173,7 @@ async def test_protected_endpoint_requires_auth(test_db_session):
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        response = await client.get("/api/v1/tracks")
+        response = await client.get("/api/v1/maps")
 
     assert response.status_code == 401
 

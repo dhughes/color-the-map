@@ -1,6 +1,7 @@
 export interface Track {
   id: number;
   user_id: string;
+  map_id: number;
   hash: string;
   name: string;
   filename: string;

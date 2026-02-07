@@ -19,6 +19,19 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, UUID]):
     async def on_after_register(self, user: User, request: Optional[Request] = None):
         print(f"User {user.email} has registered.")
 
+        from ..services.map_service import MapService
+
+        map_service = MapService()
+        session = self.user_db.session  # type: ignore[attr-defined]
+        await map_service.create_map(
+            name="My Map",
+            user_id=str(user.id),
+            is_default=True,
+            session=session,
+        )
+        await session.commit()
+        print(f"Created default map for user {user.email}")
+
     async def on_after_login(
         self,
         user: User,

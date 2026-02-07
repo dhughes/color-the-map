@@ -81,6 +81,7 @@ describe("BulkOperationsPanel", () => {
     render(
       <BulkOperationsPanel
         tracks={mockTracks}
+        mapId={1}
         allActivityTypes={["Running", "Walking"]}
         onDelete={mockOnDelete}
       />,
@@ -96,6 +97,7 @@ describe("BulkOperationsPanel", () => {
     render(
       <BulkOperationsPanel
         tracks={mockTracks}
+        mapId={1}
         allActivityTypes={["Running", "Walking"]}
         onDelete={mockOnDelete}
       />,
@@ -115,6 +117,7 @@ describe("BulkOperationsPanel", () => {
     render(
       <BulkOperationsPanel
         tracks={sameDateTracks}
+        mapId={1}
         allActivityTypes={[]}
         onDelete={mockOnDelete}
       />,
@@ -130,6 +133,7 @@ describe("BulkOperationsPanel", () => {
     render(
       <BulkOperationsPanel
         tracks={mockTracks}
+        mapId={1}
         allActivityTypes={["Running", "Walking", "Cycling"]}
         onDelete={mockOnDelete}
       />,
@@ -147,6 +151,7 @@ describe("BulkOperationsPanel", () => {
     render(
       <BulkOperationsPanel
         tracks={mockTracks}
+        mapId={1}
         allActivityTypes={["Running", "Walking"]}
         onDelete={mockOnDelete}
       />,
@@ -158,7 +163,7 @@ describe("BulkOperationsPanel", () => {
     fireEvent.blur(activityInput);
 
     await waitFor(() => {
-      expect(bulkUpdateTracks).toHaveBeenCalledWith([1, 2], {
+      expect(bulkUpdateTracks).toHaveBeenCalledWith(1, [1, 2], {
         activity_type: "Hiking",
       });
     });
@@ -175,6 +180,7 @@ describe("BulkOperationsPanel", () => {
     render(
       <BulkOperationsPanel
         tracks={mixedActivityTracks}
+        mapId={1}
         allActivityTypes={["Running", "Walking"]}
         onDelete={mockOnDelete}
       />,
@@ -193,6 +199,7 @@ describe("BulkOperationsPanel", () => {
     render(
       <BulkOperationsPanel
         tracks={mockTracks}
+        mapId={1}
         allActivityTypes={["Running", "Walking"]}
         onDelete={mockOnDelete}
       />,
@@ -212,6 +219,7 @@ describe("BulkOperationsPanel", () => {
     render(
       <BulkOperationsPanel
         tracks={mockTracks}
+        mapId={1}
         allActivityTypes={[]}
         onDelete={mockOnDelete}
       />,
@@ -225,6 +233,7 @@ describe("BulkOperationsPanel", () => {
     render(
       <BulkOperationsPanel
         tracks={mockTracks}
+        mapId={1}
         allActivityTypes={[]}
         onDelete={mockOnDelete}
       />,
@@ -256,6 +265,7 @@ describe("BulkOperationsPanel", () => {
     render(
       <BulkOperationsPanel
         tracks={tracksWithNulls}
+        mapId={1}
         allActivityTypes={[]}
         onDelete={mockOnDelete}
       />,
@@ -283,6 +293,7 @@ describe("BulkOperationsPanel", () => {
     render(
       <BulkOperationsPanel
         tracks={mixedTracks}
+        mapId={1}
         allActivityTypes={[]}
         onDelete={mockOnDelete}
       />,

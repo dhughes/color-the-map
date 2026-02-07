@@ -51,6 +51,7 @@ describe("SelectionPanel", () => {
     it("displays total track count when no tracks are selected", () => {
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -65,6 +66,7 @@ describe("SelectionPanel", () => {
     it("displays singular form for one total track with no selection", () => {
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={1}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -80,6 +82,7 @@ describe("SelectionPanel", () => {
       const track = createTrack();
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -99,6 +102,7 @@ describe("SelectionPanel", () => {
       ];
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={tracks}
           allActivityTypes={[]}
@@ -115,6 +119,7 @@ describe("SelectionPanel", () => {
     it("renders no content below header when no tracks are selected", () => {
       const { container } = render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -133,6 +138,7 @@ describe("SelectionPanel", () => {
       const track = createTrack({ name: "My Track" });
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={["Cycling", "Running"]}
@@ -151,6 +157,7 @@ describe("SelectionPanel", () => {
       ];
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={tracks}
           allActivityTypes={["Cycling"]}
@@ -171,6 +178,7 @@ describe("SelectionPanel", () => {
 
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -190,6 +198,7 @@ describe("SelectionPanel", () => {
 
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={tracks}
           allActivityTypes={[]}
@@ -209,6 +218,7 @@ describe("SelectionPanel", () => {
     it("shows speed coloring toggle button", () => {
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -232,6 +242,7 @@ describe("SelectionPanel", () => {
 
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -251,6 +262,7 @@ describe("SelectionPanel", () => {
     it("shows active style when speed coloring is enabled", () => {
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -270,6 +282,7 @@ describe("SelectionPanel", () => {
     it("shows relative mode button", () => {
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -290,6 +303,7 @@ describe("SelectionPanel", () => {
     it("disables relative mode button when speed coloring is off", () => {
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -309,6 +323,7 @@ describe("SelectionPanel", () => {
     it("enables relative mode button when speed coloring is on", () => {
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -331,6 +346,7 @@ describe("SelectionPanel", () => {
 
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -350,6 +366,7 @@ describe("SelectionPanel", () => {
     it("shows active style on relative mode button when set to all", () => {
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -372,6 +389,7 @@ describe("SelectionPanel", () => {
       const track = createTrack({ visible: true });
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -394,6 +412,7 @@ describe("SelectionPanel", () => {
       ];
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={tracks}
           allActivityTypes={[]}
@@ -412,6 +431,7 @@ describe("SelectionPanel", () => {
     it("does not show visibility button when no tracks are selected", () => {
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -434,6 +454,7 @@ describe("SelectionPanel", () => {
       const track = createTrack({ visible: true });
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -454,6 +475,7 @@ describe("SelectionPanel", () => {
       const track = createTrack({ visible: true });
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -474,6 +496,7 @@ describe("SelectionPanel", () => {
       const track = createTrack({ visible: false });
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -497,6 +520,7 @@ describe("SelectionPanel", () => {
       ];
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={tracks}
           allActivityTypes={[]}
@@ -520,6 +544,7 @@ describe("SelectionPanel", () => {
       ];
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={tracks}
           allActivityTypes={[]}
@@ -537,6 +562,7 @@ describe("SelectionPanel", () => {
       const track = createTrack({ visible: true });
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -554,6 +580,7 @@ describe("SelectionPanel", () => {
       const track = createTrack({ visible: false });
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -574,6 +601,7 @@ describe("SelectionPanel", () => {
 
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -596,6 +624,7 @@ describe("SelectionPanel", () => {
       const track = createTrack();
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -614,6 +643,7 @@ describe("SelectionPanel", () => {
     it("does not show isolate button when no tracks are selected", () => {
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -633,6 +663,7 @@ describe("SelectionPanel", () => {
       const track = createTrack();
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -650,6 +681,7 @@ describe("SelectionPanel", () => {
       const track = createTrack();
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -671,6 +703,7 @@ describe("SelectionPanel", () => {
       const track = createTrack();
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -691,6 +724,7 @@ describe("SelectionPanel", () => {
       const track = createTrack();
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -716,6 +750,7 @@ describe("SelectionPanel", () => {
 
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -739,6 +774,7 @@ describe("SelectionPanel", () => {
 
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -760,6 +796,7 @@ describe("SelectionPanel", () => {
       const track = createTrack();
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -783,6 +820,7 @@ describe("SelectionPanel", () => {
       const track = createTrack();
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -801,6 +839,7 @@ describe("SelectionPanel", () => {
       const tracks = [createTrack({ id: 1 }), createTrack({ id: 2 })];
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={tracks}
           allActivityTypes={[]}
@@ -818,6 +857,7 @@ describe("SelectionPanel", () => {
     it("does not show zoom button when no tracks are selected", () => {
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[]}
           allActivityTypes={[]}
@@ -836,6 +876,7 @@ describe("SelectionPanel", () => {
       const track = createTrack();
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
@@ -856,6 +897,7 @@ describe("SelectionPanel", () => {
 
       render(
         <SelectionPanel
+          mapId={1}
           totalTracks={6}
           selectedTracks={[track]}
           allActivityTypes={[]}
