@@ -47,7 +47,6 @@ async def create_map(
     new_map = await map_service.create_map(
         name=map_data.name,
         user_id=str(user.id),
-        is_default=False,
         session=session,
     )
     await session.commit()

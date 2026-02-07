@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, DateTime, func, Index, Integer, Boolean, ForeignKey
+from sqlalchemy import String, DateTime, func, Index, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from ..database import Base
 
@@ -14,13 +14,9 @@ class Map(Base):
         nullable=False,
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
-    is_default: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
 
-    __table_args__ = (
-        Index("idx_maps_user_id", "user_id"),
-        Index("idx_maps_user_default", "user_id", "is_default"),
-    )
+    __table_args__ = (Index("idx_maps_user_id", "user_id"),)

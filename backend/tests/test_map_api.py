@@ -66,7 +66,7 @@ async def user_with_default_map(test_db_session):
     await test_db_session.flush()
 
     map_service = MapService()
-    default_map = await map_service.create_map("My Map", user_id, True, test_db_session)
+    default_map = await map_service.create_map("My Map", user_id, test_db_session)
     await test_db_session.commit()
 
     response = client.post(
@@ -97,7 +97,6 @@ def test_create_map(auth_token):
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "New Map"
-    assert data["is_default"] is False
     assert "id" in data
 
 
@@ -112,7 +111,6 @@ def test_list_maps(user_with_default_map):
     maps = response.json()
     assert len(maps) == 1
     assert maps[0]["name"] == "My Map"
-    assert maps[0]["is_default"] is True
 
 
 def test_rename_map(user_with_default_map):

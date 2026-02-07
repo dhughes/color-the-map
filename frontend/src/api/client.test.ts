@@ -311,8 +311,8 @@ describe("API Client", () => {
   describe("listMaps", () => {
     it("fetches map list", async () => {
       const mockMaps = [
-        { id: 1, name: "My Map", is_default: true },
-        { id: 2, name: "Other Map", is_default: false },
+        { id: 1, name: "My Map" },
+        { id: 2, name: "Other Map" },
       ];
 
       (globalThis.fetch as any).mockResolvedValueOnce({
@@ -341,7 +341,7 @@ describe("API Client", () => {
 
   describe("createMap", () => {
     it("creates a map with POST request", async () => {
-      const mockMap = { id: 3, name: "New Map", is_default: false };
+      const mockMap = { id: 3, name: "New Map" };
 
       (globalThis.fetch as any).mockResolvedValueOnce({
         ok: true,
@@ -367,7 +367,7 @@ describe("API Client", () => {
 
   describe("updateMap", () => {
     it("updates a map with PATCH request", async () => {
-      const mockMap = { id: 1, name: "Renamed Map", is_default: true };
+      const mockMap = { id: 1, name: "Renamed Map" };
 
       (globalThis.fetch as any).mockResolvedValueOnce({
         ok: true,

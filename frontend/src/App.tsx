@@ -84,8 +84,7 @@ export function AppContent() {
       const storedMap = storedId
         ? mapsData.find((m) => m.id === storedId)
         : null;
-      const defaultMap =
-        storedMap ?? mapsData.find((m) => m.is_default) ?? mapsData[0];
+      const defaultMap = storedMap ?? mapsData[0];
       setCurrentMapId(defaultMap.id);
     }
   }, [mapsData, currentMapId]);
@@ -185,7 +184,7 @@ export function AppContent() {
       queryClient.invalidateQueries({ queryKey: ["maps"] });
       const remaining = mapsData.filter((m) => m.id !== deletedMapId);
       if (remaining.length > 0) {
-        const next = remaining.find((m) => m.is_default) ?? remaining[0];
+        const next = remaining[0];
         setCurrentMapId(next.id);
       }
       clearSelection();

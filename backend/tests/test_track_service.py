@@ -19,7 +19,7 @@ def track_service(test_gpx_dir):
 async def test_map(test_db_session):
     await create_test_user(test_db_session, "test-user-id")
     map_service = MapService()
-    m = await map_service.create_map("Test Map", "test-user-id", True, test_db_session)
+    m = await map_service.create_map("Test Map", "test-user-id", test_db_session)
     await test_db_session.commit()
     return m
 
@@ -279,7 +279,7 @@ async def test_delete_preserves_gpx_when_shared_across_maps(
 ):
     map_service = MapService()
     second_map = await map_service.create_map(
-        "Second Map", "test-user-id", False, test_db_session
+        "Second Map", "test-user-id", test_db_session
     )
     await test_db_session.commit()
 

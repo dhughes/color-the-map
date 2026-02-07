@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, cast
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update, func
+from sqlalchemy import select, delete, func
 from sqlalchemy.engine import CursorResult
 from ..models.map_model import Map as MapModel
 from ..models.track_model import Track as TrackModel
@@ -22,16 +22,11 @@ class MapService:
         self,
         name: str,
         user_id: str,
-        is_default: bool,
         session: AsyncSession,
     ) -> Map:
-        if is_default:
-            await self._unset_other_defaults(user_id, session)
-
         map_model = MapModel(
             user_id=user_id,
             name=name,
-            is_default=is_default,
         )
 
         session.add(map_model)
@@ -57,9 +52,7 @@ class MapService:
 
     async def list_maps(self, user_id: str, session: AsyncSession) -> List[Map]:
         result = await session.execute(
-            select(MapModel)
-            .where(MapModel.user_id == user_id)
-            .order_by(MapModel.is_default.desc(), MapModel.name)
+            select(MapModel).where(MapModel.user_id == user_id).order_by(MapModel.name)
         )
         map_models = result.scalars()
 
@@ -149,27 +142,17 @@ class MapService:
             deleted=deleted, hashes_to_delete=hashes_to_delete if deleted else []
         )
 
-    async def ensure_default_map(self, user_id: str, session: AsyncSession) -> Map:
+    async def ensure_map_exists(self, user_id: str, session: AsyncSession) -> Map:
         result = await session.execute(
-            select(MapModel).where(
-                MapModel.user_id == user_id,
-                MapModel.is_default == True,  # noqa: E712
-            )
+            select(MapModel).where(MapModel.user_id == user_id).limit(1)
         )
-        default_map = result.scalar_one_or_none()
+        existing_map = result.scalar_one_or_none()
 
-        if default_map:
-            return Map.from_sqlalchemy(default_map)
+        if existing_map:
+            return Map.from_sqlalchemy(existing_map)
 
         return await self.create_map(
             name="My Map",
             user_id=user_id,
-            is_default=True,
             session=session,
         )
-
-    async def _unset_other_defaults(self, user_id: str, session: AsyncSession) -> None:
-        update_stmt = (
-            update(MapModel).where(MapModel.user_id == user_id).values(is_default=False)
-        )
-        await session.execute(update_stmt)

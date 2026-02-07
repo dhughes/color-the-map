@@ -7,7 +7,6 @@ class Map:
     id: int
     user_id: str
     name: str
-    is_default: bool
     created_at: datetime
     updated_at: datetime
 
@@ -17,7 +16,6 @@ class Map:
             id=model.id,
             user_id=model.user_id,
             name=model.name,
-            is_default=model.is_default,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )

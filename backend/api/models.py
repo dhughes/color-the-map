@@ -103,7 +103,6 @@ class MapResponse(BaseModel):
     id: int
     user_id: str
     name: str
-    is_default: bool
     created_at: datetime
     updated_at: datetime
 

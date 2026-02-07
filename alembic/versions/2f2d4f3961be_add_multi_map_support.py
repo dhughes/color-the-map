@@ -24,7 +24,6 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.String(length=36), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("is_default", sa.Boolean(), server_default="0", nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(),
@@ -41,20 +40,19 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("idx_maps_user_id", "maps", ["user_id"])
-    op.create_index("idx_maps_user_default", "maps", ["user_id", "is_default"])
 
     op.execute(
         """
-        INSERT INTO maps (user_id, name, is_default, created_at, updated_at)
-        SELECT DISTINCT user_id, 'My Map', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        INSERT INTO maps (user_id, name, created_at, updated_at)
+        SELECT DISTINCT user_id, 'My Map', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         FROM tracks
     """
     )
 
     op.execute(
         """
-        INSERT INTO maps (user_id, name, is_default, created_at, updated_at)
-        SELECT id, 'My Map', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        INSERT INTO maps (user_id, name, created_at, updated_at)
+        SELECT id, 'My Map', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         FROM users
         WHERE id NOT IN (SELECT DISTINCT user_id FROM tracks)
     """
@@ -68,7 +66,6 @@ def upgrade() -> None:
         SET map_id = (
             SELECT id FROM maps
             WHERE maps.user_id = tracks.user_id
-            AND maps.is_default = 1
             LIMIT 1
         )
     """
@@ -92,6 +89,5 @@ def downgrade() -> None:
         batch_op.drop_column("map_id")
         batch_op.create_index("idx_tracks_user_hash", ["user_id", "hash"], unique=True)
 
-    op.drop_index("idx_maps_user_default")
     op.drop_index("idx_maps_user_id")
     op.drop_table("maps")

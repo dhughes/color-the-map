@@ -34,7 +34,7 @@ const mockMaps = [
     id: 1,
     user_id: "1",
     name: "Default Map",
-    is_default: true,
+
     created_at: "2025-01-01T00:00:00Z",
     updated_at: "2025-01-01T00:00:00Z",
   },
@@ -312,7 +312,7 @@ describe("App - Map Selection Persistence", () => {
       id: 1,
       user_id: "1",
       name: "Default Map",
-      is_default: true,
+
       created_at: "2025-01-01T00:00:00Z",
       updated_at: "2025-01-01T00:00:00Z",
     },
@@ -320,7 +320,7 @@ describe("App - Map Selection Persistence", () => {
       id: 2,
       user_id: "1",
       name: "Second Map",
-      is_default: false,
+
       created_at: "2025-01-02T00:00:00Z",
       updated_at: "2025-01-02T00:00:00Z",
     },

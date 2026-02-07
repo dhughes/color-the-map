@@ -26,11 +26,10 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, UUID]):
         await map_service.create_map(
             name="My Map",
             user_id=str(user.id),
-            is_default=True,
             session=session,
         )
         await session.commit()
-        print(f"Created default map for user {user.email}")
+        print(f"Created map for user {user.email}")
 
     async def on_after_login(
         self,

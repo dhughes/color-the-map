@@ -44,7 +44,7 @@ async def user1_with_map(test_db_session):
     await test_db_session.flush()
 
     map_service = MapService()
-    default_map = await map_service.create_map("My Map", user_id, True, test_db_session)
+    default_map = await map_service.create_map("My Map", user_id, test_db_session)
     await test_db_session.commit()
 
     return {"user": user, "map_id": default_map.id}
@@ -65,7 +65,7 @@ async def user2_with_map(test_db_session):
     await test_db_session.flush()
 
     map_service = MapService()
-    default_map = await map_service.create_map("My Map", user_id, True, test_db_session)
+    default_map = await map_service.create_map("My Map", user_id, test_db_session)
     await test_db_session.commit()
 
     return {"user": user, "map_id": default_map.id}

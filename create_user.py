@@ -29,17 +29,16 @@ async def create_user(email: str, password: str):
         await session.flush()
 
         map_service = MapService()
-        default_map = await map_service.create_map(
+        new_map = await map_service.create_map(
             name="My Map",
             user_id=str(user.id),
-            is_default=True,
             session=session,
         )
 
         await session.commit()
         print(f"✓ Created user: {email}")
         print(f"  User ID: {user.id}")
-        print(f"  Default map ID: {default_map.id}")
+        print(f"  Map ID: {new_map.id}")
 
 
 if __name__ == "__main__":
