@@ -70,7 +70,7 @@
       "WebFetch(domain:lucide.dev)",
       "WebFetch(domain:api.github.com)",
       "WebFetch(domain:patch-diff.githubusercontent.com)",
-      "Bash(visibility\" since it restores the prior visibility state, not showing\nall tracks. Swap icons so Blocks is the unisolated state and\nLayoutGrid is the isolated \\(active\\) state.\nEOF\n\\)\")"
+      "Bash(cd /Users/doughughes/.claude-worktrees/color-the-map/nice-gould/frontend npm test -- --run)"
     ]
   }
 }

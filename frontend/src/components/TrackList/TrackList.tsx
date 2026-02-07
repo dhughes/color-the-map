@@ -312,37 +312,11 @@ export function TrackList({
     return true;
   }, [selectedTrackIds, isolationState]);
 
-  const setUnselectedTracksVisibility = useMutation({
-    mutationFn: ({
-      trackIds,
-      visible,
-    }: {
-      trackIds: number[];
-      visible: boolean;
-    }) => bulkUpdateTracks(trackIds, { visible }),
-    onMutate: async ({ trackIds, visible }) => {
-      await queryClient.cancelQueries({ queryKey: ["tracks"] });
-      const previousTracks = queryClient.getQueryData(["tracks"]);
-      const idSet = new Set(trackIds);
-      queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
-        old?.map((track) =>
-          idSet.has(track.id) ? { ...track, visible } : track,
-        ),
-      );
-      return { previousTracks };
-    },
-    onError: (_err, _variables, context) => {
-      if (context?.previousTracks) {
-        queryClient.setQueryData(["tracks"], context.previousTracks);
-      }
-    },
-  });
-
   const handleToggleIsolation = () => {
     if (isolationActive && isolationState) {
       const trackIdsToRestore = isolationState.hiddenTrackIds;
       if (trackIdsToRestore.length > 0) {
-        setUnselectedTracksVisibility.mutate({
+        toggleSelectedTracksVisibility.mutate({
           trackIds: trackIdsToRestore,
           visible: true,
         });
@@ -357,7 +331,7 @@ export function TrackList({
           selectionIds: new Set(selectedTrackIds),
           hiddenTrackIds: unselectedVisibleIds,
         });
-        setUnselectedTracksVisibility.mutate({
+        toggleSelectedTracksVisibility.mutate({
           trackIds: unselectedVisibleIds,
           visible: false,
         });
