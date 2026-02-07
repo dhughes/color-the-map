@@ -297,6 +297,53 @@ export function TrackList({
     toggleSelectedTracksVisibility.mutate({ trackIds, visible });
   };
 
+  const [isolationState, setIsolationState] = useState<{
+    selectionIds: Set<number>;
+    hiddenTrackIds: number[];
+  } | null>(null);
+
+  const isolationActive = useMemo(() => {
+    if (!isolationState) return false;
+    if (isolationState.selectionIds.size !== selectedTrackIds.size)
+      return false;
+    for (const id of selectedTrackIds) {
+      if (!isolationState.selectionIds.has(id)) return false;
+    }
+    return true;
+  }, [selectedTrackIds, isolationState]);
+
+  const handleToggleIsolation = () => {
+    if (isolationActive && isolationState) {
+      const trackIdsToRestore = isolationState.hiddenTrackIds;
+      if (trackIdsToRestore.length > 0) {
+        toggleSelectedTracksVisibility.mutate({
+          trackIds: trackIdsToRestore,
+          visible: true,
+        });
+      }
+      setIsolationState(null);
+    } else {
+      const unselectedVisibleIds = tracks
+        .filter((t) => !selectedTrackIds.has(t.id) && t.visible)
+        .map((t) => t.id);
+      if (unselectedVisibleIds.length > 0) {
+        setIsolationState({
+          selectionIds: new Set(selectedTrackIds),
+          hiddenTrackIds: unselectedVisibleIds,
+        });
+        toggleSelectedTracksVisibility.mutate({
+          trackIds: unselectedVisibleIds,
+          visible: false,
+        });
+      }
+    }
+  };
+
+  const hasVisibleUnselectedTracks = useMemo(
+    () => tracks.some((t) => !selectedTrackIds.has(t.id) && t.visible),
+    [tracks, selectedTrackIds],
+  );
+
   const allActivityTypes = useMemo(() => {
     const types = new Set(
       tracks
@@ -378,6 +425,9 @@ export function TrackList({
         onToggleSpeedColorRelative={onToggleSpeedColorRelative}
         selectedTracksVisibility={selectedTracksVisibility}
         onToggleSelectedTracksVisibility={handleToggleSelectedTracksVisibility}
+        isolationActive={isolationActive}
+        hasVisibleUnselectedTracks={hasVisibleUnselectedTracks}
+        onToggleIsolation={handleToggleIsolation}
       />
 
       <ConfirmDialog

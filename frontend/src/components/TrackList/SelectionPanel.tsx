@@ -1,4 +1,12 @@
-import { Eye, EyeOff, Focus, Gauge, Layers } from "lucide-react";
+import {
+  Blocks,
+  Eye,
+  EyeOff,
+  Focus,
+  Gauge,
+  LayoutGrid,
+  Layers,
+} from "lucide-react";
 import { SidebarPanel } from "../SidebarPanel";
 import { TrackDetailsPanel } from "./TrackDetailsPanel";
 import { BulkOperationsPanel } from "./BulkOperationsPanel";
@@ -20,6 +28,9 @@ interface SelectionPanelProps {
   onToggleSpeedColorRelative?: () => void;
   selectedTracksVisibility?: TrackVisibility;
   onToggleSelectedTracksVisibility?: () => void;
+  isolationActive?: boolean;
+  hasVisibleUnselectedTracks?: boolean;
+  onToggleIsolation?: () => void;
 }
 
 export function SelectionPanel({
@@ -34,6 +45,9 @@ export function SelectionPanel({
   onToggleSpeedColorRelative,
   selectedTracksVisibility,
   onToggleSelectedTracksVisibility,
+  isolationActive = false,
+  hasVisibleUnselectedTracks = false,
+  onToggleIsolation,
 }: SelectionPanelProps) {
   const selectionCount = selectedTracks.length;
 
@@ -124,6 +138,31 @@ export function SelectionPanel({
           {selectedTracksVisibility === "mixed" && (
             <span className="visibility-mixed-indicator">*</span>
           )}
+        </button>
+      )}
+      {selectionCount > 0 && onToggleIsolation && (
+        <button
+          onClick={onToggleIsolation}
+          className={[
+            "panel-icon-button",
+            isolationActive && "active",
+            !isolationActive && !hasVisibleUnselectedTracks && "disabled",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          disabled={!isolationActive && !hasVisibleUnselectedTracks}
+          aria-label={
+            isolationActive ? "Unisolate tracks" : "Isolate selected tracks"
+          }
+          title={
+            isolationActive
+              ? "Unisolate tracks"
+              : hasVisibleUnselectedTracks
+                ? "Isolate selected tracks"
+                : "No visible unselected tracks to hide"
+          }
+        >
+          {isolationActive ? <LayoutGrid size={16} /> : <Blocks size={16} />}
         </button>
       )}
       {selectionCount > 0 && onZoomToSelectedTracks && (

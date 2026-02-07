@@ -65,7 +65,12 @@
       "Bash(./scripts/start-backend.sh:*)",
       "Bash(./scripts/start-frontend.sh:*)",
       "Bash(./scripts/check-for-worktree.sh:*)",
-      "Bash(./scripts/check-venv-exists.sh:*)"
+      "Bash(./scripts/check-venv-exists.sh:*)",
+      "Bash(./scripts/check-node-modules-exists.sh:*)",
+      "WebFetch(domain:lucide.dev)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:patch-diff.githubusercontent.com)",
+      "Bash(cd /Users/doughughes/.claude-worktrees/color-the-map/nice-gould/frontend npm test -- --run)"
     ]
   }
 }
