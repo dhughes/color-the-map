@@ -1,6 +1,7 @@
 import pytest
 import pytest_asyncio
 from backend.services.map_service import MapService
+from .conftest import create_test_user
 
 
 @pytest_asyncio.fixture
@@ -10,6 +11,13 @@ async def map_service():
 
 USER_ID = "test-user-123"
 OTHER_USER_ID = "other-user-456"
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def setup_users(test_db_session):
+    await create_test_user(test_db_session, USER_ID)
+    await create_test_user(test_db_session, OTHER_USER_ID)
+    await test_db_session.commit()
 
 
 @pytest.mark.asyncio

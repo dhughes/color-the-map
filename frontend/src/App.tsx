@@ -168,9 +168,10 @@ export function AppContent() {
 
   const deleteMapMutation = useMutation({
     mutationFn: deleteMap,
-    onSuccess: () => {
+    onSuccess: (_data, deletedMapId) => {
+      queryClient.removeQueries({ queryKey: ["tracks", deletedMapId] });
       queryClient.invalidateQueries({ queryKey: ["maps"] });
-      const remaining = mapsData.filter((m) => m.id !== currentMapId);
+      const remaining = mapsData.filter((m) => m.id !== deletedMapId);
       if (remaining.length > 0) {
         const next = remaining.find((m) => m.is_default) ?? remaining[0];
         setCurrentMapId(next.id);

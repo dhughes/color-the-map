@@ -92,7 +92,8 @@ async def delete_map(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ):
-    result = await map_service.delete_map(map_id, str(user.id), session)
+    user_id = str(user.id)
+    result = await map_service.delete_map(map_id, user_id, session)
 
     if not result.deleted:
         if result.error:
@@ -100,6 +101,9 @@ async def delete_map(
         raise HTTPException(status_code=404, detail="Map not found")
 
     await session.commit()
+
+    for gpx_hash in result.hashes_to_delete:
+        storage.delete_gpx(user_id, gpx_hash)
 
     return MapDeleteResponse(deleted=True)
 

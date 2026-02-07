@@ -5,6 +5,7 @@ from backend.services.track_service import TrackService
 from backend.services.gpx_parser import GPXParser
 from backend.services.storage_service import StorageService
 from backend.services.map_service import MapService
+from .conftest import create_test_user
 
 
 @pytest.fixture
@@ -16,6 +17,7 @@ def track_service(test_gpx_dir):
 
 @pytest_asyncio.fixture
 async def test_map(test_db_session):
+    await create_test_user(test_db_session, "test-user-id")
     map_service = MapService()
     m = await map_service.create_map("Test Map", "test-user-id", True, test_db_session)
     await test_db_session.commit()

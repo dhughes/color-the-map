@@ -2,11 +2,28 @@ import sys
 from pathlib import Path
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy import event, text
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from backend.database import Base
 from backend.main import app
 from backend.auth.database import get_async_session
+
+
+async def create_test_user(session: AsyncSession, user_id: str) -> None:
+    await session.execute(
+        text(
+            "INSERT OR IGNORE INTO users (id, email, hashed_password, is_active, is_superuser, is_verified)"
+            " VALUES (:id, :email, :hashed_password, 1, 0, 0)"
+        ),
+        {
+            "id": user_id,
+            "email": f"{user_id}@test.com",
+            "hashed_password": "not-a-real-hash",
+        },
+    )
+    await session.flush()
+
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -24,6 +41,12 @@ async def test_db_session():
         "sqlite+aiosqlite:///:memory:",
         connect_args={"check_same_thread": False},
     )
+
+    @event.listens_for(engine.sync_engine, "connect")
+    def _set_sqlite_pragma(dbapi_connection, _connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
     # Create all tables
     async with engine.begin() as conn:

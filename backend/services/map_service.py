@@ -1,9 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, cast
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update, func
 from sqlalchemy.engine import CursorResult
 from ..models.map_model import Map as MapModel
+from ..models.track_model import Track as TrackModel
 from ..models.map import Map
 
 ALLOWED_UPDATE_FIELDS = {"name"}
@@ -13,6 +14,7 @@ ALLOWED_UPDATE_FIELDS = {"name"}
 class MapDeleteResult:
     deleted: bool
     error: Optional[str] = None
+    hashes_to_delete: List[str] = field(default_factory=list)
 
 
 class MapService:
@@ -107,14 +109,45 @@ class MapService:
         if map_count <= 1:
             return MapDeleteResult(deleted=False, error="Cannot delete the last map")
 
-        delete_stmt = delete(MapModel).where(
+        hash_result = await session.execute(
+            select(TrackModel.hash).where(
+                TrackModel.map_id == map_id,
+                TrackModel.user_id == user_id,
+            )
+        )
+        candidate_hashes = list(hash_result.scalars().all())
+
+        delete_tracks_stmt = delete(TrackModel).where(
+            TrackModel.map_id == map_id,
+            TrackModel.user_id == user_id,
+        )
+        await session.execute(delete_tracks_stmt)
+
+        hashes_to_delete: List[str] = []
+        if candidate_hashes:
+            still_used = await session.execute(
+                select(TrackModel.hash)
+                .where(
+                    TrackModel.user_id == user_id,
+                    TrackModel.hash.in_(candidate_hashes),
+                )
+                .distinct()
+            )
+            still_used_hashes = set(still_used.scalars().all())
+            hashes_to_delete = [
+                h for h in candidate_hashes if h not in still_used_hashes
+            ]
+
+        delete_map_stmt = delete(MapModel).where(
             MapModel.id == map_id,
             MapModel.user_id == user_id,
         )
-        cursor_result = cast(CursorResult[Any], await session.execute(delete_stmt))
+        cursor_result = cast(CursorResult[Any], await session.execute(delete_map_stmt))
 
         deleted = cursor_result.rowcount > 0
-        return MapDeleteResult(deleted=deleted)
+        return MapDeleteResult(
+            deleted=deleted, hashes_to_delete=hashes_to_delete if deleted else []
+        )
 
     async def ensure_default_map(self, user_id: str, session: AsyncSession) -> Map:
         result = await session.execute(
