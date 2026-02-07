@@ -70,7 +70,16 @@
       "WebFetch(domain:lucide.dev)",
       "WebFetch(domain:api.github.com)",
       "WebFetch(domain:patch-diff.githubusercontent.com)",
-      "Bash(cd /Users/doughughes/.claude-worktrees/color-the-map/nice-gould/frontend npm test -- --run)"
+      "Bash(cd /Users/doughughes/.claude-worktrees/color-the-map/nice-gould/frontend npm test -- --run)",
+      "Bash(/Users/doughughes/.claude-worktrees/color-the-map/great-shirley/scripts/check-venv-exists.sh:*)",
+      "Bash(/Users/doughughes/.claude-worktrees/color-the-map/great-shirley/scripts/check-node-modules-exists.sh:*)",
+      "Bash(/Users/doughughes/.claude-worktrees/color-the-map/great-shirley/scripts/setup-worktree.sh:*)",
+      "Bash(/Users/doughughes/.claude-worktrees/color-the-map/great-shirley/scripts/start-backend.sh:*)",
+      "Bash(/Users/doughughes/.claude-worktrees/color-the-map/great-shirley/scripts/find-available-port.sh:*)",
+      "Bash(/Users/doughughes/.claude-worktrees/color-the-map/great-shirley/scripts/start-frontend.sh:*)",
+      "Bash(PORT=8031 FRONTEND_PORT=5180 source venv/bin/activate:*)",
+      "Bash(uvicorn backend.main:app:*)",
+      "Bash(VITE_API_PORT=8031 npx vite:*)"
     ]
   }
 }

@@ -25,6 +25,7 @@ import {
 } from "./api/client";
 import { geometryCache } from "./utils/geometryCache";
 import { mapViewStorage } from "./utils/mapViewStorage";
+import { selectedMapStorage } from "./utils/selectedMapStorage";
 import type { Track } from "./types/track";
 import type { SpeedColorRelative } from "./types/track";
 import { version } from "../package.json";
@@ -79,10 +80,21 @@ export function AppContent() {
 
   useEffect(() => {
     if (mapsData.length > 0 && currentMapId === null) {
-      const defaultMap = mapsData.find((m) => m.is_default) ?? mapsData[0];
+      const storedId = selectedMapStorage.getSelectedMapId();
+      const storedMap = storedId
+        ? mapsData.find((m) => m.id === storedId)
+        : null;
+      const defaultMap =
+        storedMap ?? mapsData.find((m) => m.is_default) ?? mapsData[0];
       setCurrentMapId(defaultMap.id);
     }
   }, [mapsData, currentMapId]);
+
+  useEffect(() => {
+    if (currentMapId !== null) {
+      selectedMapStorage.setSelectedMapId(currentMapId);
+    }
+  }, [currentMapId]);
 
   const { data: tracksData = [] } = useQuery<Track[]>({
     queryKey: ["tracks", currentMapId],
@@ -190,6 +202,7 @@ export function AppContent() {
       queryClient.clear();
       await geometryCache.clearCache();
       mapViewStorage.clearMapView();
+      selectedMapStorage.clearSelectedMapId();
       clearSelection();
       setCurrentMapId(null);
       await logout();
