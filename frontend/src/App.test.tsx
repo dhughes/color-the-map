@@ -49,9 +49,12 @@ describe("App - Zoom to Track Feature", () => {
 
   const mockTrackWithBounds: Track = {
     id: 1,
+    user_id: "1",
+    map_id: 1,
     hash: "abc123",
     name: "Track with Bounds",
     filename: "track1.gpx",
+    creator: null,
     activity_type: "Cycling",
     activity_date: "2025-01-01T10:00:00Z",
     uploaded_at: "2025-01-01T10:05:00Z",
@@ -189,9 +192,12 @@ describe("App - Logout Functionality", () => {
   it("does not display tracks when not authenticated", () => {
     const mockTrack1: Track = {
       id: 1,
+      user_id: "1",
+      map_id: 1,
       hash: "hash1",
       name: "Test Track 1",
       filename: "track1.gpx",
+      creator: null,
       activity_type: "Walking",
       activity_date: "2025-01-01T10:00:00Z",
       uploaded_at: "2025-01-01T10:05:00Z",

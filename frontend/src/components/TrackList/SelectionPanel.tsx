@@ -19,7 +19,7 @@ import type {
 interface SelectionPanelProps {
   totalTracks: number;
   selectedTracks: Track[];
-  mapId: number | null;
+  mapId: number;
   allActivityTypes: string[];
   onDelete: () => void;
   onZoomToSelectedTracks?: () => void;

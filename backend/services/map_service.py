@@ -141,18 +141,3 @@ class MapService:
         return MapDeleteResult(
             deleted=deleted, hashes_to_delete=hashes_to_delete if deleted else []
         )
-
-    async def ensure_map_exists(self, user_id: str, session: AsyncSession) -> Map:
-        result = await session.execute(
-            select(MapModel).where(MapModel.user_id == user_id).limit(1)
-        )
-        existing_map = result.scalar_one_or_none()
-
-        if existing_map:
-            return Map.from_sqlalchemy(existing_map)
-
-        return await self.create_map(
-            name="My Map",
-            user_id=user_id,
-            session=session,
-        )

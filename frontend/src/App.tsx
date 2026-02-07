@@ -167,6 +167,11 @@ export function AppContent() {
       setCurrentMapId(newMap.id);
       clearSelection();
     },
+    onError: () => {
+      setStatus({ message: "Failed to create map", type: "error" });
+      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
+      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
+    },
   });
 
   const renameMapMutation = useMutation({
@@ -174,6 +179,11 @@ export function AppContent() {
       updateMap(mapId, { name }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["maps"] });
+    },
+    onError: () => {
+      setStatus({ message: "Failed to rename map", type: "error" });
+      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
+      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
     },
   });
 
@@ -188,6 +198,11 @@ export function AppContent() {
         setCurrentMapId(next.id);
       }
       clearSelection();
+    },
+    onError: () => {
+      setStatus({ message: "Failed to delete map", type: "error" });
+      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
+      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
     },
   });
 

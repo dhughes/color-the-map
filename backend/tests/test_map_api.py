@@ -300,6 +300,43 @@ def test_track_operations_require_valid_map(user_with_default_map, sample_gpx_fi
     assert response.status_code == 404
 
 
+def test_create_map_rejects_empty_name(auth_token):
+    response = client.post(
+        "/api/v1/maps",
+        json={"name": ""},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert response.status_code == 422
+
+
+def test_create_map_rejects_whitespace_only_name(auth_token):
+    response = client.post(
+        "/api/v1/maps",
+        json={"name": "   "},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert response.status_code == 422
+
+
+def test_create_map_strips_whitespace(auth_token):
+    response = client.post(
+        "/api/v1/maps",
+        json={"name": "  My Map  "},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert response.status_code == 201
+    assert response.json()["name"] == "My Map"
+
+
+def test_create_map_rejects_too_long_name(auth_token):
+    response = client.post(
+        "/api/v1/maps",
+        json={"name": "x" * 101},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert response.status_code == 422
+
+
 def test_unauthenticated_map_access():
     response = client.get("/api/v1/maps")
     assert response.status_code == 401

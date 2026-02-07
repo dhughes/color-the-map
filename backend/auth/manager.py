@@ -1,3 +1,4 @@
+import logging
 import secrets
 from datetime import datetime, timezone
 from typing import Optional
@@ -11,25 +12,33 @@ from .models import User, RefreshToken
 from .config import auth_config
 from .database import get_async_session
 
+logger = logging.getLogger(__name__)
+
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, UUID]):
     reset_password_token_secret = auth_config.SECRET_KEY
     verification_token_secret = auth_config.SECRET_KEY
 
+    def __init__(self, user_db: SQLAlchemyUserDatabase, session: AsyncSession):
+        super().__init__(user_db)
+        self._session = session
+
     async def on_after_register(self, user: User, request: Optional[Request] = None):
-        print(f"User {user.email} has registered.")
+        logger.info("User %s has registered.", user.email)
 
-        from ..services.map_service import MapService
+        try:
+            from ..services.map_service import MapService
 
-        map_service = MapService()
-        session = self.user_db.session  # type: ignore[attr-defined]
-        await map_service.create_map(
-            name="My Map",
-            user_id=str(user.id),
-            session=session,
-        )
-        await session.commit()
-        print(f"Created map for user {user.email}")
+            map_service = MapService()
+            await map_service.create_map(
+                name="My Map",
+                user_id=str(user.id),
+                session=self._session,
+            )
+            await self._session.commit()
+            logger.info("Created default map for user %s.", user.email)
+        except Exception:
+            logger.exception("Failed to create default map for user %s.", user.email)
 
     async def on_after_login(
         self,
@@ -37,15 +46,18 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, UUID]):
         request: Optional[Request] = None,
         response: Optional[Response] = None,
     ):
-        print(f"User {user.email} has logged in.")
+        logger.info("User %s has logged in.", user.email)
 
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
     yield SQLAlchemyUserDatabase(session, User)
 
 
-async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):
-    yield UserManager(user_db)
+async def get_user_manager(
+    user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
+    session: AsyncSession = Depends(get_async_session),
+):
+    yield UserManager(user_db, session)
 
 
 class RefreshTokenManager:

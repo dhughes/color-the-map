@@ -41,35 +41,7 @@ def upgrade() -> None:
     )
     op.create_index("idx_maps_user_id", "maps", ["user_id"])
 
-    op.execute(
-        """
-        INSERT INTO maps (user_id, name, created_at, updated_at)
-        SELECT DISTINCT user_id, 'My Map', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-        FROM tracks
-    """
-    )
-
-    op.execute(
-        """
-        INSERT INTO maps (user_id, name, created_at, updated_at)
-        SELECT id, 'My Map', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-        FROM users
-        WHERE id NOT IN (SELECT DISTINCT user_id FROM tracks)
-    """
-    )
-
     op.add_column("tracks", sa.Column("map_id", sa.Integer(), nullable=True))
-
-    op.execute(
-        """
-        UPDATE tracks
-        SET map_id = (
-            SELECT id FROM maps
-            WHERE maps.user_id = tracks.user_id
-            LIMIT 1
-        )
-    """
-    )
 
     with op.batch_alter_table("tracks") as batch_op:
         batch_op.alter_column("map_id", nullable=False)

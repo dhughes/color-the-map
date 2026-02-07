@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
 from typing import Optional, List, TYPE_CHECKING
 
@@ -114,7 +114,15 @@ class MapResponse(BaseModel):
 
 
 class MapCreate(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1, max_length=100)
+
+    @field_validator("name")
+    @classmethod
+    def strip_and_validate_name(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Map name cannot be empty")
+        return stripped
 
 
 class MapUpdate(BaseModel):

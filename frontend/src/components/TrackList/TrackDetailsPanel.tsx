@@ -12,7 +12,7 @@ import {
 
 interface TrackDetailsPanelProps {
   track: Track;
-  mapId: number | null;
+  mapId: number;
   allActivityTypes: string[];
   onDelete: () => void;
 }
@@ -29,9 +29,7 @@ export function TrackDetailsPanel({
 
   const updateMutation = useMutation({
     mutationFn: (updates: { name?: string; activity_type?: string }) =>
-      mapId !== null
-        ? updateTrack(mapId, track.id, updates)
-        : Promise.reject(new Error("No map selected")),
+      updateTrack(mapId, track.id, updates),
     onMutate: async (updates) => {
       await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
       const previousTracks = queryClient.getQueryData(["tracks", mapId]);

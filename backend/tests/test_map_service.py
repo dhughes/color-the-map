@@ -131,20 +131,3 @@ async def test_delete_map_wrong_user(map_service, test_db_session):
 
     result = await map_service.delete_map(map2.id, OTHER_USER_ID, test_db_session)
     assert result.deleted is False
-
-
-@pytest.mark.asyncio
-async def test_ensure_map_exists_creates_when_none_exist(map_service, test_db_session):
-    result = await map_service.ensure_map_exists(USER_ID, test_db_session)
-
-    assert result.name == "My Map"
-    assert result.user_id == USER_ID
-
-
-@pytest.mark.asyncio
-async def test_ensure_map_exists_returns_existing(map_service, test_db_session):
-    existing = await map_service.create_map("Existing", USER_ID, test_db_session)
-    await test_db_session.commit()
-
-    result = await map_service.ensure_map_exists(USER_ID, test_db_session)
-    assert result.id == existing.id

@@ -3,6 +3,11 @@
 :root {
   --color-primary: #ff00ff;
   --color-primary-hover: #cc00cc;
+  --color-primary-subtle: rgba(255, 0, 255, 0.08);
+  --color-primary-ring: rgba(255, 0, 255, 0.15);
+  --color-primary-glow: rgba(255, 0, 255, 0.3);
+  --color-primary-ring-strong: rgba(255, 0, 255, 0.25);
+  --color-primary-glow-strong: rgba(255, 0, 255, 0.5);
   --color-bg: #fafaf8;
   --color-overlay: #fffef9;
   --color-text: #1a1a1a;
@@ -270,7 +275,7 @@ body {
 
 .pulse-ring {
   position: absolute;
-  border: 2px solid #ff00ff;
+  border: 2px solid var(--color-primary);
   border-radius: 50%;
   opacity: 0;
   animation: pulseRing 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
@@ -297,12 +302,12 @@ body {
 .pulse-center {
   width: 16px;
   height: 16px;
-  background: #ff00ff;
+  background: var(--color-primary);
   border-radius: 50%;
   position: relative;
   box-shadow:
-    0 0 0 4px rgba(255, 0, 255, 0.15),
-    0 0 20px rgba(255, 0, 255, 0.3);
+    0 0 0 4px var(--color-primary-ring),
+    0 0 20px var(--color-primary-glow);
   animation: centerPulse 2s ease-in-out infinite;
 }
 
@@ -332,14 +337,14 @@ body {
   100% {
     transform: scale(1);
     box-shadow:
-      0 0 0 4px rgba(255, 0, 255, 0.15),
-      0 0 20px rgba(255, 0, 255, 0.3);
+      0 0 0 4px var(--color-primary-ring),
+      0 0 20px var(--color-primary-glow);
   }
   50% {
     transform: scale(1.1);
     box-shadow:
-      0 0 0 8px rgba(255, 0, 255, 0.25),
-      0 0 30px rgba(255, 0, 255, 0.5);
+      0 0 0 8px var(--color-primary-ring-strong),
+      0 0 30px var(--color-primary-glow-strong);
   }
 }
 
@@ -427,7 +432,7 @@ body {
 .map-selector-select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(255, 0, 255, 0.08);
+  box-shadow: 0 0 0 2px var(--color-primary-subtle);
 }
 
 .map-selector-actions {
@@ -497,7 +502,7 @@ body {
 .map-selector-input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(255, 0, 255, 0.08);
+  box-shadow: 0 0 0 2px var(--color-primary-subtle);
 }
 
 .map-selector-input::placeholder {
@@ -645,7 +650,7 @@ body {
 }
 
 .track-item.selected {
-  background: rgba(255, 0, 255, 0.08);
+  background: var(--color-primary-subtle);
   border-left: 3px solid var(--color-primary);
   padding-left: 13px;
 }
@@ -927,7 +932,7 @@ body {
 .track-details-input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(255, 0, 255, 0.08);
+  box-shadow: 0 0 0 3px var(--color-primary-subtle);
 }
 
 .track-details-input::placeholder {

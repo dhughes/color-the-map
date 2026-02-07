@@ -84,16 +84,8 @@ export function TrackList({
   );
 
   const toggleVisibility = useMutation({
-    mutationFn: ({
-      trackId,
-      visible,
-    }: {
-      trackId: number;
-      visible: boolean;
-    }) =>
-      mapId !== null
-        ? updateTrack(mapId, trackId, { visible })
-        : Promise.reject(new Error("No map selected")),
+    mutationFn: ({ trackId, visible }: { trackId: number; visible: boolean }) =>
+      updateTrack(mapId!, trackId, { visible }),
     onMutate: async ({ trackId, visible }) => {
       await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
@@ -115,10 +107,7 @@ export function TrackList({
   });
 
   const deleteTracksMutation = useMutation({
-    mutationFn: (trackIds: number[]) =>
-      mapId !== null
-        ? deleteTracks(mapId, trackIds)
-        : Promise.reject(new Error("No map selected")),
+    mutationFn: (trackIds: number[]) => deleteTracks(mapId!, trackIds),
     onMutate: (trackIdsToDelete) => {
       queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
@@ -297,10 +286,7 @@ export function TrackList({
     }: {
       trackIds: number[];
       visible: boolean;
-    }) =>
-      mapId !== null
-        ? bulkUpdateTracks(mapId, trackIds, { visible })
-        : Promise.reject(new Error("No map selected")),
+    }) => bulkUpdateTracks(mapId!, trackIds, { visible }),
     onMutate: async ({ trackIds, visible }) => {
       await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
@@ -457,7 +443,7 @@ export function TrackList({
       <SelectionPanel
         totalTracks={tracks.length}
         selectedTracks={selectedTracks}
-        mapId={mapId}
+        mapId={mapId!}
         allActivityTypes={allActivityTypes}
         onDelete={handleDelete}
         onZoomToSelectedTracks={onZoomToSelectedTracks}

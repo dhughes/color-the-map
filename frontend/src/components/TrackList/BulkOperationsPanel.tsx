@@ -11,7 +11,7 @@ import {
 
 interface BulkOperationsPanelProps {
   tracks: Track[];
-  mapId: number | null;
+  mapId: number;
   allActivityTypes: string[];
   onDelete: () => void;
 }
@@ -45,9 +45,7 @@ export function BulkOperationsPanel({
 
   const updateMutation = useMutation({
     mutationFn: (updates: { activity_type?: string }) =>
-      mapId !== null
-        ? bulkUpdateTracks(mapId, trackIds, updates)
-        : Promise.reject(new Error("No map selected")),
+      bulkUpdateTracks(mapId, trackIds, updates),
     onMutate: async (updates) => {
       await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
       const previousTracks = queryClient.getQueryData(["tracks", mapId]);
