@@ -454,32 +454,30 @@ export function AppContent() {
             <StatusMessage message={status.message} type={status.type} />
           )}
         </div>
-        {currentMapId !== null && (
-          <TrackList
-            tracks={tracks}
-            mapId={currentMapId}
-            maps={mapsData}
-            onSelectMap={handleSelectMap}
-            onCreateMap={(name) => createMapMutation.mutate(name)}
-            onRenameMap={(mapId, name) =>
-              renameMapMutation.mutate({ mapId, name })
-            }
-            onDeleteMap={(mapId) => deleteMapMutation.mutate(mapId)}
-            selectedTrackIds={selectedTrackIds}
-            anchorTrackId={anchorTrackId}
-            onSelect={toggleSelection}
-            onSelectRange={selectRange}
-            onZoomToTrack={handleZoomToTrack}
-            onZoomToSelectedTracks={handleZoomToSelectedTracks}
-            onUploadFiles={handleFilesDropped}
-            lastSelectedTrackId={lastSelectedTrackId}
-            selectionSource={selectionSource}
-            speedColorEnabled={speedColorEnabled}
-            onToggleSpeedColor={handleToggleSpeedColor}
-            speedColorRelative={speedColorRelative}
-            onToggleSpeedColorRelative={handleToggleSpeedColorRelative}
-          />
-        )}
+        <TrackList
+          tracks={tracks}
+          mapId={currentMapId}
+          maps={mapsData}
+          onSelectMap={handleSelectMap}
+          onCreateMap={(name) => createMapMutation.mutate(name)}
+          onRenameMap={(mapId, name) =>
+            renameMapMutation.mutate({ mapId, name })
+          }
+          onDeleteMap={(mapId) => deleteMapMutation.mutate(mapId)}
+          selectedTrackIds={selectedTrackIds}
+          anchorTrackId={anchorTrackId}
+          onSelect={toggleSelection}
+          onSelectRange={selectRange}
+          onZoomToTrack={handleZoomToTrack}
+          onZoomToSelectedTracks={handleZoomToSelectedTracks}
+          onUploadFiles={handleFilesDropped}
+          lastSelectedTrackId={lastSelectedTrackId}
+          selectionSource={selectionSource}
+          speedColorEnabled={speedColorEnabled}
+          onToggleSpeedColor={handleToggleSpeedColor}
+          speedColorRelative={speedColorRelative}
+          onToggleSpeedColorRelative={handleToggleSpeedColorRelative}
+        />
       </div>
     </>
   );

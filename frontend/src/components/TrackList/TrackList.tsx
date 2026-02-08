@@ -15,7 +15,7 @@ import { geometryCache } from "../../utils/geometryCache";
 
 interface TrackListProps {
   tracks: Track[];
-  mapId: number;
+  mapId: number | null;
   maps: MapData[];
   onSelectMap: (mapId: number) => void;
   onCreateMap: (name: string) => void;
@@ -84,8 +84,16 @@ export function TrackList({
   );
 
   const toggleVisibility = useMutation({
-    mutationFn: ({ trackId, visible }: { trackId: number; visible: boolean }) =>
-      updateTrack(mapId, trackId, { visible }),
+    mutationFn: ({
+      trackId,
+      visible,
+    }: {
+      trackId: number;
+      visible: boolean;
+    }) => {
+      if (mapId === null) return Promise.reject(new Error("No map selected"));
+      return updateTrack(mapId, trackId, { visible });
+    },
     onMutate: async ({ trackId, visible }) => {
       await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
@@ -107,7 +115,10 @@ export function TrackList({
   });
 
   const deleteTracksMutation = useMutation({
-    mutationFn: (trackIds: number[]) => deleteTracks(mapId, trackIds),
+    mutationFn: (trackIds: number[]) => {
+      if (mapId === null) return Promise.reject(new Error("No map selected"));
+      return deleteTracks(mapId, trackIds);
+    },
     onMutate: (trackIdsToDelete) => {
       queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
@@ -286,7 +297,10 @@ export function TrackList({
     }: {
       trackIds: number[];
       visible: boolean;
-    }) => bulkUpdateTracks(mapId, trackIds, { visible }),
+    }) => {
+      if (mapId === null) return Promise.reject(new Error("No map selected"));
+      return bulkUpdateTracks(mapId, trackIds, { visible });
+    },
     onMutate: async ({ trackIds, visible }) => {
       await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
@@ -388,7 +402,7 @@ export function TrackList({
         onChange={handleFileChange}
         hidden
       />
-      {maps.length > 0 && (
+      {maps.length > 0 && mapId !== null && (
         <MapSelector
           maps={maps}
           currentMapId={mapId}
