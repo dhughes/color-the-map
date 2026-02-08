@@ -402,16 +402,14 @@ export function TrackList({
         onChange={handleFileChange}
         hidden
       />
-      {maps.length > 0 && mapId !== null && (
-        <MapSelector
-          maps={maps}
-          currentMapId={mapId}
-          onSelectMap={onSelectMap}
-          onCreateMap={onCreateMap}
-          onRenameMap={onRenameMap}
-          onDeleteMap={onDeleteMap}
-        />
-      )}
+      <MapSelector
+        maps={maps}
+        currentMapId={mapId}
+        onSelectMap={onSelectMap}
+        onCreateMap={onCreateMap}
+        onRenameMap={onRenameMap}
+        onDeleteMap={onDeleteMap}
+      />
       <SidebarPanel
         title="Tracks"
         action={

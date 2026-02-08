@@ -5,7 +5,7 @@ import type { MapData } from "../../types/map";
 
 interface MapSelectorProps {
   maps: MapData[];
-  currentMapId: number;
+  currentMapId: number | null;
   onSelectMap: (mapId: number) => void;
   onCreateMap: (name: string) => void;
   onRenameMap: (mapId: number, name: string) => void;
@@ -26,7 +26,10 @@ export function MapSelector({
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const currentMap = maps.find((m) => m.id === currentMapId);
+  const loaded = maps.length > 0 && currentMapId !== null;
+  const currentMap = loaded
+    ? maps.find((m) => m.id === currentMapId)
+    : undefined;
   const canDelete = maps.length > 1;
 
   useEffect(() => {
@@ -43,6 +46,7 @@ export function MapSelector({
   };
 
   const handleStartRename = () => {
+    if (!loaded) return;
     setNewName(currentMap?.name ?? "");
     setIsRenaming(true);
     setIsCreating(false);
@@ -58,6 +62,7 @@ export function MapSelector({
   };
 
   const handleSubmitRename = () => {
+    if (currentMapId === null) return;
     const trimmed = newName.trim();
     if (trimmed && trimmed !== currentMap?.name) {
       onRenameMap(currentMapId, trimmed);
@@ -84,7 +89,7 @@ export function MapSelector({
   };
 
   const handleDeleteClick = () => {
-    if (canDelete) {
+    if (canDelete && currentMapId !== null) {
       setConfirmDeleteId(currentMapId);
     }
   };
@@ -135,8 +140,9 @@ export function MapSelector({
           <>
             <select
               className="map-selector-select"
-              value={currentMapId}
+              value={currentMapId ?? ""}
               onChange={(e) => onSelectMap(Number(e.target.value))}
+              disabled={!loaded}
             >
               {maps.map((map) => (
                 <option key={map.id} value={map.id}>
@@ -148,6 +154,7 @@ export function MapSelector({
               <button
                 className="map-selector-icon-btn"
                 onClick={handleStartCreate}
+                disabled={!loaded}
                 aria-label="Create new map"
                 title="New map"
               >
@@ -156,6 +163,7 @@ export function MapSelector({
               <button
                 className="map-selector-icon-btn"
                 onClick={handleStartRename}
+                disabled={!loaded}
                 aria-label="Rename map"
                 title="Rename map"
               >
@@ -164,7 +172,7 @@ export function MapSelector({
               <button
                 className={`map-selector-icon-btn${!canDelete ? " disabled" : ""}`}
                 onClick={handleDeleteClick}
-                disabled={!canDelete}
+                disabled={!loaded || !canDelete}
                 aria-label="Delete map"
                 title={canDelete ? "Delete map" : "Cannot delete last map"}
               >

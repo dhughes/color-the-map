@@ -35,6 +35,29 @@ describe("MapSelector", () => {
     vi.clearAllMocks();
   });
 
+  describe("loading state", () => {
+    it("disables select and all buttons when maps have not loaded", () => {
+      render(<MapSelector {...defaultProps} maps={[]} currentMapId={null} />);
+
+      expect(screen.getByRole("combobox")).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Create new map" }),
+      ).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Rename map" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Delete map" })).toBeDisabled();
+    });
+
+    it("enables controls once maps are loaded", () => {
+      render(<MapSelector {...defaultProps} />);
+
+      expect(screen.getByRole("combobox")).toBeEnabled();
+      expect(
+        screen.getByRole("button", { name: "Create new map" }),
+      ).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Rename map" })).toBeEnabled();
+    });
+  });
+
   describe("normal state", () => {
     it("renders a select with all maps", () => {
       render(<MapSelector {...defaultProps} />);

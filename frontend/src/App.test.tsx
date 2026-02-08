@@ -400,7 +400,7 @@ describe("App - Map Selection Persistence", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("combobox")).toBeInTheDocument();
+      expect(screen.getByRole("combobox")).toBeEnabled();
     });
 
     await user.selectOptions(screen.getByRole("combobox"), "2");
