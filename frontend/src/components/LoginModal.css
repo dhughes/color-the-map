@@ -89,7 +89,7 @@
 .form-input:focus {
   outline: none;
   border-color: var(--color-primary, #ff00ff);
-  box-shadow: 0 0 0 3px rgba(255, 0, 255, 0.08);
+  box-shadow: 0 0 0 3px var(--color-primary-subtle);
 }
 
 .form-input:disabled {
@@ -134,18 +134,18 @@
   justify-content: center;
   gap: 8px;
   letter-spacing: -0.01em;
-  box-shadow: 0 2px 8px rgba(255, 0, 255, 0.2);
+  box-shadow: 0 2px 8px var(--color-primary-shadow);
 }
 
 .submit-button:hover:not(:disabled) {
-  background: #e600e6;
-  box-shadow: 0 4px 12px rgba(255, 0, 255, 0.28);
+  background: var(--color-primary-hover);
+  box-shadow: 0 4px 12px var(--color-primary-shadow-strong);
   transform: translateY(-1px);
 }
 
 .submit-button:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(255, 0, 255, 0.2);
+  box-shadow: 0 2px 4px var(--color-primary-shadow);
 }
 
 .submit-button:disabled {

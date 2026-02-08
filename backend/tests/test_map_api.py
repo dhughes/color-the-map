@@ -16,16 +16,19 @@ def setup_api_test_environment(test_gpx_dir):
     from backend.services.storage_service import StorageService
     from backend.services.gpx_parser import GPXParser
     from backend.services.track_service import TrackService
-    import backend.api.map_routes as map_routes_module
+    from backend.api.map_routes import get_storage, get_track_service
 
     new_storage = StorageService(test_gpx_dir)
     new_parser = GPXParser()
     new_track_service = TrackService(new_storage, new_parser)
 
-    map_routes_module.storage = new_storage
-    map_routes_module.track_service = new_track_service
+    app.dependency_overrides[get_storage] = lambda: new_storage
+    app.dependency_overrides[get_track_service] = lambda: new_track_service
 
     yield
+
+    app.dependency_overrides.pop(get_storage, None)
+    app.dependency_overrides.pop(get_track_service, None)
 
 
 client = TestClient(app)

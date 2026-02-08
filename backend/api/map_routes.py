@@ -31,11 +31,20 @@ from ..auth.database import get_async_session
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-map_service = MapService()
 
-storage = StorageService(config.GPX_DIR)
-parser = GPXParser()
-track_service = TrackService(storage, parser)
+
+def get_map_service() -> MapService:
+    return MapService()
+
+
+def get_storage() -> StorageService:
+    return StorageService(config.GPX_DIR)
+
+
+def get_track_service(
+    storage: StorageService = Depends(get_storage),
+) -> TrackService:
+    return TrackService(storage, GPXParser())
 
 
 @router.post("/maps", response_model=MapResponse, status_code=status.HTTP_201_CREATED)
@@ -43,8 +52,9 @@ async def create_map(
     map_data: MapCreate,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    ms: MapService = Depends(get_map_service),
 ):
-    new_map = await map_service.create_map(
+    new_map = await ms.create_map(
         name=map_data.name,
         user_id=str(user.id),
         session=session,
@@ -58,8 +68,9 @@ async def create_map(
 async def list_maps(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    ms: MapService = Depends(get_map_service),
 ):
-    maps = await map_service.list_maps(str(user.id), session)
+    maps = await ms.list_maps(str(user.id), session)
     return [MapResponse.from_domain(m) for m in maps]
 
 
@@ -69,8 +80,9 @@ async def update_map(
     update: MapUpdate,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    ms: MapService = Depends(get_map_service),
 ):
-    updated_map = await map_service.update_map(
+    updated_map = await ms.update_map(
         map_id,
         update.model_dump(exclude_unset=True),
         str(user.id),
@@ -90,9 +102,11 @@ async def delete_map(
     map_id: int,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    ms: MapService = Depends(get_map_service),
+    storage: StorageService = Depends(get_storage),
 ):
     user_id = str(user.id)
-    result = await map_service.delete_map(map_id, user_id, session)
+    result = await ms.delete_map(map_id, user_id, session)
 
     if not result.deleted:
         if result.error:
@@ -113,9 +127,11 @@ async def upload_tracks(
     files: List[UploadFile] = File(...),
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    ms: MapService = Depends(get_map_service),
+    ts: TrackService = Depends(get_track_service),
 ):
     user_id = str(user.id)
-    map_obj = await map_service.get_map(map_id, user_id, session)
+    map_obj = await ms.get_map(map_id, user_id, session)
     if not map_obj:
         raise HTTPException(status_code=404, detail="Map not found")
 
@@ -138,7 +154,7 @@ async def upload_tracks(
                 errors.append(f"{file.filename}: File too large")
                 continue
 
-            result = await track_service.upload_track(
+            result = await ts.upload_track(
                 file.filename, content, map_id, user_id, session
             )
 
@@ -196,13 +212,15 @@ async def list_tracks(
     map_id: int,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    ms: MapService = Depends(get_map_service),
+    ts: TrackService = Depends(get_track_service),
 ):
     user_id = str(user.id)
-    map_obj = await map_service.get_map(map_id, user_id, session)
+    map_obj = await ms.get_map(map_id, user_id, session)
     if not map_obj:
         raise HTTPException(status_code=404, detail="Map not found")
 
-    tracks = await track_service.list_tracks(map_id, user_id, session)
+    tracks = await ts.list_tracks(map_id, user_id, session)
     return [TrackResponse.from_domain(track) for track in tracks]
 
 
@@ -212,13 +230,15 @@ async def get_track_geometries(
     request: GeometryRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    ms: MapService = Depends(get_map_service),
+    ts: TrackService = Depends(get_track_service),
 ):
     user_id = str(user.id)
-    map_obj = await map_service.get_map(map_id, user_id, session)
+    map_obj = await ms.get_map(map_id, user_id, session)
     if not map_obj:
         raise HTTPException(status_code=404, detail="Map not found")
 
-    geometries = await track_service.get_multiple_geometries(
+    geometries = await ts.get_multiple_geometries(
         request.track_ids, map_id, user_id, session
     )
     return [TrackGeometry.from_domain(geometry) for geometry in geometries]
@@ -230,13 +250,15 @@ async def bulk_update_tracks(
     request: BulkUpdateRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    ms: MapService = Depends(get_map_service),
+    ts: TrackService = Depends(get_track_service),
 ):
     user_id = str(user.id)
-    map_obj = await map_service.get_map(map_id, user_id, session)
+    map_obj = await ms.get_map(map_id, user_id, session)
     if not map_obj:
         raise HTTPException(status_code=404, detail="Map not found")
 
-    updated = await track_service.update_tracks(
+    updated = await ts.update_tracks(
         request.track_ids,
         request.updates.model_dump(exclude_unset=True),
         map_id,
@@ -255,13 +277,15 @@ async def update_track(
     update: TrackUpdate,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    ms: MapService = Depends(get_map_service),
+    ts: TrackService = Depends(get_track_service),
 ):
     user_id = str(user.id)
-    map_obj = await map_service.get_map(map_id, user_id, session)
+    map_obj = await ms.get_map(map_id, user_id, session)
     if not map_obj:
         raise HTTPException(status_code=404, detail="Map not found")
 
-    track = await track_service.update_track(
+    track = await ts.update_track(
         track_id,
         update.model_dump(exclude_unset=True),
         map_id,
@@ -283,15 +307,16 @@ async def delete_tracks(
     request: DeleteRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    ms: MapService = Depends(get_map_service),
+    ts: TrackService = Depends(get_track_service),
+    storage: StorageService = Depends(get_storage),
 ):
     user_id = str(user.id)
-    map_obj = await map_service.get_map(map_id, user_id, session)
+    map_obj = await ms.get_map(map_id, user_id, session)
     if not map_obj:
         raise HTTPException(status_code=404, detail="Map not found")
 
-    result = await track_service.delete_tracks(
-        request.track_ids, map_id, user_id, session
-    )
+    result = await ts.delete_tracks(request.track_ids, map_id, user_id, session)
     await session.commit()
 
     for gpx_hash in result.hashes_to_delete:

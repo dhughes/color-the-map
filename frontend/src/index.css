@@ -6,6 +6,8 @@
   --color-primary-subtle: rgba(255, 0, 255, 0.08);
   --color-primary-ring: rgba(255, 0, 255, 0.15);
   --color-primary-glow: rgba(255, 0, 255, 0.3);
+  --color-primary-shadow: rgba(255, 0, 255, 0.2);
+  --color-primary-shadow-strong: rgba(255, 0, 255, 0.28);
   --color-primary-ring-strong: rgba(255, 0, 255, 0.25);
   --color-primary-glow-strong: rgba(255, 0, 255, 0.5);
   --color-bg: #fafaf8;
