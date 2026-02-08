@@ -7,6 +7,10 @@ import {
   getTrackGeometries,
   updateTrack,
   deleteTracks,
+  listMaps,
+  createMap,
+  updateMap,
+  deleteMap,
 } from "./client";
 
 globalThis.fetch = vi.fn() as any;
@@ -33,10 +37,10 @@ describe("API Client", () => {
       const file1 = new File(["content1"], "track1.gpx");
       const file2 = new File(["content2"], "track2.gpx");
 
-      const result = await uploadTracks([file1, file2]);
+      const result = await uploadTracks(1, [file1, file2]);
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "api/v1/tracks",
+        "api/v1/maps/1/tracks",
         expect.objectContaining({
           method: "POST",
           body: expect.any(FormData),
@@ -55,7 +59,7 @@ describe("API Client", () => {
 
       const file = new File(["content"], "track.gpx");
 
-      await expect(uploadTracks([file])).rejects.toThrow("Invalid file");
+      await expect(uploadTracks(1, [file])).rejects.toThrow("Invalid file");
     });
   });
 
@@ -71,9 +75,12 @@ describe("API Client", () => {
         json: async () => mockTracks,
       });
 
-      const result = await listTracks();
+      const result = await listTracks(1);
 
-      expect(globalThis.fetch).toHaveBeenCalledWith("api/v1/tracks", {});
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "api/v1/maps/1/tracks",
+        expect.objectContaining({}),
+      );
       expect(result).toEqual(mockTracks);
     });
 
@@ -83,7 +90,7 @@ describe("API Client", () => {
         statusText: "Internal Server Error",
       });
 
-      await expect(listTracks()).rejects.toThrow("Failed to load tracks");
+      await expect(listTracks(1)).rejects.toThrow("Failed to load tracks");
     });
   });
 
@@ -111,13 +118,15 @@ describe("API Client", () => {
         json: async () => mockGeometries,
       });
 
-      const result = await getTrackGeometries([1, 2]);
+      const result = await getTrackGeometries(1, [1, 2]);
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "api/v1/tracks/geometry",
+        "api/v1/maps/1/tracks/geometry",
         expect.objectContaining({
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+          }),
           body: JSON.stringify({ track_ids: [1, 2] }),
         }),
       );
@@ -135,16 +144,18 @@ describe("API Client", () => {
         json: async () => mockTrack,
       });
 
-      const result = await updateTrack(1, {
+      const result = await updateTrack(1, 1, {
         visible: false,
         name: "Updated Track",
       });
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "api/v1/tracks/1",
+        "api/v1/maps/1/tracks/1",
         expect.objectContaining({
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+          }),
           body: JSON.stringify({ visible: false, name: "Updated Track" }),
         }),
       );
@@ -158,7 +169,7 @@ describe("API Client", () => {
         statusText: "Not Found",
       });
 
-      await expect(updateTrack(999, { visible: false })).rejects.toThrow(
+      await expect(updateTrack(1, 999, { visible: false })).rejects.toThrow(
         "Failed to update track",
       );
     });
@@ -193,6 +204,7 @@ describe("API Client", () => {
       const progressCallback = vi.fn();
 
       const result = await uploadTracksWithProgress(
+        1,
         [file1, file2, file3],
         progressCallback,
       );
@@ -245,6 +257,7 @@ describe("API Client", () => {
       const progressCallback = vi.fn();
 
       const result = await uploadTracksWithProgress(
+        1,
         [file1, file2, file3],
         progressCallback,
       );
@@ -268,13 +281,15 @@ describe("API Client", () => {
         json: async () => mockResult,
       });
 
-      const result = await deleteTracks([1, 2]);
+      const result = await deleteTracks(1, [1, 2]);
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "api/v1/tracks",
+        "api/v1/maps/1/tracks",
         expect.objectContaining({
           method: "DELETE",
-          headers: { "Content-Type": "application/json" },
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+          }),
           body: JSON.stringify({ track_ids: [1, 2] }),
         }),
       );
@@ -289,7 +304,122 @@ describe("API Client", () => {
         json: async () => ({ detail: "Delete failed" }),
       });
 
-      await expect(deleteTracks([1])).rejects.toThrow("Delete failed");
+      await expect(deleteTracks(1, [1])).rejects.toThrow("Delete failed");
+    });
+  });
+
+  describe("listMaps", () => {
+    it("fetches map list", async () => {
+      const mockMaps = [
+        { id: 1, name: "My Map" },
+        { id: 2, name: "Other Map" },
+      ];
+
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockMaps,
+      });
+
+      const result = await listMaps();
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "api/v1/maps",
+        expect.objectContaining({}),
+      );
+      expect(result).toEqual(mockMaps);
+    });
+
+    it("throws error on failed fetch", async () => {
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        statusText: "Internal Server Error",
+      });
+
+      await expect(listMaps()).rejects.toThrow("Failed to load maps");
+    });
+  });
+
+  describe("createMap", () => {
+    it("creates a map with POST request", async () => {
+      const mockMap = { id: 3, name: "New Map" };
+
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockMap,
+      });
+
+      const result = await createMap("New Map");
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "api/v1/maps",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+          }),
+          body: JSON.stringify({ name: "New Map" }),
+        }),
+      );
+
+      expect(result).toEqual(mockMap);
+    });
+  });
+
+  describe("updateMap", () => {
+    it("updates a map with PATCH request", async () => {
+      const mockMap = { id: 1, name: "Renamed Map" };
+
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockMap,
+      });
+
+      const result = await updateMap(1, { name: "Renamed Map" });
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "api/v1/maps/1",
+        expect.objectContaining({
+          method: "PATCH",
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+          }),
+          body: JSON.stringify({ name: "Renamed Map" }),
+        }),
+      );
+
+      expect(result).toEqual(mockMap);
+    });
+  });
+
+  describe("deleteMap", () => {
+    it("deletes a map with DELETE request", async () => {
+      const mockResult = { deleted: true };
+
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResult,
+      });
+
+      const result = await deleteMap(1);
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "api/v1/maps/1",
+        expect.objectContaining({
+          method: "DELETE",
+        }),
+      );
+
+      expect(result).toEqual(mockResult);
+    });
+
+    it("throws error on failed delete", async () => {
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        statusText: "Bad Request",
+        json: async () => ({ detail: "Cannot delete last map" }),
+      });
+
+      await expect(deleteMap(1)).rejects.toThrow("Cannot delete last map");
     });
   });
 });

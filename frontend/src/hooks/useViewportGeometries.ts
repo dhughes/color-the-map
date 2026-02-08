@@ -17,6 +17,7 @@ export interface UseViewportGeometriesResult {
 
 export function useViewportGeometries(
   tracks: Track[],
+  mapId: number | null,
 ): UseViewportGeometriesResult {
   const [viewport, setViewport] = useState<ViewportBounds | null>(null);
   const [geometries, setGeometries] = useState<TrackGeometry[]>([]);
@@ -47,6 +48,14 @@ export function useViewportGeometries(
   }, [visibleTracks]);
 
   useEffect(() => {
+    if (mapId === null) {
+      setGeometries([]);
+      setIsLoading(false);
+      setLoadingCount(0);
+      setError(null);
+      return;
+    }
+
     const visibleTrackIds = JSON.parse(visibleTrackIdsKey) as number[];
 
     if (abortControllerRef.current) {
@@ -86,6 +95,7 @@ export function useViewportGeometries(
           setError(null);
 
           const fetched = await getTrackGeometries(
+            mapId,
             missingIds,
             abortController.signal,
           );
@@ -138,7 +148,7 @@ export function useViewportGeometries(
     // when visible tracks change. Including visibleTracks would cause infinite loop
     // since it's a new array reference on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visibleTrackIdsKey]);
+  }, [visibleTrackIdsKey, mapId]);
 
   const retryFetch = useCallback(() => {
     if (!viewport) return;

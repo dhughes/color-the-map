@@ -5,6 +5,16 @@ from unittest.mock import AsyncMock, patch
 
 from backend.auth.manager import RefreshTokenManager
 from backend.auth.models import RefreshToken
+from .conftest import create_test_user
+
+TEST_USER_IDS = ["user-123", "user-456", "user-789", "user-valid", "user-expired"]
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def setup_users(test_db_session):
+    for uid in TEST_USER_IDS:
+        await create_test_user(test_db_session, uid)
+    await test_db_session.commit()
 
 
 @pytest_asyncio.fixture

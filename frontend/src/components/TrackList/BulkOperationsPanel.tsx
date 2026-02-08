@@ -11,6 +11,7 @@ import {
 
 interface BulkOperationsPanelProps {
   tracks: Track[];
+  mapId: number;
   allActivityTypes: string[];
   onDelete: () => void;
 }
@@ -22,6 +23,7 @@ function sumOptional(values: (number | null | undefined)[]): number | null {
 
 export function BulkOperationsPanel({
   tracks,
+  mapId,
   allActivityTypes,
   onDelete,
 }: BulkOperationsPanelProps) {
@@ -43,22 +45,22 @@ export function BulkOperationsPanel({
 
   const updateMutation = useMutation({
     mutationFn: (updates: { activity_type?: string }) =>
-      bulkUpdateTracks(trackIds, updates),
+      bulkUpdateTracks(mapId, trackIds, updates),
     onMutate: async (updates) => {
-      await queryClient.cancelQueries({ queryKey: ["tracks"] });
-      const previousTracks = queryClient.getQueryData(["tracks"]);
-      queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
+      await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
+      const previousTracks = queryClient.getQueryData(["tracks", mapId]);
+      queryClient.setQueryData(["tracks", mapId], (old: Track[] | undefined) =>
         old?.map((t) => (trackIds.includes(t.id) ? { ...t, ...updates } : t)),
       );
       return { previousTracks };
     },
     onError: (_err, _variables, context) => {
       if (context?.previousTracks) {
-        queryClient.setQueryData(["tracks"], context.previousTracks);
+        queryClient.setQueryData(["tracks", mapId], context.previousTracks);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tracks"] });
+      queryClient.invalidateQueries({ queryKey: ["tracks", mapId] });
     },
   });
 

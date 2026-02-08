@@ -9,6 +9,7 @@ from sqlalchemy import (
     Float,
     Boolean,
     JSON,
+    ForeignKey,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 from ..database import Base
@@ -19,6 +20,11 @@ class Track(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    map_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("maps.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     hash: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     filename: Mapped[str] = mapped_column(String, nullable=False)
@@ -54,5 +60,6 @@ class Track(Base):
         Index("idx_tracks_date", "activity_date"),
         Index("idx_tracks_type", "activity_type"),
         Index("idx_tracks_user_id", "user_id"),
-        Index("idx_tracks_user_hash", "user_id", "hash", unique=True),
+        Index("idx_tracks_map_id", "map_id"),
+        Index("idx_tracks_map_hash", "map_id", "hash", unique=True),
     )

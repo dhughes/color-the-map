@@ -3,6 +3,7 @@ import {
   QueryClient,
   QueryClientProvider,
   useQuery,
+  useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
 import { Map, type MapRef } from "./components/Map";
@@ -16,10 +17,15 @@ import { useViewportGeometries } from "./hooks/useViewportGeometries";
 import {
   uploadTracksWithProgress,
   listTracks,
+  listMaps,
+  createMap,
+  updateMap,
+  deleteMap,
   setAccessToken,
 } from "./api/client";
 import { geometryCache } from "./utils/geometryCache";
 import { mapViewStorage } from "./utils/mapViewStorage";
+import { selectedMapStorage } from "./utils/selectedMapStorage";
 import type { Track } from "./types/track";
 import type { SpeedColorRelative } from "./types/track";
 import { version } from "../package.json";
@@ -30,6 +36,7 @@ const EMPTY_TRACKS: Track[] = [];
 export function AppContent() {
   const { isAuthenticated, isLoading, accessToken, logout } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [currentMapId, setCurrentMapId] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{
     current: number;
@@ -41,6 +48,16 @@ export function AppContent() {
   } | null>(null);
   const queryClient = useQueryClient();
   const statusTimeoutRef = useRef<number | undefined>(undefined);
+
+  const showStatus = useCallback(
+    (message: string, type: "info" | "success" | "error") => {
+      setStatus({ message, type });
+      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
+      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
+    },
+    [],
+  );
+
   const mapRef = useRef<MapRef>(null);
   const {
     selectedTrackIds,
@@ -65,10 +82,33 @@ export function AppContent() {
     setSpeedColorRelative((prev) => (prev === "each" ? "all" : "each"));
   }, []);
 
-  const { data: tracksData = [] } = useQuery<Track[]>({
-    queryKey: ["tracks"],
-    queryFn: listTracks,
+  const { data: mapsData = [] } = useQuery({
+    queryKey: ["maps"],
+    queryFn: listMaps,
     enabled: isAuthenticated,
+  });
+
+  useEffect(() => {
+    if (mapsData.length > 0 && currentMapId === null) {
+      const storedId = selectedMapStorage.getSelectedMapId();
+      const storedMap = storedId
+        ? mapsData.find((m) => m.id === storedId)
+        : null;
+      const defaultMap = storedMap ?? mapsData[0];
+      setCurrentMapId(defaultMap.id);
+    }
+  }, [mapsData, currentMapId]);
+
+  useEffect(() => {
+    if (currentMapId !== null) {
+      selectedMapStorage.setSelectedMapId(currentMapId);
+    }
+  }, [currentMapId]);
+
+  const { data: tracksData = [] } = useQuery<Track[]>({
+    queryKey: ["tracks", currentMapId],
+    queryFn: () => listTracks(currentMapId!),
+    enabled: isAuthenticated && currentMapId !== null,
   });
 
   const tracks = useMemo(
@@ -119,7 +159,7 @@ export function AppContent() {
     error: geometryError,
     onViewportChange,
     retryFetch,
-  } = useViewportGeometries(tracks);
+  } = useViewportGeometries(tracks, currentMapId);
 
   const visibleGeometries = useMemo(() => {
     const visibleIds = new Set(
@@ -130,12 +170,53 @@ export function AppContent() {
     );
   }, [tracks, allGeometries]);
 
+  const createMapMutation = useMutation({
+    mutationFn: createMap,
+    onSuccess: (newMap) => {
+      queryClient.invalidateQueries({ queryKey: ["maps"] });
+      setCurrentMapId(newMap.id);
+      clearSelection();
+    },
+    onError: () => showStatus("Failed to create map", "error"),
+  });
+
+  const renameMapMutation = useMutation({
+    mutationFn: ({ mapId, name }: { mapId: number; name: string }) =>
+      updateMap(mapId, { name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["maps"] });
+    },
+    onError: () => showStatus("Failed to rename map", "error"),
+  });
+
+  const deleteMapMutation = useMutation({
+    mutationFn: deleteMap,
+    onSuccess: (_data, deletedMapId) => {
+      queryClient.removeQueries({ queryKey: ["tracks", deletedMapId] });
+      queryClient.invalidateQueries({ queryKey: ["maps"] });
+      const remaining = mapsData.filter((m) => m.id !== deletedMapId);
+      if (remaining.length > 0) {
+        const next = remaining[0];
+        setCurrentMapId(next.id);
+      }
+      clearSelection();
+    },
+    onError: () => showStatus("Failed to delete map", "error"),
+  });
+
+  const handleSelectMap = (mapId: number) => {
+    setCurrentMapId(mapId);
+    clearSelection();
+  };
+
   const handleLogout = async () => {
     try {
       queryClient.clear();
       await geometryCache.clearCache();
       mapViewStorage.clearMapView();
+      selectedMapStorage.clearSelectedMapId();
       clearSelection();
+      setCurrentMapId(null);
       await logout();
     } catch (error) {
       console.error("Logout cleanup failed:", error);
@@ -188,31 +269,32 @@ export function AppContent() {
   };
 
   const handleFilesDropped = async (files: File[]) => {
+    if (currentMapId === null) return;
+
     setIsUploading(true);
     setUploadProgress({ current: 0, total: files.length });
 
     try {
-      const result = await uploadTracksWithProgress(files, (current, total) => {
-        setUploadProgress({ current, total });
-      });
+      const result = await uploadTracksWithProgress(
+        currentMapId,
+        files,
+        (current, total) => {
+          setUploadProgress({ current, total });
+        },
+      );
 
-      queryClient.invalidateQueries({ queryKey: ["tracks"] });
+      queryClient.invalidateQueries({ queryKey: ["tracks", currentMapId] });
       queryClient.invalidateQueries({
         predicate: (query) => query.queryKey[0] === "geometries",
       });
 
       if (result.failed > 0) {
-        setStatus({ message: "Some files failed", type: "error" });
+        showStatus("Some files failed", "error");
       } else {
-        setStatus({ message: "Upload complete", type: "success" });
+        showStatus("Upload complete", "success");
       }
-
-      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
-      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
     } catch {
-      setStatus({ message: "Upload failed", type: "error" });
-      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
-      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
+      showStatus("Upload failed", "error");
     } finally {
       setIsUploading(false);
       setUploadProgress(null);
@@ -374,6 +456,14 @@ export function AppContent() {
         </div>
         <TrackList
           tracks={tracks}
+          mapId={currentMapId}
+          maps={mapsData}
+          onSelectMap={handleSelectMap}
+          onCreateMap={(name) => createMapMutation.mutate(name)}
+          onRenameMap={(mapId, name) =>
+            renameMapMutation.mutate({ mapId, name })
+          }
+          onDeleteMap={(mapId) => deleteMapMutation.mutate(mapId)}
           selectedTrackIds={selectedTrackIds}
           anchorTrackId={anchorTrackId}
           onSelect={toggleSelection}

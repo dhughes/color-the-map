@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -29,14 +29,32 @@ vi.mock("./components/Map", () => ({
   }),
 }));
 
+const mockMaps = [
+  {
+    id: 1,
+    user_id: "1",
+    name: "Default Map",
+
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
+  },
+];
+
 describe("App - Zoom to Track Feature", () => {
   let queryClient: QueryClient;
 
+  afterEach(() => {
+    localStorage.clear();
+  });
+
   const mockTrackWithBounds: Track = {
     id: 1,
+    user_id: "1",
+    map_id: 1,
     hash: "abc123",
     name: "Track with Bounds",
     filename: "track1.gpx",
+    creator: null,
     activity_type: "Cycling",
     activity_date: "2025-01-01T10:00:00Z",
     uploaded_at: "2025-01-01T10:05:00Z",
@@ -75,6 +93,7 @@ describe("App - Zoom to Track Feature", () => {
       },
     });
 
+    vi.mocked(apiClient.listMaps).mockResolvedValue(mockMaps);
     vi.mocked(apiClient.listTracks).mockResolvedValue([
       mockTrackWithBounds,
       mockTrackWithNullBounds,
@@ -119,6 +138,10 @@ describe("App - Logout Functionality", () => {
   let queryClient: QueryClient;
   let mockLogout: ReturnType<typeof vi.fn>;
 
+  afterEach(() => {
+    localStorage.clear();
+  });
+
   beforeEach(() => {
     queryClient = new QueryClient({
       defaultOptions: {
@@ -130,6 +153,7 @@ describe("App - Logout Functionality", () => {
 
     mockLogout = vi.fn();
 
+    vi.mocked(apiClient.listMaps).mockResolvedValue(mockMaps);
     vi.mocked(apiClient.listTracks).mockResolvedValue([]);
 
     vi.spyOn(authContext, "useAuth").mockReturnValue({
@@ -168,9 +192,12 @@ describe("App - Logout Functionality", () => {
   it("does not display tracks when not authenticated", () => {
     const mockTrack1: Track = {
       id: 1,
+      user_id: "1",
+      map_id: 1,
       hash: "hash1",
       name: "Test Track 1",
       filename: "track1.gpx",
+      creator: null,
       activity_type: "Walking",
       activity_date: "2025-01-01T10:00:00Z",
       uploaded_at: "2025-01-01T10:05:00Z",
@@ -197,7 +224,7 @@ describe("App - Logout Functionality", () => {
       name: "Test Track 2",
     };
 
-    queryClient.setQueryData(["tracks"], [mockTrack1, mockTrack2]);
+    queryClient.setQueryData(["tracks", 1], [mockTrack1, mockTrack2]);
 
     vi.spyOn(authContext, "useAuth").mockReturnValue({
       user: null,
@@ -222,6 +249,10 @@ describe("App - Logout Functionality", () => {
 describe("App - Version Display", () => {
   let queryClient: QueryClient;
 
+  afterEach(() => {
+    localStorage.clear();
+  });
+
   beforeEach(() => {
     queryClient = new QueryClient({
       defaultOptions: {
@@ -231,6 +262,7 @@ describe("App - Version Display", () => {
       },
     });
 
+    vi.mocked(apiClient.listMaps).mockResolvedValue(mockMaps);
     vi.mocked(apiClient.listTracks).mockResolvedValue([]);
 
     vi.spyOn(authContext, "useAuth").mockReturnValue({
@@ -275,5 +307,124 @@ describe("App - Version Display", () => {
 
     const versionElement = screen.getByText(`v${version}`);
     expect(versionElement).toHaveClass("version-display");
+  });
+});
+
+describe("App - Map Selection Persistence", () => {
+  let queryClient: QueryClient;
+
+  const multipleMaps = [
+    {
+      id: 1,
+      user_id: "1",
+      name: "Default Map",
+
+      created_at: "2025-01-01T00:00:00Z",
+      updated_at: "2025-01-01T00:00:00Z",
+    },
+    {
+      id: 2,
+      user_id: "1",
+      name: "Second Map",
+
+      created_at: "2025-01-02T00:00:00Z",
+      updated_at: "2025-01-02T00:00:00Z",
+    },
+  ];
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    vi.mocked(apiClient.listTracks).mockResolvedValue([]);
+
+    vi.spyOn(authContext, "useAuth").mockReturnValue({
+      user: { id: "1", email: "test@example.com" },
+      accessToken: "mock-token",
+      login: vi.fn(),
+      logout: vi.fn(),
+      isAuthenticated: true,
+      isLoading: false,
+    });
+  });
+
+  it("restores previously selected map from localStorage", async () => {
+    localStorage.setItem("selected_map_id", "2");
+    vi.mocked(apiClient.listMaps).mockResolvedValue(multipleMaps);
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      const select = screen.getByRole("combobox");
+      expect(select).toHaveValue("2");
+    });
+  });
+
+  it("falls back to default map when stored map ID no longer exists", async () => {
+    localStorage.setItem("selected_map_id", "999");
+    vi.mocked(apiClient.listMaps).mockResolvedValue(multipleMaps);
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      const select = screen.getByRole("combobox");
+      expect(select).toHaveValue("1");
+    });
+  });
+
+  it("saves selected map ID to localStorage when map changes", async () => {
+    vi.mocked(apiClient.listMaps).mockResolvedValue(multipleMaps);
+    const user = userEvent.setup();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("combobox")).toBeEnabled();
+    });
+
+    await user.selectOptions(screen.getByRole("combobox"), "2");
+
+    expect(localStorage.getItem("selected_map_id")).toBe("2");
+  });
+
+  it("clears stored map ID on logout", async () => {
+    localStorage.setItem("selected_map_id", "2");
+    vi.mocked(apiClient.listMaps).mockResolvedValue(multipleMaps);
+    const user = userEvent.setup();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Logout")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText("Logout"));
+
+    expect(localStorage.getItem("selected_map_id")).toBeNull();
   });
 });

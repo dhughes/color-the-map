@@ -7,6 +7,7 @@ from typing import Optional
 class Track:
     id: int
     user_id: str
+    map_id: int
     hash: str
     name: str
     filename: str
@@ -39,6 +40,7 @@ class Track:
         return cls(
             id=model.id,
             user_id=model.user_id,
+            map_id=model.map_id,
             hash=model.hash,
             name=model.name,
             filename=model.filename,

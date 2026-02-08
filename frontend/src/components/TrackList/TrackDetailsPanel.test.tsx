@@ -59,6 +59,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,
@@ -73,6 +74,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,
@@ -87,6 +89,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,
@@ -104,6 +107,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,
@@ -121,6 +125,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,
@@ -132,7 +137,7 @@ describe("TrackDetailsPanel", () => {
     fireEvent.blur(nameInput);
 
     await waitFor(() => {
-      expect(updateTrack).toHaveBeenCalledWith(1, { name: "Evening Walk" });
+      expect(updateTrack).toHaveBeenCalledWith(1, 1, { name: "Evening Walk" });
     });
   });
 
@@ -142,6 +147,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,
@@ -162,6 +168,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,
@@ -173,7 +180,9 @@ describe("TrackDetailsPanel", () => {
     fireEvent.blur(activityInput);
 
     await waitFor(() => {
-      expect(updateTrack).toHaveBeenCalledWith(1, { activity_type: "Walking" });
+      expect(updateTrack).toHaveBeenCalledWith(1, 1, {
+        activity_type: "Walking",
+      });
     });
   });
 
@@ -181,6 +190,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running", "Walking", "Cycling"]}
         onDelete={mockOnDelete}
       />,
@@ -208,6 +218,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={trackWithNulls}
+        mapId={1}
         allActivityTypes={[]}
         onDelete={mockOnDelete}
       />,
@@ -226,6 +237,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,
@@ -246,6 +258,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,
@@ -265,6 +278,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,
@@ -284,6 +298,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,
@@ -298,6 +313,7 @@ describe("TrackDetailsPanel", () => {
     render(
       <TrackDetailsPanel
         track={mockTrack}
+        mapId={1}
         allActivityTypes={["Running"]}
         onDelete={mockOnDelete}
       />,

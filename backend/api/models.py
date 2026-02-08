@@ -1,15 +1,17 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, Field
 from datetime import datetime
 from typing import Optional, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..models.track import Track
     from ..models.track_geometry_data import TrackGeometryData
+    from ..models.map import Map
 
 
 class TrackResponse(BaseModel):
     id: int
     user_id: str
+    map_id: int
     hash: str
     name: str
     filename: str
@@ -95,3 +97,47 @@ class BulkUpdateRequest(BaseModel):
 
 class BulkUpdateResult(BaseModel):
     updated: int
+
+
+class MapResponse(BaseModel):
+    id: int
+    user_id: str
+    name: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_domain(cls, map_obj: "Map") -> "MapResponse":
+        return cls.model_validate(map_obj, from_attributes=True)
+
+
+class MapCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+
+    @field_validator("name")
+    @classmethod
+    def strip_and_validate_name(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Map name cannot be empty")
+        return stripped
+
+
+class MapUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+
+    @field_validator("name")
+    @classmethod
+    def strip_and_validate_name(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Map name cannot be empty")
+        return stripped
+
+
+class MapDeleteResponse(BaseModel):
+    deleted: bool

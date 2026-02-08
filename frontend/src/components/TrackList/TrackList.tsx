@@ -3,16 +3,24 @@ import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Upload } from "lucide-react";
 import { updateTrack, bulkUpdateTracks, deleteTracks } from "../../api/client";
 import { SidebarPanel } from "../SidebarPanel";
+import { MapSelector } from "../MapSelector";
 import { TrackListItem } from "./TrackListItem";
 import { SelectionPanel } from "./SelectionPanel";
 import { ConfirmDialog } from "../ConfirmDialog";
 import type { Track } from "../../types/track";
+import type { MapData } from "../../types/map";
 import type { SelectionSource } from "../../hooks/useSelection";
 import type { SpeedColorRelative, TrackVisibility } from "../../types/track";
 import { geometryCache } from "../../utils/geometryCache";
 
 interface TrackListProps {
   tracks: Track[];
+  mapId: number | null;
+  maps: MapData[];
+  onSelectMap: (mapId: number) => void;
+  onCreateMap: (name: string) => void;
+  onRenameMap: (mapId: number, name: string) => void;
+  onDeleteMap: (mapId: number) => void;
   selectedTrackIds: Set<number>;
   anchorTrackId: number | null;
   onSelect: (trackId: number, isMultiSelect: boolean) => void;
@@ -30,6 +38,12 @@ interface TrackListProps {
 
 export function TrackList({
   tracks,
+  mapId,
+  maps,
+  onSelectMap,
+  onCreateMap,
+  onRenameMap,
+  onDeleteMap,
   selectedTrackIds,
   anchorTrackId,
   onSelect,
@@ -70,14 +84,22 @@ export function TrackList({
   );
 
   const toggleVisibility = useMutation({
-    mutationFn: ({ trackId, visible }: { trackId: number; visible: boolean }) =>
-      updateTrack(trackId, { visible }),
+    mutationFn: ({
+      trackId,
+      visible,
+    }: {
+      trackId: number;
+      visible: boolean;
+    }) => {
+      if (mapId === null) return Promise.reject(new Error("No map selected"));
+      return updateTrack(mapId, trackId, { visible });
+    },
     onMutate: async ({ trackId, visible }) => {
-      await queryClient.cancelQueries({ queryKey: ["tracks"] });
+      await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
-      const previousTracks = queryClient.getQueryData(["tracks"]);
+      const previousTracks = queryClient.getQueryData(["tracks", mapId]);
 
-      queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
+      queryClient.setQueryData(["tracks", mapId], (old: Track[] | undefined) =>
         old?.map((track) =>
           track.id === trackId ? { ...track, visible } : track,
         ),
@@ -87,17 +109,23 @@ export function TrackList({
     },
     onError: (_err, _variables, context) => {
       if (context?.previousTracks) {
-        queryClient.setQueryData(["tracks"], context.previousTracks);
+        queryClient.setQueryData(["tracks", mapId], context.previousTracks);
       }
     },
   });
 
   const deleteTracksMutation = useMutation({
-    mutationFn: (trackIds: number[]) => deleteTracks(trackIds),
+    mutationFn: (trackIds: number[]) => {
+      if (mapId === null) return Promise.reject(new Error("No map selected"));
+      return deleteTracks(mapId, trackIds);
+    },
     onMutate: (trackIdsToDelete) => {
-      queryClient.cancelQueries({ queryKey: ["tracks"] });
+      queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
-      const previousTracks = queryClient.getQueryData<Track[]>(["tracks"]);
+      const previousTracks = queryClient.getQueryData<Track[]>([
+        "tracks",
+        mapId,
+      ]);
       const previousGeometries = queryClient.getQueryData(["geometries"]);
 
       const hashesToDelete =
@@ -111,7 +139,7 @@ export function TrackList({
         });
       }
 
-      queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
+      queryClient.setQueryData(["tracks", mapId], (old: Track[] | undefined) =>
         old?.filter((track) => !trackIdsToDelete.includes(track.id)),
       );
 
@@ -128,7 +156,7 @@ export function TrackList({
     },
     onError: (_err, _variables, context) => {
       if (context?.previousTracks) {
-        queryClient.setQueryData(["tracks"], context.previousTracks);
+        queryClient.setQueryData(["tracks", mapId], context.previousTracks);
       }
       if (context?.previousGeometries) {
         queryClient.setQueryData(["geometries"], context.previousGeometries);
@@ -269,14 +297,17 @@ export function TrackList({
     }: {
       trackIds: number[];
       visible: boolean;
-    }) => bulkUpdateTracks(trackIds, { visible }),
+    }) => {
+      if (mapId === null) return Promise.reject(new Error("No map selected"));
+      return bulkUpdateTracks(mapId, trackIds, { visible });
+    },
     onMutate: async ({ trackIds, visible }) => {
-      await queryClient.cancelQueries({ queryKey: ["tracks"] });
+      await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
-      const previousTracks = queryClient.getQueryData(["tracks"]);
+      const previousTracks = queryClient.getQueryData(["tracks", mapId]);
 
       const idSet = new Set(trackIds);
-      queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
+      queryClient.setQueryData(["tracks", mapId], (old: Track[] | undefined) =>
         old?.map((track) =>
           idSet.has(track.id) ? { ...track, visible } : track,
         ),
@@ -286,7 +317,7 @@ export function TrackList({
     },
     onError: (_err, _variables, context) => {
       if (context?.previousTracks) {
-        queryClient.setQueryData(["tracks"], context.previousTracks);
+        queryClient.setQueryData(["tracks", mapId], context.previousTracks);
       }
     },
   });
@@ -371,6 +402,14 @@ export function TrackList({
         onChange={handleFileChange}
         hidden
       />
+      <MapSelector
+        maps={maps}
+        currentMapId={mapId}
+        onSelectMap={onSelectMap}
+        onCreateMap={onCreateMap}
+        onRenameMap={onRenameMap}
+        onDeleteMap={onDeleteMap}
+      />
       <SidebarPanel
         title="Tracks"
         action={
@@ -416,6 +455,7 @@ export function TrackList({
       <SelectionPanel
         totalTracks={tracks.length}
         selectedTracks={selectedTracks}
+        mapId={mapId}
         allActivityTypes={allActivityTypes}
         onDelete={handleDelete}
         onZoomToSelectedTracks={onZoomToSelectedTracks}

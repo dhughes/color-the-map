@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TrackList } from "./TrackList";
+import type { MapData } from "../../types/map";
 
 const mockTracks = [
   {
@@ -23,18 +24,47 @@ const mockTracks = [
   },
 ];
 
+const mockMaps: MapData[] = [
+  {
+    id: 1,
+    user_id: "user-1",
+    name: "Default Map",
+    created_at: "2025-01-01T00:00:00Z",
+    updated_at: "2025-01-01T00:00:00Z",
+  },
+];
+
 vi.mock("../../api/client", () => ({
   listTracks: vi.fn(() => Promise.resolve(mockTracks)),
   updateTrack: vi.fn(() => Promise.resolve(mockTracks[0])),
+  deleteTracks: vi.fn(() => Promise.resolve({ deleted: 0 })),
+  bulkUpdateTracks: vi.fn(() => Promise.resolve({ updated: 0 })),
 }));
 
-describe("TrackList", () => {
-  const mockSelectedTrackIds = new Set<number>();
-  const mockOnSelect = vi.fn();
-  const mockOnSelectRange = vi.fn();
-  const mockOnZoomToTrack = vi.fn();
-  const mockOnUploadFiles = vi.fn();
+const defaultProps = {
+  tracks: mockTracks,
+  mapId: 1 as number | null,
+  maps: mockMaps,
+  onSelectMap: vi.fn(),
+  onCreateMap: vi.fn(),
+  onRenameMap: vi.fn(),
+  onDeleteMap: vi.fn(),
+  selectedTrackIds: new Set<number>(),
+  anchorTrackId: null as number | null,
+  onSelect: vi.fn(),
+  onSelectRange: vi.fn(),
+  onZoomToTrack: vi.fn(),
+  onZoomToSelectedTracks: vi.fn(),
+  onUploadFiles: vi.fn(),
+  lastSelectedTrackId: null as number | null,
+  selectionSource: null as "map" | "sidebar" | null,
+  speedColorEnabled: false,
+  onToggleSpeedColor: vi.fn(),
+  speedColorRelative: "each" as const,
+  onToggleSpeedColorRelative: vi.fn(),
+};
 
+describe("TrackList", () => {
   const createWrapper = () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -45,80 +75,28 @@ describe("TrackList", () => {
   };
 
   it("renders track list header", async () => {
-    render(
-      <TrackList
-        tracks={mockTracks}
-        selectedTrackIds={mockSelectedTrackIds}
-        anchorTrackId={null}
-        onSelect={mockOnSelect}
-        onSelectRange={mockOnSelectRange}
-        onZoomToTrack={mockOnZoomToTrack}
-        onUploadFiles={mockOnUploadFiles}
-        lastSelectedTrackId={null}
-        selectionSource={null}
-      />,
-      { wrapper: createWrapper() },
-    );
+    render(<TrackList {...defaultProps} />, { wrapper: createWrapper() });
 
     expect(await screen.findByText("Tracks")).toBeInTheDocument();
   });
 
   it("displays track count", async () => {
-    render(
-      <TrackList
-        tracks={mockTracks}
-        selectedTrackIds={mockSelectedTrackIds}
-        anchorTrackId={null}
-        onSelect={mockOnSelect}
-        onSelectRange={mockOnSelectRange}
-        onZoomToTrack={mockOnZoomToTrack}
-        onUploadFiles={mockOnUploadFiles}
-        lastSelectedTrackId={null}
-        selectionSource={null}
-      />,
-      { wrapper: createWrapper() },
-    );
+    render(<TrackList {...defaultProps} />, { wrapper: createWrapper() });
 
     expect(await screen.findByText("2 Tracks")).toBeInTheDocument();
   });
 
   it("renders track items", async () => {
-    render(
-      <TrackList
-        tracks={mockTracks}
-        selectedTrackIds={mockSelectedTrackIds}
-        anchorTrackId={null}
-        onSelect={mockOnSelect}
-        onSelectRange={mockOnSelectRange}
-        onZoomToTrack={mockOnZoomToTrack}
-        onUploadFiles={mockOnUploadFiles}
-        lastSelectedTrackId={null}
-        selectionSource={null}
-      />,
-      { wrapper: createWrapper() },
-    );
+    render(<TrackList {...defaultProps} />, { wrapper: createWrapper() });
 
     expect(await screen.findByText("Track 1")).toBeInTheDocument();
     expect(await screen.findByText("Track 2")).toBeInTheDocument();
   });
 
   it("shows selected count when tracks selected", async () => {
-    const selectedIds = new Set([1, 2]);
-
-    render(
-      <TrackList
-        tracks={mockTracks}
-        selectedTrackIds={selectedIds}
-        anchorTrackId={null}
-        onSelect={mockOnSelect}
-        onSelectRange={mockOnSelectRange}
-        onZoomToTrack={mockOnZoomToTrack}
-        onUploadFiles={mockOnUploadFiles}
-        lastSelectedTrackId={null}
-        selectionSource={null}
-      />,
-      { wrapper: createWrapper() },
-    );
+    render(<TrackList {...defaultProps} selectedTrackIds={new Set([1, 2])} />, {
+      wrapper: createWrapper(),
+    });
 
     expect(await screen.findByText("2 Tracks Selected")).toBeInTheDocument();
   });
@@ -184,7 +162,7 @@ describe("TrackList", () => {
       queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false } },
       });
-      queryClient.setQueryData(["tracks"], mockTracks);
+      queryClient.setQueryData(["tracks", 1], mockTracks);
     });
 
     it("scrolls to track when selected from map and not visible", async () => {
@@ -192,17 +170,7 @@ describe("TrackList", () => {
 
       const { rerender } = render(
         <QueryClientProvider client={queryClient}>
-          <TrackList
-            tracks={mockTracks}
-            selectedTrackIds={new Set()}
-            anchorTrackId={null}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
-            lastSelectedTrackId={null}
-            selectionSource={null}
-          />
+          <TrackList {...defaultProps} />
         </QueryClientProvider>,
       );
 
@@ -213,13 +181,9 @@ describe("TrackList", () => {
       rerender(
         <QueryClientProvider client={queryClient}>
           <TrackList
-            tracks={mockTracks}
+            {...defaultProps}
             selectedTrackIds={new Set([1])}
             anchorTrackId={1}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
             lastSelectedTrackId={1}
             selectionSource="map"
           />
@@ -239,17 +203,7 @@ describe("TrackList", () => {
 
       const { rerender } = render(
         <QueryClientProvider client={queryClient}>
-          <TrackList
-            tracks={mockTracks}
-            selectedTrackIds={new Set()}
-            anchorTrackId={null}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
-            lastSelectedTrackId={null}
-            selectionSource={null}
-          />
+          <TrackList {...defaultProps} />
         </QueryClientProvider>,
       );
 
@@ -260,13 +214,9 @@ describe("TrackList", () => {
       rerender(
         <QueryClientProvider client={queryClient}>
           <TrackList
-            tracks={mockTracks}
+            {...defaultProps}
             selectedTrackIds={new Set([1])}
             anchorTrackId={1}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
             lastSelectedTrackId={1}
             selectionSource="map"
           />
@@ -283,17 +233,7 @@ describe("TrackList", () => {
 
       const { rerender } = render(
         <QueryClientProvider client={queryClient}>
-          <TrackList
-            tracks={mockTracks}
-            selectedTrackIds={new Set()}
-            anchorTrackId={null}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
-            lastSelectedTrackId={null}
-            selectionSource={null}
-          />
+          <TrackList {...defaultProps} />
         </QueryClientProvider>,
       );
 
@@ -304,13 +244,9 @@ describe("TrackList", () => {
       rerender(
         <QueryClientProvider client={queryClient}>
           <TrackList
-            tracks={mockTracks}
+            {...defaultProps}
             selectedTrackIds={new Set([1])}
             anchorTrackId={1}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
             lastSelectedTrackId={1}
             selectionSource="sidebar"
           />
@@ -330,17 +266,7 @@ describe("TrackList", () => {
 
       const { rerender } = render(
         <QueryClientProvider client={queryClient}>
-          <TrackList
-            tracks={mockTracks}
-            selectedTrackIds={new Set()}
-            anchorTrackId={null}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
-            lastSelectedTrackId={null}
-            selectionSource={null}
-          />
+          <TrackList {...defaultProps} />
         </QueryClientProvider>,
       );
 
@@ -351,13 +277,9 @@ describe("TrackList", () => {
       rerender(
         <QueryClientProvider client={queryClient}>
           <TrackList
-            tracks={mockTracks}
+            {...defaultProps}
             selectedTrackIds={new Set([1])}
             anchorTrackId={1}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
             lastSelectedTrackId={1}
             selectionSource="sidebar"
           />
@@ -372,17 +294,7 @@ describe("TrackList", () => {
     it("does not scroll when multiple tracks selected from sidebar", async () => {
       const { rerender } = render(
         <QueryClientProvider client={queryClient}>
-          <TrackList
-            tracks={mockTracks}
-            selectedTrackIds={new Set()}
-            anchorTrackId={null}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
-            lastSelectedTrackId={null}
-            selectionSource={null}
-          />
+          <TrackList {...defaultProps} />
         </QueryClientProvider>,
       );
 
@@ -393,13 +305,9 @@ describe("TrackList", () => {
       rerender(
         <QueryClientProvider client={queryClient}>
           <TrackList
-            tracks={mockTracks}
+            {...defaultProps}
             selectedTrackIds={new Set([1, 2])}
             anchorTrackId={1}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
             lastSelectedTrackId={2}
             selectionSource="sidebar"
           />
@@ -415,13 +323,9 @@ describe("TrackList", () => {
       render(
         <QueryClientProvider client={queryClient}>
           <TrackList
-            tracks={mockTracks}
+            {...defaultProps}
             selectedTrackIds={new Set([1])}
             anchorTrackId={1}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
             lastSelectedTrackId={1}
             selectionSource={null}
           />
@@ -438,17 +342,7 @@ describe("TrackList", () => {
     it("does not scroll when lastSelectedTrackId is null", async () => {
       render(
         <QueryClientProvider client={queryClient}>
-          <TrackList
-            tracks={mockTracks}
-            selectedTrackIds={new Set()}
-            anchorTrackId={null}
-            onSelect={vi.fn()}
-            onSelectRange={vi.fn()}
-            onZoomToTrack={vi.fn()}
-            onUploadFiles={vi.fn()}
-            lastSelectedTrackId={null}
-            selectionSource="map"
-          />
+          <TrackList {...defaultProps} selectionSource="map" />
         </QueryClientProvider>,
       );
 
@@ -461,23 +355,15 @@ describe("TrackList", () => {
   });
 
   describe("upload button", () => {
+    const mockOnUploadFiles = vi.fn();
+
     beforeEach(() => {
       mockOnUploadFiles.mockClear();
     });
 
     it("renders an upload button in the tracks header", () => {
       render(
-        <TrackList
-          tracks={mockTracks}
-          selectedTrackIds={mockSelectedTrackIds}
-          anchorTrackId={null}
-          onSelect={mockOnSelect}
-          onSelectRange={mockOnSelectRange}
-          onZoomToTrack={mockOnZoomToTrack}
-          onUploadFiles={mockOnUploadFiles}
-          lastSelectedTrackId={null}
-          selectionSource={null}
-        />,
+        <TrackList {...defaultProps} onUploadFiles={mockOnUploadFiles} />,
         { wrapper: createWrapper() },
       );
 
@@ -490,17 +376,7 @@ describe("TrackList", () => {
       const user = userEvent.setup();
 
       render(
-        <TrackList
-          tracks={mockTracks}
-          selectedTrackIds={mockSelectedTrackIds}
-          anchorTrackId={null}
-          onSelect={mockOnSelect}
-          onSelectRange={mockOnSelectRange}
-          onZoomToTrack={mockOnZoomToTrack}
-          onUploadFiles={mockOnUploadFiles}
-          lastSelectedTrackId={null}
-          selectionSource={null}
-        />,
+        <TrackList {...defaultProps} onUploadFiles={mockOnUploadFiles} />,
         { wrapper: createWrapper() },
       );
 
@@ -518,17 +394,7 @@ describe("TrackList", () => {
 
     it("calls onUploadFiles with selected gpx files", async () => {
       render(
-        <TrackList
-          tracks={mockTracks}
-          selectedTrackIds={mockSelectedTrackIds}
-          anchorTrackId={null}
-          onSelect={mockOnSelect}
-          onSelectRange={mockOnSelectRange}
-          onZoomToTrack={mockOnZoomToTrack}
-          onUploadFiles={mockOnUploadFiles}
-          lastSelectedTrackId={null}
-          selectionSource={null}
-        />,
+        <TrackList {...defaultProps} onUploadFiles={mockOnUploadFiles} />,
         { wrapper: createWrapper() },
       );
 
@@ -547,17 +413,7 @@ describe("TrackList", () => {
 
     it("filters out non-gpx files", async () => {
       render(
-        <TrackList
-          tracks={mockTracks}
-          selectedTrackIds={mockSelectedTrackIds}
-          anchorTrackId={null}
-          onSelect={mockOnSelect}
-          onSelectRange={mockOnSelectRange}
-          onZoomToTrack={mockOnZoomToTrack}
-          onUploadFiles={mockOnUploadFiles}
-          lastSelectedTrackId={null}
-          selectionSource={null}
-        />,
+        <TrackList {...defaultProps} onUploadFiles={mockOnUploadFiles} />,
         { wrapper: createWrapper() },
       );
 
@@ -576,17 +432,7 @@ describe("TrackList", () => {
 
     it("accepts files with uppercase .GPX extension", async () => {
       render(
-        <TrackList
-          tracks={mockTracks}
-          selectedTrackIds={mockSelectedTrackIds}
-          anchorTrackId={null}
-          onSelect={mockOnSelect}
-          onSelectRange={mockOnSelectRange}
-          onZoomToTrack={mockOnZoomToTrack}
-          onUploadFiles={mockOnUploadFiles}
-          lastSelectedTrackId={null}
-          selectionSource={null}
-        />,
+        <TrackList {...defaultProps} onUploadFiles={mockOnUploadFiles} />,
         { wrapper: createWrapper() },
       );
 
@@ -605,17 +451,7 @@ describe("TrackList", () => {
 
     it("accepts multiple gpx files", async () => {
       render(
-        <TrackList
-          tracks={mockTracks}
-          selectedTrackIds={mockSelectedTrackIds}
-          anchorTrackId={null}
-          onSelect={mockOnSelect}
-          onSelectRange={mockOnSelectRange}
-          onZoomToTrack={mockOnZoomToTrack}
-          onUploadFiles={mockOnUploadFiles}
-          lastSelectedTrackId={null}
-          selectionSource={null}
-        />,
+        <TrackList {...defaultProps} onUploadFiles={mockOnUploadFiles} />,
         { wrapper: createWrapper() },
       );
 
@@ -637,17 +473,7 @@ describe("TrackList", () => {
 
     it("resets file input after selection", async () => {
       render(
-        <TrackList
-          tracks={mockTracks}
-          selectedTrackIds={mockSelectedTrackIds}
-          anchorTrackId={null}
-          onSelect={mockOnSelect}
-          onSelectRange={mockOnSelectRange}
-          onZoomToTrack={mockOnZoomToTrack}
-          onUploadFiles={mockOnUploadFiles}
-          lastSelectedTrackId={null}
-          selectionSource={null}
-        />,
+        <TrackList {...defaultProps} onUploadFiles={mockOnUploadFiles} />,
         { wrapper: createWrapper() },
       );
 
@@ -666,17 +492,7 @@ describe("TrackList", () => {
 
     it("has correct file input attributes", () => {
       render(
-        <TrackList
-          tracks={mockTracks}
-          selectedTrackIds={mockSelectedTrackIds}
-          anchorTrackId={null}
-          onSelect={mockOnSelect}
-          onSelectRange={mockOnSelectRange}
-          onZoomToTrack={mockOnZoomToTrack}
-          onUploadFiles={mockOnUploadFiles}
-          lastSelectedTrackId={null}
-          selectionSource={null}
-        />,
+        <TrackList {...defaultProps} onUploadFiles={mockOnUploadFiles} />,
         { wrapper: createWrapper() },
       );
 

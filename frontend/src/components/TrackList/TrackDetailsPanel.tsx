@@ -12,12 +12,14 @@ import {
 
 interface TrackDetailsPanelProps {
   track: Track;
+  mapId: number;
   allActivityTypes: string[];
   onDelete: () => void;
 }
 
 export function TrackDetailsPanel({
   track,
+  mapId,
   allActivityTypes,
   onDelete,
 }: TrackDetailsPanelProps) {
@@ -27,18 +29,18 @@ export function TrackDetailsPanel({
 
   const updateMutation = useMutation({
     mutationFn: (updates: { name?: string; activity_type?: string }) =>
-      updateTrack(track.id, updates),
+      updateTrack(mapId, track.id, updates),
     onMutate: async (updates) => {
-      await queryClient.cancelQueries({ queryKey: ["tracks"] });
-      const previousTracks = queryClient.getQueryData(["tracks"]);
-      queryClient.setQueryData(["tracks"], (old: Track[] | undefined) =>
+      await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
+      const previousTracks = queryClient.getQueryData(["tracks", mapId]);
+      queryClient.setQueryData(["tracks", mapId], (old: Track[] | undefined) =>
         old?.map((t) => (t.id === track.id ? { ...t, ...updates } : t)),
       );
       return { previousTracks };
     },
     onError: (_err, _variables, context) => {
       if (context?.previousTracks) {
-        queryClient.setQueryData(["tracks"], context.previousTracks);
+        queryClient.setQueryData(["tracks", mapId], context.previousTracks);
       }
     },
   });
