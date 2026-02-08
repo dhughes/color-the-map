@@ -41,6 +41,9 @@ def upgrade() -> None:
     )
     op.create_index("idx_maps_user_id", "maps", ["user_id"])
 
+    # NOTE: This migration assumes the tracks table is empty.
+    # If tracks exist, they must be deleted before running this migration
+    # because map_id is added without a default value.
     op.add_column("tracks", sa.Column("map_id", sa.Integer(), nullable=True))
 
     with op.batch_alter_table("tracks") as batch_op:

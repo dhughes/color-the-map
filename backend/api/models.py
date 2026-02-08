@@ -126,7 +126,17 @@ class MapCreate(BaseModel):
 
 
 class MapUpdate(BaseModel):
-    name: Optional[str] = None
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+
+    @field_validator("name")
+    @classmethod
+    def strip_and_validate_name(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Map name cannot be empty")
+        return stripped
 
 
 class MapDeleteResponse(BaseModel):

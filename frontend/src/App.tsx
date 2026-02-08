@@ -48,6 +48,16 @@ export function AppContent() {
   } | null>(null);
   const queryClient = useQueryClient();
   const statusTimeoutRef = useRef<number | undefined>(undefined);
+
+  const showStatus = useCallback(
+    (message: string, type: "info" | "success" | "error") => {
+      setStatus({ message, type });
+      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
+      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
+    },
+    [],
+  );
+
   const mapRef = useRef<MapRef>(null);
   const {
     selectedTrackIds,
@@ -167,11 +177,7 @@ export function AppContent() {
       setCurrentMapId(newMap.id);
       clearSelection();
     },
-    onError: () => {
-      setStatus({ message: "Failed to create map", type: "error" });
-      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
-      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
-    },
+    onError: () => showStatus("Failed to create map", "error"),
   });
 
   const renameMapMutation = useMutation({
@@ -180,11 +186,7 @@ export function AppContent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["maps"] });
     },
-    onError: () => {
-      setStatus({ message: "Failed to rename map", type: "error" });
-      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
-      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
-    },
+    onError: () => showStatus("Failed to rename map", "error"),
   });
 
   const deleteMapMutation = useMutation({
@@ -199,11 +201,7 @@ export function AppContent() {
       }
       clearSelection();
     },
-    onError: () => {
-      setStatus({ message: "Failed to delete map", type: "error" });
-      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
-      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
-    },
+    onError: () => showStatus("Failed to delete map", "error"),
   });
 
   const handleSelectMap = (mapId: number) => {
@@ -291,17 +289,12 @@ export function AppContent() {
       });
 
       if (result.failed > 0) {
-        setStatus({ message: "Some files failed", type: "error" });
+        showStatus("Some files failed", "error");
       } else {
-        setStatus({ message: "Upload complete", type: "success" });
+        showStatus("Upload complete", "success");
       }
-
-      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
-      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
     } catch {
-      setStatus({ message: "Upload failed", type: "error" });
-      if (statusTimeoutRef.current) clearTimeout(statusTimeoutRef.current);
-      statusTimeoutRef.current = setTimeout(() => setStatus(null), 3000);
+      showStatus("Upload failed", "error");
     } finally {
       setIsUploading(false);
       setUploadProgress(null);
@@ -461,30 +454,32 @@ export function AppContent() {
             <StatusMessage message={status.message} type={status.type} />
           )}
         </div>
-        <TrackList
-          tracks={tracks}
-          mapId={currentMapId}
-          maps={mapsData}
-          onSelectMap={handleSelectMap}
-          onCreateMap={(name) => createMapMutation.mutate(name)}
-          onRenameMap={(mapId, name) =>
-            renameMapMutation.mutate({ mapId, name })
-          }
-          onDeleteMap={(mapId) => deleteMapMutation.mutate(mapId)}
-          selectedTrackIds={selectedTrackIds}
-          anchorTrackId={anchorTrackId}
-          onSelect={toggleSelection}
-          onSelectRange={selectRange}
-          onZoomToTrack={handleZoomToTrack}
-          onZoomToSelectedTracks={handleZoomToSelectedTracks}
-          onUploadFiles={handleFilesDropped}
-          lastSelectedTrackId={lastSelectedTrackId}
-          selectionSource={selectionSource}
-          speedColorEnabled={speedColorEnabled}
-          onToggleSpeedColor={handleToggleSpeedColor}
-          speedColorRelative={speedColorRelative}
-          onToggleSpeedColorRelative={handleToggleSpeedColorRelative}
-        />
+        {currentMapId !== null && (
+          <TrackList
+            tracks={tracks}
+            mapId={currentMapId}
+            maps={mapsData}
+            onSelectMap={handleSelectMap}
+            onCreateMap={(name) => createMapMutation.mutate(name)}
+            onRenameMap={(mapId, name) =>
+              renameMapMutation.mutate({ mapId, name })
+            }
+            onDeleteMap={(mapId) => deleteMapMutation.mutate(mapId)}
+            selectedTrackIds={selectedTrackIds}
+            anchorTrackId={anchorTrackId}
+            onSelect={toggleSelection}
+            onSelectRange={selectRange}
+            onZoomToTrack={handleZoomToTrack}
+            onZoomToSelectedTracks={handleZoomToSelectedTracks}
+            onUploadFiles={handleFilesDropped}
+            lastSelectedTrackId={lastSelectedTrackId}
+            selectionSource={selectionSource}
+            speedColorEnabled={speedColorEnabled}
+            onToggleSpeedColor={handleToggleSpeedColor}
+            speedColorRelative={speedColorRelative}
+            onToggleSpeedColorRelative={handleToggleSpeedColorRelative}
+          />
+        )}
       </div>
     </>
   );

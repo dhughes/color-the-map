@@ -15,7 +15,7 @@ import { geometryCache } from "../../utils/geometryCache";
 
 interface TrackListProps {
   tracks: Track[];
-  mapId: number | null;
+  mapId: number;
   maps: MapData[];
   onSelectMap: (mapId: number) => void;
   onCreateMap: (name: string) => void;
@@ -85,7 +85,7 @@ export function TrackList({
 
   const toggleVisibility = useMutation({
     mutationFn: ({ trackId, visible }: { trackId: number; visible: boolean }) =>
-      updateTrack(mapId!, trackId, { visible }),
+      updateTrack(mapId, trackId, { visible }),
     onMutate: async ({ trackId, visible }) => {
       await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
@@ -107,7 +107,7 @@ export function TrackList({
   });
 
   const deleteTracksMutation = useMutation({
-    mutationFn: (trackIds: number[]) => deleteTracks(mapId!, trackIds),
+    mutationFn: (trackIds: number[]) => deleteTracks(mapId, trackIds),
     onMutate: (trackIdsToDelete) => {
       queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
@@ -286,7 +286,7 @@ export function TrackList({
     }: {
       trackIds: number[];
       visible: boolean;
-    }) => bulkUpdateTracks(mapId!, trackIds, { visible }),
+    }) => bulkUpdateTracks(mapId, trackIds, { visible }),
     onMutate: async ({ trackIds, visible }) => {
       await queryClient.cancelQueries({ queryKey: ["tracks", mapId] });
 
@@ -388,7 +388,7 @@ export function TrackList({
         onChange={handleFileChange}
         hidden
       />
-      {maps.length > 0 && mapId !== null && (
+      {maps.length > 0 && (
         <MapSelector
           maps={maps}
           currentMapId={mapId}
@@ -443,7 +443,7 @@ export function TrackList({
       <SelectionPanel
         totalTracks={tracks.length}
         selectedTracks={selectedTracks}
-        mapId={mapId!}
+        mapId={mapId}
         allActivityTypes={allActivityTypes}
         onDelete={handleDelete}
         onZoomToSelectedTracks={onZoomToSelectedTracks}

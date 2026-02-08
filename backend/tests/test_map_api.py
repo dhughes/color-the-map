@@ -340,6 +340,55 @@ def test_create_map_rejects_too_long_name(auth_token):
     assert response.status_code == 422
 
 
+def test_rename_map_rejects_empty_name(user_with_default_map):
+    token = user_with_default_map["token"]
+    map_id = user_with_default_map["map_id"]
+
+    response = client.patch(
+        f"/api/v1/maps/{map_id}",
+        json={"name": ""},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+
+
+def test_rename_map_rejects_whitespace_only_name(user_with_default_map):
+    token = user_with_default_map["token"]
+    map_id = user_with_default_map["map_id"]
+
+    response = client.patch(
+        f"/api/v1/maps/{map_id}",
+        json={"name": "   "},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+
+
+def test_rename_map_strips_whitespace(user_with_default_map):
+    token = user_with_default_map["token"]
+    map_id = user_with_default_map["map_id"]
+
+    response = client.patch(
+        f"/api/v1/maps/{map_id}",
+        json={"name": "  Renamed  "},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    assert response.json()["name"] == "Renamed"
+
+
+def test_rename_map_rejects_too_long_name(user_with_default_map):
+    token = user_with_default_map["token"]
+    map_id = user_with_default_map["map_id"]
+
+    response = client.patch(
+        f"/api/v1/maps/{map_id}",
+        json={"name": "x" * 101},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 422
+
+
 def test_unauthenticated_map_access():
     response = client.get("/api/v1/maps")
     assert response.status_code == 401
